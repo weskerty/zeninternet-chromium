@@ -1,0 +1,112 @@
+{
+  "manifest_version": 2,
+  "name": "Transparent Zen",
+  "version": "0.1.1",
+  "description": "Inject custom styles to make your favorite websites transparent",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{74186d10-f6f2-4f73-b33a-83bb72e50654}"
+    }
+  },
+  "icons": {
+    "48": "assets/images/logo_48.png",
+    "96": "assets/images/logo_96.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "<all_urls>"
+  ],
+  "browser_action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Transparent Zen"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["transparent-zen.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.steampowered.com/*", "*://*.steamcommunity.com/*"],
+      "css": ["./styles/websites/steam.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.bing.com/*"],
+      "css": ["./styles/websites/bing.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.amazon.com/*", "*://*.amazon.de/*"],
+      "css": ["./styles/websites/amazon.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.ddl-warez.cc/*"],
+      "css": ["./styles/websites/ddl-warez.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.epicgames.com/*"],
+      "css": ["./styles/websites/epicgames.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.gog.com/*"],
+      "css": ["./styles/websites/gog.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.kinguin.net/*"],
+      "css": ["./styles/websites/kinguin.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.kryptex.com/*"],
+      "css": ["./styles/websites/kryptex.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.lieferando.at/*"],
+      "css": ["./styles/websites/lieferando.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.proton.me/*"],
+      "css": ["./styles/websites/proton.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://mail.proton.me/*"],
+      "css": ["./styles/websites/mail.proton.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.wuwatracker.com/*"],
+      "css": ["./styles/websites/wuwatracker.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "css": ["./styles/websites/youtube.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.github.com/*"],
+      "css": ["./styles/websites/github.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.reddit.com/*"],
+      "css": ["./styles/websites/reddit.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.nexusmods.com/*"],
+      "css": ["./styles/websites/nexusmods.css"],
+      "run_at": "document_start"
+    }
+  ]
+}

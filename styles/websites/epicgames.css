@@ -1,0 +1,22 @@
+@import url("../global/base.css");
+
+#purchaseAppContainer {
+  background-color: var(--transparent-background-darker) !important;
+  backdrop-filter: var(--backdrop-blur);
+  border-radius: var(--border-radius);
+}
+
+button[type="button"] {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent !important;
+  border: 2px solid var(--color-primary) !important;
+  border-radius: var(--border-radius);
+  color: var(--color-primary) !important;
+  font-weight: 500;
+
+  * {
+    color: var(--color-primary) !important;
+  }
+}

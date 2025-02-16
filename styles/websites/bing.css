@@ -1,5 +1,57 @@
 @import url("../global/base.css");
 
+#hp_app {
+  .hp_body {
+    .hp_top_cover {
+      display: none !important;
+    }
+
+    .hp_media_container {
+      #img_cont {
+        display: none !important;
+      }
+    }
+
+    .hp_cont {
+      header {
+        background: var(--transparent-background) !important;
+        backdrop-filter: var(--backdrop-blur);
+      }
+
+      #sb_form {
+        background: var(--transparent-background-dark) !important;
+        backdrop-filter: var(--backdrop-blur);
+
+        input,
+        textarea {
+          color: var(--color-text) !important;
+        }
+
+        .tooltip {
+          background: none !important;
+          backdrop-filter: none !important;
+        }
+      }
+    }
+
+    .bottom_row {
+      #vs_cont {
+        .vs {
+          .modules_wrapper {
+            .moduleCont {
+              background: var(--transparent-background) !important;
+
+              .module {
+                background: none !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 #id_hbfo,
 #sb_sbipane,
 #id_d,
@@ -24,7 +76,8 @@
   box-shadow: none !important;
 }
 
-.b_icon.tooltip {
+.b_icon.tooltip,
+header .tooltip {
   background: none !important;
   backdrop-filter: none !important;
 }

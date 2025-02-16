@@ -2,6 +2,22 @@
 
 Transparent Zen is a browser extension specifically designed for Zen Browser. This extension injects styles into supported websites to make them transparent, providing a new experience.
 
+<a href="https://addons.mozilla.org/de/firefox/addon/transparent-zen">
+    <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
+</a>
+
+## Table of Contents
+
+- [Transparent Zen](#transparent-zen)
+- [Supported Websites](#supported-websites)
+- [Prerequisites](#prerequisites)
+    - [Windows 11](#windows-11)
+- [Installation](#installation)
+    - [Dark Reader](#dark-reader)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Supported Websites
 🔴 = Not working / Broken
 <br>
@@ -42,6 +58,9 @@ The following websites are currently supported by Transparent Zen:
 ## Installation
 
 To install Transparent Zen, you can either download it from the [Firefox Add-Ons Store](https://addons.mozilla.org/de/firefox/addon/transparent-zen) or grab the latest release from github and manually install it through the Zen Browser settings.
+
+#### Dark Reader
+If you are using Dark Reader, ensure that it is disabled for the websites you want to view as transparent.
 
 ## Usage
 

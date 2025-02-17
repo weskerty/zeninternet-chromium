@@ -50,9 +50,7 @@ The following websites are currently supported by Transparent Zen:
 2. In MicaForEveryone add a new process rule and select "zen"
 3. Activate **Blur Behind** and set the Backdrop Type to **Acrylic**
 4. Open Zen Browser and go to `about:config`
-5. Make sure that `browser.tabs.allow_transparent_browser` is set to **true**
-6. Also make sure that `widget.transparent-windows` is set to **true**
-7. `widget.windows.mica` is set to **true**
+5. Make sure that `browser.tabs.allow_transparent_browser`, `widget.transparent-windows` and `widget.windows.mica` are all set to **true**
 
 ##### TODO: Add other OS prerequisites
 

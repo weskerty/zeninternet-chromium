@@ -38,13 +38,11 @@ html {
 /* Styles by FrostyBiscuit */
 #flex-left-nav-container {
   background: none !important;
-  position: sticky;
-  top: var(--shreddit-header-height);
+  border: 0 !important;
 }
 
 .left-sidebar {
   background-color: var(--transparent-background) !important;
-  backdrop-filter: var(--backdrop-blur);
   border: 0 !important;
 
   .text-secondary-weak {
@@ -96,7 +94,7 @@ shreddit-post {
   }
 }
 
-coment-body-header {
+comment-body-header {
   background: var(--transparent-background) !important;
   border-radius: var(--border-radius-lg) !important;
   margin-bottom: 20px;
@@ -107,7 +105,7 @@ coment-body-header {
   }
 }
 
-shrddit-comment-tree {
+shreddit-comment-tree {
   --shreddit-content-background: var(--transparent-background);
   --color-neutral-background: transparent;
   border-radius: var(--border-radius-lg);

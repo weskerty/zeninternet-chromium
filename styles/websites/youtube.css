@@ -94,6 +94,11 @@ a#thumbnail {
 /* Youtube Player (incl. embeds) */
 #player,
 #player-container {
+  #cinematics.ytd-watch-flexy {
+    /* Disable ambient mode */
+    display: none !important;
+  }
+
   .ytp-popup,
   .ytp-tooltip {
     background-color: var(--transparent-background-darker) !important;

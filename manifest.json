@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Transparent Zen",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Inject custom styles to make your favorite websites transparent. PLEASE KEEP IN MIND THAT THIS IS STILL WORK IN PROGRESS, SO THINGS MIGHT BREAK!",
   "browser_specific_settings": {
     "gecko": {
@@ -106,6 +106,26 @@
     {
       "matches": ["*://*.nexusmods.com/*"],
       "css": ["./styles/websites/nexusmods.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.wikipedia.org/*"],
+      "css": ["./styles/websites/wikipedia.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://copilot.microsoft.com/*"],
+      "css": ["./styles/websites/copilot.microsoft.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.chatgpt.com/*"],
+      "css": ["./styles/websites/chatgpt.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.chess.com/*"],
+      "css": ["./styles/websites/chess.css"],
       "run_at": "document_start"
     }
   ]

@@ -1,16 +1,14 @@
-@-moz-document domain("chatgpt.com") {
-    :root{
-        --main-surface-primary: rgba(0,0,0,0.1);
-        --sidebar-surface-primary: rgba(0,0,0,0.2)
-    }
+:root{
+    --main-surface-primary: rgba(0,0,0,0.1);
+    --sidebar-surface-primary: rgba(0,0,0,0.2)
+}
 
-    .dark{
-        --sidebar-surface-tertiary: background: rgba(0,0,0,0.1) !important;
-    }
-    nav{
-        background: rgba(0,0,0,0.1);
-    }
-    .bg-token-message-surface{
-        background-color: rgba(0,0,0,0.2) !important;
-    }
+.dark{
+    --sidebar-surface-tertiary: background: rgba(0,0,0,0.1) !important;
+}
+nav{
+    background: rgba(0,0,0,0.1);
+}
+.bg-token-message-surface{
+    background-color: rgba(0,0,0,0.2) !important;
 }

@@ -38,13 +38,13 @@ The following websites are currently supported by Transparent Zen:
 - 🟢 chatgpt.com
 - 🟢 copilot.microsoft.com
 - 🟢 chess.com
+- 🟢 github.com
 - 🟠 amazon.de
 - 🟠 bing.com
 - 🟠 kryptex.com
 - 🟠 lieferando.at
 - 🟠 nexusmods.com
 - 🔴 epicgames.com
-- 🔴 github.com
 - 🔴 gog.com
 - 🔴 kinguin.net
 

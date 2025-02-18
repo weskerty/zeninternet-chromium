@@ -1,3 +1,8 @@
+html,
+body {
+  background: none !important;
+}
+
 /* Styles by u/sameera_s_w */
 
 div.feed-item-content.d-flex.flex-column.pt-2.pb-2.border.color-border-default.rounded-2.color-shadow-small.width-full.height-fit,
@@ -69,7 +74,8 @@ div.prc-Dialog-Dialog-luvDS,
 .Overlay,
 .Overlay__StyledOverlay-sc-51280t-0,
 details-menu {
-  background-color: var(--bgColor-disabled);
+  background-color: var(--transparent-background-dark);
+  backdrop-filter: var(--backdrop-blur);
 }
 
 aside.feed-right-sidebar,
@@ -82,7 +88,7 @@ aside.feed-left-sidebar {
 }
 
 .gh-header-sticky.is-stuck {
-  background-color: var(--bgColor-disabled);
+  background-color: var(--transparent-background-dark);
   border-radius: 1em;
   /* margin-top: 1em; */
 }

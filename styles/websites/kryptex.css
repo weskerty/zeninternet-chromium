@@ -4,8 +4,17 @@
   background-color: var(--transparent-background) !important;
 }
 
-.bg-white {
+.bg-white,
+.bg-gray,
+.bg-dark {
   background-color: var(--transparent-background-dark) !important;
+
+  &.fake-bg-overlay {
+    &::before,
+    &::after {
+      background-color: var(--transparent-background-dark) !important;
+    }
+  }
 }
 
 .alert-info-light,
@@ -15,6 +24,16 @@
 
 .text-middle {
   color: var(--color-text-alt) !important;
+}
+
+.text-dark {
+  color: var(--color-text) !important;
+
+  &:is(a) {
+    &:hover {
+      color: var(--color-primary) !important;
+    }
+  }
 }
 
 .border {
@@ -67,6 +86,34 @@
   background-color: var(--transparent-background-darker) !important;
   backdrop-filter: var(--backdrop-blur);
   border-radius: var(--border-radius);
+
+  a {
+    color: var(--color-text) !important;
+
+    &:hover {
+      color: var(--color-primary) !important;
+    }
+  }
+
+  .page-header-nav-tooltip__link {
+    &:hover {
+      background-color: var(--color-bg) !important;
+    }
+  }
+
+  .page-header-nav-tooltip__link-image-block {
+    &:hover {
+      background-color: var(--color-bg) !important;
+
+      .page-header-nav-tooltip__link-image {
+        color: var(--color-primary) !important;
+      }
+    }
+
+    .page-header-nav-tooltip__link-image {
+      color: var(--color-text) !important;
+    }
+  }
 }
 
 .tooltip__single {
@@ -100,12 +147,41 @@ label {
 
 input {
   border: 1px solid var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+
+  &:read-only,
+  &:disabled {
+    background: none !important;
+  }
 }
 
 .btn {
   &.btn-circle-icon {
     border-image: none !important;
     border: none !important;
+  }
+
+  &.btn-white {
+    background: var(--color-bg) !important;
+    border-color: var(--color-bg) !important;
+
+    &:hover {
+      background: var(--transparent-background) !important;
+      border-color: var(--color-primary) !important;
+    }
+
+    .btn-icon__wrap svg {
+      filter: invert(1);
+    }
+  }
+}
+
+.category-list {
+  .category-list__link {
+    &.active,
+    &:hover {
+      background: linear-gradient(to right, var(--color-primary) 10%, transparent);
+    }
   }
 }
 

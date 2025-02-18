@@ -27,22 +27,26 @@ Transparent Zen is a browser extension specifically designed for Zen Browser. Th
 
 The following websites are currently supported by Transparent Zen:
 
-- 🟠 amazon.de
-- 🟠 bing.com
 - 🟢 ddl-warez.cc
-- 🔴 epicgames.com
-- 🔴 github.com
-- 🔴 gog.com
-- 🔴 kinguin.net
-- 🟠 kryptex.com
-- 🟠 lieferando.at
 - 🟢 mail.proton.me
-- 🟠 nexusmods.com
 - 🟢 reddit.com
 - 🟢 store.steamworks.com
 - 🟢 steamcommunity.com
 - 🟢 wuwatracker.com
 - 🟢 youtube.com
+- 🟢 wikipedia.org
+- 🟢 chatgpt.com
+- 🟢 copilot.microsoft.com
+- 🟢 chess.com
+- 🟠 amazon.de
+- 🟠 bing.com
+- 🟠 kryptex.com
+- 🟠 lieferando.at
+- 🟠 nexusmods.com
+- 🔴 epicgames.com
+- 🔴 github.com
+- 🔴 gog.com
+- 🔴 kinguin.net
 
 ## Prerequisites
 #### Windows 11

@@ -1,0 +1,12 @@
+@-moz-document domain("chess.com") {
+    /* Insert code here... */
+    body{
+        background-color: rgba(0,0,0,0);
+        background: none;
+    }
+    :root{
+        --theme-background-override-image: none;
+        --theme-background-image: none;
+        --theme-background-color: none;
+    }
+}

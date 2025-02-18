@@ -1,0 +1,12 @@
+@-moz-document domain("copilot.microsoft.com") {
+    * {
+        background: none !important;
+    }
+    .dark\:bg-midnight-750:is([data-theme="dark"] *){
+        background-color: rgb(29 36 57 / var(--tw-bg-opacity)) !important;
+    }
+    .dark\:before\:bg-midnight-800:is([data-theme="dark"] *)::before {
+        background-color: rgba(23,30,50,0.2) !important;
+        backdrop-filter: blur(512px);
+    }
+}

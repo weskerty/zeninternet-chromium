@@ -1,0 +1,76 @@
+@-moz-document domain("wikipedia.org") {
+    @media screen {
+        html.skin-theme-clientpref-night {
+            --background-color-base: none;
+            --background-color-neutral: none;
+            --background-color-neutral-subtle: none;
+            --background-color-interactive-subtle: rgba(0,0,0,0.2)
+        }
+    }
+    table{
+        border-radius: 16px;
+    }
+    td{
+        background: rgba(0,0,0,0.1) !important;
+    }
+    body, html {
+        background: none !important;
+        color: white;
+        font-family: Ginto,ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji" !important;
+         text-align: justify;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: white;
+    }
+    .mw-page-container{background: none;}
+    .infobox, .hatnote{
+        border-radius: 12px;
+    }
+    .vector-dropdown-content{
+        backdrop-filter: blur(12px) !important;
+        background-color: rgba(0,0,0,0.5) !important;
+        color: white !important;
+        text-decoration: none !important;
+        
+    }
+    .vector-pinned-container {
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 12px;
+    }
+    .cdx-button:enabled.cdx-button--weight-quiet.cdx-button--action-progressive, .cdx-button.cdx-button--fake-button--enabled.cdx-button--weight-quiet.cdx-button--action-progressive{
+        color: white;
+        text-decoration: none;
+        background: rgba(0,0,0,0.1);
+        border-radius: 16px;
+    }
+    .vector-icon[class*="-progressive"]{
+        background-color: white;
+    }
+    .vector-menu-tabs .mw-list-item.selected a, a:where(:not([role="button"])){
+        color: white !important;
+    }
+    
+    .vector-pinnable-header-toggle-button{
+        content: 'X' !important;
+        border-radius: 16px;
+        margin-top: 5px;
+        height: 23px;
+        color: white;
+        background: none;
+        right: 10px;
+        position: absolute;
+    }
+    .mwe-popups-containers::after{
+        background: rgba(0,0,0,1) !important;
+        backdrop-filter: blur(100px);
+    }
+    .infobox-subbox{
+        font-family: consolas;
+    }
+    .uls-menu, .uls-lcd {
+        background: rgba(0,0,0,0.3);
+        backdrop-filter: blur(64px) !important;
+        -webkit-backdrop-filter: blur(5px);
+        color: white;
+    }
+}

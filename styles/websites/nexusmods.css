@@ -116,3 +116,37 @@ header#head {
 .tooltipster-base {
   background-color: var(--color-bg) !important;
 }
+
+/* Adaptions for the next.nexusmods.com beta */
+header.bg-surface-base {
+  background: var(--transparent-background-darker) !important;
+
+  > .bg-surface-base {
+    background: none !important;
+  }
+
+  .bg-surface-low {
+    background-color: var(--transparent-background-darker);
+    backdrop-filter: var(--backdrop-blur);
+  }
+}
+
+#mainContent {
+  > [class="relative"] {
+    > .absolute,
+    > .to-surface-base {
+      display: none !important;
+    }
+
+    > .next-container-fluid {
+      .sticky {
+        background-color: transparent;
+        backdrop-filter: none;
+      }
+    }
+  }
+
+  .clearfix {
+    background: none !important;
+  }
+}

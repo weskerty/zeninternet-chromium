@@ -69,6 +69,9 @@ If you are using Dark Reader, ensure that it is disabled for the websites you wa
 
 Once installed, Transparent Zen will automatically apply transparent styles to the supported websites listed above. No further configuration is required.
 
+#### Customization
+I highly recommend darkening the browser theme slightly by right-clicking the Zen Browser Toolbar and selecting **Change Theme Colors**. I'm personally using the hex code **#00000066** which darkens the browser background slightly while maintaining readability. But of course, feel free to play around to find the best color to your liking!
+
 ## Contributing
 
 The main idea behind this project is for the community to contribute and add styles for their favorite websites, so that everyone can enjoy a fully transparent experience.

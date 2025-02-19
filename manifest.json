@@ -127,6 +127,16 @@
       "matches": ["*://*.chess.com/*"],
       "css": ["./styles/websites/chess.css"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.leetcode.com/*"],
+      "css": ["./styles/websites/leetcode.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.programiz.com/*"],
+      "css": ["./styles/websites/programiz.css"],
+      "run_at": "document_start"
     }
   ]
 }

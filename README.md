@@ -39,9 +39,11 @@ The following websites are currently supported by Transparent Zen:
 - 🟢 copilot.microsoft.com
 - 🟢 chess.com
 - 🟢 github.com
+- 🟢 bing.com
+- 🟢 kryptex.com
+- 🟢 leetcode.com
+- 🟢 programiz.com (only for their dark theme)
 - 🟠 amazon.de
-- 🟠 bing.com
-- 🟠 kryptex.com
 - 🟠 lieferando.at
 - 🟠 nexusmods.com
 - 🔴 epicgames.com

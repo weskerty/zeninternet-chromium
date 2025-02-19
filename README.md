@@ -15,6 +15,7 @@ Transparent Zen is a browser extension specifically designed for Zen Browser. Th
 - [Installation](#installation)
     - [Dark Reader](#dark-reader)
 - [Usage](#usage)
+    - [Customization](#customization)
 - [Contributing](#contributing)
 - [License](#license)
 

@@ -103,6 +103,12 @@ comment-body-header {
   .bg-neutral-background {
     background: none !important;
   }
+
+  shreddit-comments-sort-dropdown {
+    --color-neutral-background: transparent;
+    padding: 10px;
+    margin-top: 0 !important;
+  }
 }
 
 shreddit-comment-tree {

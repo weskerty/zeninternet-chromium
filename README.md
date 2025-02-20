@@ -45,6 +45,7 @@ The following websites are currently supported by Transparent Zen:
 - 🟢 leetcode.com
 - 🟢 programiz.com (only for their dark theme)
 - 🟢 nexusmods.com
+- 🟢 duckduckgo.com
 - 🟠 amazon.de
 - 🟠 lieferando.at
 - 🔴 epicgames.com

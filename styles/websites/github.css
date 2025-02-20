@@ -3,6 +3,10 @@ body {
   background: none !important;
 }
 
+[data-testid="issue-metadata-sticky"] {
+  background-color: var(--transparent-background-darker);
+}
+
 /* Styles by u/sameera_s_w */
 
 div.feed-item-content.d-flex.flex-column.pt-2.pb-2.border.color-border-default.rounded-2.color-shadow-small.width-full.height-fit,
@@ -59,11 +63,11 @@ a:hover {
   border-radius: 20px;
 }
 
-:root {
-  --bgColor-default: #00000000;
-  --bgColor-muted: #00000000;
-  --bgColor-inset: #00000000;
-  --borderColor-default: #00000000;
+body {
+  --bgColor-default: transparent;
+  --bgColor-muted: var(--transparent-background);
+  --bgColor-inset: var(--transparent-background);
+  --borderColor-default: var(--transparent-background);
 }
 
 footer.footer.pt-8.pb-6.f6.color-fg-muted.p-responsive {
@@ -90,5 +94,4 @@ aside.feed-left-sidebar {
 .gh-header-sticky.is-stuck {
   background-color: var(--transparent-background-dark);
   border-radius: 1em;
-  /* margin-top: 1em; */
 }

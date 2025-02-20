@@ -155,6 +155,12 @@ input {
   }
 }
 
+.input-text {
+  label::after {
+    content: none !important;
+  }
+}
+
 .btn {
   &.btn-circle-icon {
     border-image: none !important;

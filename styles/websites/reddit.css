@@ -94,6 +94,10 @@ shreddit-post {
   }
 }
 
+comment-composer-host {
+  --color-input-bordered: var(--transparent-background);
+}
+
 comment-body-header {
   background: var(--transparent-background) !important;
   border-radius: var(--border-radius-lg) !important;

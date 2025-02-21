@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Transparent Zen",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Inject custom styles to make your favorite websites transparent. PLEASE KEEP IN MIND THAT THIS IS STILL WORK IN PROGRESS, SO THINGS MIGHT BREAK!",
   "browser_specific_settings": {
     "gecko": {

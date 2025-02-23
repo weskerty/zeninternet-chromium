@@ -52,6 +52,18 @@ The following websites are currently supported by Transparent Zen:
 - 🔴 gog.com
 - 🔴 kinguin.net
 
+#### To Do
+- [ ] outlook.live.com
+- [ ] notebooklm.google.com
+- [ ] web.whatsapp.com
+- [ ] Plex Media Server (usually 127.0.0.1:32400)
+- [ ] linkedin.com
+- [ ] google.com
+- [ ] instagram.com
+- [ ] x.com
+- [ ] threads.net
+- [ ] monkeytype.com
+
 ## Prerequisites
 #### Windows 11
 1. Install [MicaForEveryone](https://github.com/MicaForEveryone/MicaForEveryone)

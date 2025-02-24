@@ -47,6 +47,7 @@ The following websites are currently supported by Transparent Zen:
 - 🟢 nexusmods.com
 - 🟢 duckduckgo.com
 - 🟢 epicgames.com
+- 🟢 google.com
 - 🟠 amazon.de
 - 🟠 lieferando.at
 - 🔴 gog.com
@@ -58,7 +59,7 @@ The following websites are currently supported by Transparent Zen:
 - [ ] web.whatsapp.com
 - [ ] Plex Media Server (usually 127.0.0.1:32400)
 - [ ] linkedin.com
-- [ ] google.com
+- [x] ~~google.com~~
 - [ ] instagram.com
 - [ ] x.com
 - [ ] threads.net

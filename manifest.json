@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Transparent Zen",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Inject custom styles to make your favorite websites transparent. PLEASE KEEP IN MIND THAT THIS IS STILL WORK IN PROGRESS, SO THINGS MIGHT BREAK!",
   "browser_specific_settings": {
     "gecko": {
@@ -141,6 +141,11 @@
     {
       "matches": ["*://*.duckduckgo.com/*"],
       "css": ["./styles/websites/duckduckgo.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.google.com/*"],
+      "css": ["./styles/websites/google.css"],
       "run_at": "document_start"
     }
   ]

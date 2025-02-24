@@ -1,3 +1,7 @@
+:root {
+  --darkreader-background-ffffff: transparent;
+}
+
 body,
 html,
 main {
@@ -6,65 +10,5 @@ main {
   &::before,
   &::after {
     background: none !important;
-  }
-}
-
-.card,
-.card-ui,
-.post,
-.entry,
-.box,
-.product-item,
-pre {
-  background-color: var(--transparent-background-dark) !important;
-  border-radius: var(--border-radius) !important;
-}
-
-dialog,
-.dialog,
-#dialog,
-.modal,
-#modal,
-.popup,
-#popup,
-.popover,
-#popover,
-.tooltip,
-#tooltip,
-.dropdown,
-#dropdown,
-.sub-menu,
-.submenu,
-.gdpr,
-.cookie-bar,
-#cookie-bar,
-.cookie-banner,
-#cookie-banner,
-.consent-banner,
-#consent-banner,
-.is-sticky,
-.sticky,
-ul > li > ul,
-[popover],
-[role="dialog"],
-[style*="position:fixed"]:not([style*="pointer-events:none"]) {
-  background: var(--transparent-background-darker);
-  backdrop-filter: var(--backdrop-blur);
-}
-
-a {
-  color: var(--color-primary);
-
-  &:active,
-  &.active {
-    color: var(--color-secondary);
-  }
-}
-
-svg {
-  color: inherit;
-
-  * {
-    color: inherit;
   }
 }

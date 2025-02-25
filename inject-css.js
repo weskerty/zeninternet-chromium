@@ -1,27 +1,21 @@
-browser.storage.sync.get("transparentZenSettings").then((settings) => {
+browser.storage.local.get("transparentZenSettings").then((settings) => {
   if (settings.transparentZenSettings?.enableStyling) {
-    fetch(browser.runtime.getURL("mapper.json"))
-      .then((response) => response.json())
-      .then((mapping) => {
-        const currentUrl = window.location.hostname;
-        const matchedKey = Object.keys(mapping).find((key) =>
-          currentUrl.includes(key)
-        );
-        const cssFileName = mapping[matchedKey];
-        if (
-          cssFileName &&
-          settings.transparentZenSettings.websiteSettings?.[matchedKey] !==
-            false
-        ) {
-          browser.storage.sync.get(cssFileName).then((data) => {
-            if (data[cssFileName]) {
-              let style = document.createElement("style");
-              style.textContent = data[cssFileName];
-              document.head.appendChild(style);
-              console.log(`Injected custom CSS for ${currentUrl}`);
-            }
-          });
-        }
-      });
+    browser.storage.local.get("styles").then((data) => {
+      const currentUrl = window.location.hostname;
+      const cssFileName = Object.keys(data.styles).find((key) =>
+        currentUrl.includes(key.replace(".css", ""))
+      );
+      if (
+        cssFileName &&
+        settings.transparentZenSettings.websiteSettings?.[
+          cssFileName.replace(".css", "")
+        ] !== false
+      ) {
+        let style = document.createElement("style");
+        style.textContent = data.styles[cssFileName];
+        document.head.appendChild(style);
+        console.log(`Injected custom CSS for ${currentUrl}`);
+      }
+    });
   }
 });

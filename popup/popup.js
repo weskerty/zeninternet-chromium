@@ -57,9 +57,6 @@ new (class ExtensionPopup {
     browser.storage.local.set({
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
     });
-    browser.storage.sync.set({
-      [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
-    });
     console.info("Settings saved", this.browserStorageSettings);
   }
 
@@ -93,38 +90,28 @@ new (class ExtensionPopup {
   async refetchCSS() {
     this.refetchCSSButton.textContent = "Fetching...";
     try {
-      const response = await fetch("/mapper.json", {
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch mapper.json");
-      const mapping = await response.json();
-      for (const [site, cssFileName] of Object.entries(mapping)) {
-        const cssResponse = await fetch(
-          `https://sameerasw.github.io/my-internet/${cssFileName}`,
-          {
-            headers: {
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
-        if (!cssResponse.ok) throw new Error(`Failed to fetch CSS for ${site}`);
-        const cssText = await cssResponse.text();
-        await browser.storage.local.set({ [cssFileName]: cssText });
-        await browser.storage.sync.set({ [cssFileName]: cssText });
-      }
+      const response = await fetch(
+        "https://sameerasw.github.io/my-internet/styles.json",
+        {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch styles.json");
+      const styles = await response.json();
+      await browser.storage.local.set({ styles });
       this.refetchCSSButton.textContent = "Done!";
       setTimeout(() => {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
-      console.info("All CSS files refetched and updated from GitHub.");
+      console.info("All styles refetched and updated from GitHub.");
     } catch (error) {
       this.refetchCSSButton.textContent = "Error!";
       setTimeout(() => {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
-      console.error("Error refetching CSS:", error);
+      console.error("Error refetching styles:", error);
     }
   }
 

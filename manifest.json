@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Transparent Zen",
-  "version": "0.1.10",
-  "description": "Inject custom styles to make your favorite websites transparent.",
+  "name": "Zen Internet",
+  "version": "0.2.0",
+  "description": "Inject custom css from my repository in real time",
   "browser_specific_settings": {
     "gecko": {
       "id": "{74186d10-f6f2-4f73-b33a-83bb72e50654}"
@@ -12,15 +12,10 @@
     "48": "assets/images/logo_48.png",
     "96": "assets/images/logo_96.png"
   },
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabs",
-    "<all_urls>"
-  ],
+  "permissions": ["activeTab", "storage", "tabs", "<all_urls>"],
   "browser_action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Transparent Zen"
+    "default_title": "Zen Internet"
   },
   "background": {
     "scripts": ["background.js"],
@@ -28,7 +23,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.github.com/*"],
+      "matches": ["<all_urls>"],
       "js": ["inject-css.js"],
       "run_at": "document_start"
     }

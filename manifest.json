@@ -3,11 +3,6 @@
   "name": "Zen Internet",
   "version": "0.2.0",
   "description": "Inject custom css from my repository in real time",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{74186d10-f6f2-4f73-b33a-83bb72e50654}"
-    }
-  },
   "icons": {
     "48": "assets/images/logo_48.png",
     "96": "assets/images/logo_96.png"

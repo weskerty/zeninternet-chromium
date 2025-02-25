@@ -3,6 +3,7 @@ new (class ExtensionPopup {
   browserStorageSettings = {};
   enableStylingSwitch = document.getElementById("enable-styling");
   refetchCSSButton = document.getElementById("refetch-css");
+  websitesList = document.getElementById("websites-list");
 
   constructor() {
     this.loadSettings().then((settings) => {
@@ -22,6 +23,9 @@ new (class ExtensionPopup {
     this.enableStylingSwitch.addEventListener("change", () => {
       this.saveSettings();
     });
+    this.websitesList.addEventListener("change", () => {
+      this.saveSettings();
+    });
   }
 
   restoreSettings() {
@@ -29,6 +33,7 @@ new (class ExtensionPopup {
       this.enableStylingSwitch.checked =
         this.browserStorageSettings.enableStyling;
     }
+    this.loadWebsitesList();
   }
 
   async loadSettings() {
@@ -41,6 +46,14 @@ new (class ExtensionPopup {
     this.browserStorageSettings.enableStyling =
       this.enableStylingSwitch.checked;
 
+    const websiteSettings = {};
+    this.websitesList
+      .querySelectorAll("input[type=checkbox]")
+      .forEach((checkbox) => {
+        websiteSettings[checkbox.name] = checkbox.checked;
+      });
+    this.browserStorageSettings.websiteSettings = websiteSettings;
+
     browser.storage.local.set({
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
     });
@@ -48,6 +61,33 @@ new (class ExtensionPopup {
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
     });
     console.info("Settings saved", this.browserStorageSettings);
+  }
+
+  async loadWebsitesList() {
+    try {
+      const response = await fetch("/mapper.json", {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch mapper.json");
+      const mapping = await response.json();
+      this.websitesList.innerHTML = "";
+      for (const site of Object.keys(mapping)) {
+        const isChecked =
+          this.browserStorageSettings.websiteSettings?.[site] ?? true;
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+          <label>
+            <input type="checkbox" name="${site}" ${isChecked ? "checked" : ""}>
+            ${site}
+          </label>
+        `;
+        this.websitesList.appendChild(listItem);
+      }
+    } catch (error) {
+      console.error("Error loading websites list:", error);
+    }
   }
 
   async refetchCSS() {

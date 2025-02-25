@@ -8,7 +8,11 @@ browser.storage.sync.get("transparentZenSettings").then((settings) => {
           currentUrl.includes(key)
         );
         const cssFileName = mapping[matchedKey];
-        if (cssFileName) {
+        if (
+          cssFileName &&
+          settings.transparentZenSettings.websiteSettings?.[matchedKey] !==
+            false
+        ) {
           browser.storage.sync.get(cssFileName).then((data) => {
             if (data[cssFileName]) {
               let style = document.createElement("style");

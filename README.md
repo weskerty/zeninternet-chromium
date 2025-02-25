@@ -40,6 +40,8 @@ If you would like to contribute to the addon, please follow these steps:
 3. Make your changes and commit them with a descriptive message.
 4. Push your changes to your fork and create a pull request.
 
+   > Thanks to @YelehaUwU for the contributions on the pop-up UI!
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

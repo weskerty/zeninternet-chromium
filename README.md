@@ -6,6 +6,8 @@ Transparent Zen is a browser extension specifically designed for Zen Browser. Th
     <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
 </a>
 
+https://github.com/user-attachments/assets/03ce72fc-e5b0-48fc-b0ae-40c6671b187d
+
 ## Supported Websites
 Checkout the [repository](https://github.com/sameerasw/my-internet) for website css styling which are used in this addon.
 

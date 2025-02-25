@@ -11,3 +11,8 @@ config.json
 node_modules/
 dist/
 builds/
+
+# macos
+.DS_Store
+.AppleDouble
+.LSOverride

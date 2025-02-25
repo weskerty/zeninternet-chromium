@@ -2,98 +2,38 @@
 
 Transparent Zen is a browser extension specifically designed for Zen Browser. This extension injects styles into supported websites to make them transparent, providing a new experience.
 
-<a href="https://addons.mozilla.org/en-US/firefox/addon/transparent-zen/">
+<a href="https://addons.mozilla.org/en-US/firefox/addon/zen-internet/">
     <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
 </a>
 
-## Table of Contents
-
-- [Transparent Zen](#transparent-zen)
-- [Supported Websites](#supported-websites)
-- [Prerequisites](#prerequisites)
-    - [Windows 11](#windows-11)
-- [Installation](#installation)
-    - [Dark Reader](#dark-reader)
-- [Usage](#usage)
-    - [Customization](#customization)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## Supported Websites
-🔴 = Not working / Broken
-<br>
-🟠 = Work in Progress
-<br>
-🟢 = Working
-
-The following websites are currently supported by Transparent Zen:
-
-- 🟢 ddl-warez.cc
-- 🟢 mail.proton.me
-- 🟢 reddit.com
-- 🟢 store.steamworks.com
-- 🟢 steamcommunity.com
-- 🟢 wuwatracker.com
-- 🟢 youtube.com
-- 🟢 wikipedia.org
-- 🟢 chatgpt.com
-- 🟢 copilot.microsoft.com
-- 🟢 chess.com
-- 🟢 github.com
-- 🟢 bing.com
-- 🟢 kryptex.com
-- 🟢 leetcode.com
-- 🟢 programiz.com (only for their dark theme)
-- 🟢 nexusmods.com
-- 🟢 duckduckgo.com
-- 🟢 epicgames.com
-- 🟢 google.com
-- 🟠 amazon.de
-- 🟠 lieferando.at
-- 🔴 gog.com
-- 🔴 kinguin.net
+Checkout the [repository](https://github.com/sameerasw/my-internet) for website css styling which are used in this addon.
 
 #### To Do
-- [ ] outlook.live.com
-- [ ] notebooklm.google.com
-- [ ] web.whatsapp.com
-- [ ] Plex Media Server (usually 127.0.0.1:32400)
-- [ ] linkedin.com
-- [x] ~~google.com~~
-- [ ] instagram.com
-- [ ] x.com
-- [ ] threads.net
-- [ ] monkeytype.com
+- [ ] Feature specific toggles for each website
+- [ ] Custom css by user
 
 ## Prerequisites
-#### Windows 11
-1. Install [MicaForEveryone](https://github.com/MicaForEveryone/MicaForEveryone)
-2. In MicaForEveryone add a new process rule and select "zen"
-3. Activate **Blur Behind** and set the Backdrop Type to **Acrylic**
-4. Open Zen Browser and go to `about:config`
-5. Make sure that `browser.tabs.allow_transparent_browser`, `widget.transparent-windows` and `widget.windows.mica` are all set to **true**
-
-##### TODO: Add other OS prerequisites
+#### Transparent Zen
+- [Guide](https://sameerasw.notion.site/Zen-Transparency-1939c6099d4080468f02cf05ae50e827?pvs=4)
 
 ## Installation
 
-To install Transparent Zen, you can either download it from the [Firefox Add-Ons Store](https://addons.mozilla.org/en-US/firefox/addon/transparent-zen) or grab the latest release from github and manually install it through the Zen Browser settings.
-
-#### Dark Reader
-If you are using Dark Reader, ensure that it is disabled for the websites you want to view as transparent.
+To install the addon, you can either download it from the [Firefox Add-Ons Store](https://addons.mozilla.org/en-US/firefox/addon/zen-internet) or grab the latest release from github and manually install it through the Zen Browser settings.
 
 ## Usage
 
-Once installed, Transparent Zen will automatically apply transparent styles to the supported websites listed above. No further configuration is required.
+Once installed, Open the addon dialog, enable theming and click the refetch latest styles button to load the latest stylesheets from the repository
 
-#### Customization
-I highly recommend darkening the browser theme slightly by right-clicking the Zen Browser Toolbar and selecting **Change Theme Colors**. I'm personally using the hex code **#00000066** which darkens the browser background slightly while maintaining readability. But of course, feel free to play around to find the best color to your liking!
+<img width="334" alt="CleanShot 2025-02-25 at 11  19 49@2x" src="https://github.com/user-attachments/assets/573519aa-10de-4606-8c9f-30a21661bcf4" />
 
-## Contributing
+Then reload the page and enjoy :D
+You can disable website specific theming from the pop-up.
 
-The main idea behind this project is for the community to contribute and add styles for their favorite websites, so that everyone can enjoy a fully transparent experience.
-<br>
-If you would like to contribute to Transparent Zen, please follow these steps:
+<img width="367" alt="CleanShot 2025-02-25 at 11  20 55@2x" src="https://github.com/user-attachments/assets/05645e1e-e83a-4f54-8895-6ea1744e9711" />
+
+
+If you would like to contribute to the addon, please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch for your feature or bug fix.
@@ -104,4 +44,4 @@ If you would like to contribute to Transparent Zen, please follow these steps:
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
-Enjoy your transparent browsing experience with Transparent Zen!
+Enjoy :D Huge thanks to the [Transparent Zen ](https://github.com/frostybiscuit/transparent-zen) for the addon base and the inspiration <3

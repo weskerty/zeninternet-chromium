@@ -1,29 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
   <div class="container">
-    <div id="extension-header">
-      <h1 class="headline">ZenInternet by @sameerasw</h1>
-    </div>
-    <div id="extension-body">
-      <label class="setting">
-        <input type="checkbox" id="enable-styling">
-        Enable Styling
-      </label>
-      <ul id="websites-list"></ul>
-      <button id="refetch-css">Refetch latest styles</button>
-      <button id="restart-background">Restart Background Script (optional)</button>
-      <a href="https://sameerasw.github.io/my-internet/">Styles repo</a>
-      <p>About:
-        <a href="https://www.sameerasw.com/">sameerasw.com</a>
-      </p>
-    </div>
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="../assets/images/logo_48.png" alt="ZenInternet Logo" class="logo-img">
+        <h1 class="app-title">ZenInternet</h1>
+      </div>
+      <div class="author">by <a href="https://www.sameerasw.com/" target="_blank">@sameerasw</a></div>
+    </header>
+
+    <main class="app-content">
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="enable-styling">
+          <span class="slider round"></span>
+        </label>
+        <span class="toggle-label">Enable Styling</span>
+      </div>
+
+      <div class="websites-container">
+        <h2 class="section-title">Available Websites</h2>
+        <ul id="websites-list" class="websites-list"></ul>
+      </div>
+
+      <div class="actions">
+        <button id="refetch-css" class="action-button primary">
+          <i class="fas fa-sync-alt"></i> Refetch latest styles
+        </button>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank">
+        <i class="fas fa-book"></i> Styles Repository
+      </a>
+      <div class="footer-divider"></div>
+      <a href="https://github.com/sameerasw/zeninternet/" class="footer-link" target="_blank">
+        <i class="fa-brands fa-github"></i> Github Repository
+      </a>
+    </footer>
   </div>
   <script src="popup.js"></script>
 </body>

@@ -2,6 +2,7 @@ new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";
   browserStorageSettings = {};
   enableStylingSwitch = document.getElementById("enable-styling");
+  refetchCSSButton = document.getElementById("refetch-css");
 
   constructor() {
     this.loadSettings().then((settings) => {
@@ -11,9 +12,7 @@ new (class ExtensionPopup {
         this.bindEvents();
       }
     });
-    document
-      .getElementById("refetch-css")
-      .addEventListener("click", this.refetchCSS.bind(this));
+    this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
     document
       .getElementById("restart-background")
       .addEventListener("click", this.restartBackground);
@@ -48,11 +47,11 @@ new (class ExtensionPopup {
     browser.storage.sync.set({
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
     });
-    browser.runtime.sendMessage({ action: "updateSettings" });
     console.info("Settings saved", this.browserStorageSettings);
   }
 
   async refetchCSS() {
+    this.refetchCSSButton.textContent = "Fetching...";
     try {
       const response = await fetch("/mapper.json", {
         headers: {
@@ -75,15 +74,22 @@ new (class ExtensionPopup {
         await browser.storage.local.set({ [cssFileName]: cssText });
         await browser.storage.sync.set({ [cssFileName]: cssText });
       }
-      browser.runtime.sendMessage({ action: "updateCSS" });
+      this.refetchCSSButton.textContent = "Done!";
+      setTimeout(() => {
+        this.refetchCSSButton.textContent = "Refetch latest styles";
+      }, 2000);
       console.info("All CSS files refetched and updated from GitHub.");
     } catch (error) {
+      this.refetchCSSButton.textContent = "Error!";
+      setTimeout(() => {
+        this.refetchCSSButton.textContent = "Refetch latest styles";
+      }, 2000);
       console.error("Error refetching CSS:", error);
     }
   }
 
   async restartBackground() {
-    browser.runtime.sendMessage({ action: "restartBackground" });
+    browser.runtime.reload();
     console.info("Background script restart requested.");
   }
 })();

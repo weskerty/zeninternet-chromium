@@ -17,10 +17,6 @@
     "default_popup": "popup/popup.html",
     "default_title": "Zen Internet"
   },
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

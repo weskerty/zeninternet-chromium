@@ -4,6 +4,7 @@ new(class ExtensionPopup {
   enableStylingSwitch = document.getElementById("enable-styling");
   refetchCSSButton = document.getElementById("refetch-css");
   websitesList = document.getElementById("websites-list");
+  currentSiteFeatures = document.getElementById("current-site-toggles");
   currentSiteHostname = "";
   
   constructor() {
@@ -17,6 +18,9 @@ new(class ExtensionPopup {
       }
     });
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
+    document.getElementById("toggle-websites").addEventListener("click", () => {
+      this.websitesList.classList.toggle("collapsed");
+    });
 
     this.setupContentScriptInjection();
   }
@@ -40,10 +44,9 @@ new(class ExtensionPopup {
       this.updateActiveTabStyling();
     });
     
-    this.websitesList.addEventListener("change", (event) => {
-      this.saveSettings();
-      // Update styling immediately when a checkbox changes
+    this.currentSiteFeatures.addEventListener("change", (event) => {
       if (event.target.type === 'checkbox') {
+        this.saveSettings();
         this.updateActiveTabStyling();
       }
     });
@@ -51,9 +54,9 @@ new(class ExtensionPopup {
   
   restoreSettings() {
     if (this.browserStorageSettings.enableStyling !== undefined) {
-      this.enableStylingSwitch.checked =
-        this.browserStorageSettings.enableStyling;
+      this.enableStylingSwitch.checked = this.browserStorageSettings.enableStyling;
     }
+    this.loadCurrentSiteFeatures();
     this.loadWebsitesList();
   }
   
@@ -64,17 +67,20 @@ new(class ExtensionPopup {
   }
   
   saveSettings() {
-    this.browserStorageSettings.enableStyling =
-      this.enableStylingSwitch.checked;
+    this.browserStorageSettings.enableStyling = this.enableStylingSwitch.checked;
     
-    const websiteSettings = {};
-    this.websitesList
+    const featureSettings = {};
+    this.currentSiteFeatures
       .querySelectorAll("input[type=checkbox]")
       .forEach((checkbox) => {
-        websiteSettings[checkbox.name] = checkbox.checked;
+        const [site, feature] = checkbox.name.split('|');
+        if (!featureSettings[site]) {
+          featureSettings[site] = {};
+        }
+        featureSettings[site][feature] = checkbox.checked;
       });
     
-    this.browserStorageSettings.websiteSettings = websiteSettings;
+    this.browserStorageSettings.featureSettings = featureSettings;
     
     browser.storage.local.set({
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
@@ -83,15 +89,51 @@ new(class ExtensionPopup {
     console.info("Settings saved", this.browserStorageSettings);
   }
   
+  async loadCurrentSiteFeatures() {
+    try {
+      const stylesData = await browser.storage.local.get("styles");
+      const styles = stylesData.styles?.website || {};
+      
+      this.currentSiteFeatures.innerHTML = "";
+      
+      const currentSiteKey = Object.keys(styles).find(site => 
+        this.isCurrentSite(site.replace(".css", ""))
+      );
+      
+      if (!currentSiteKey) {
+        this.currentSiteFeatures.innerHTML = "<div class='feature-toggle'>No styles available for this site.</div>";
+        return;
+      }
+      
+      const features = styles[currentSiteKey];
+      for (const [feature, css] of Object.entries(features)) {
+        const isChecked = this.browserStorageSettings.featureSettings?.[currentSiteKey]?.[feature] ?? true;
+        
+        const featureToggle = document.createElement("div");
+        featureToggle.className = "feature-toggle";
+        featureToggle.innerHTML = `
+          <span class="feature-name">${feature}</span>
+          <label class="toggle-switch">
+            <input type="checkbox" name="${currentSiteKey}|${feature}" ${isChecked ? "checked" : ""}>
+            <span class="slider round"></span>
+          </label>
+        `;
+        
+        this.currentSiteFeatures.appendChild(featureToggle);
+      }
+    } catch (error) {
+      console.error("Error loading current site features:", error);
+      this.currentSiteFeatures.innerHTML = "<div class='feature-toggle'>Error loading features.</div>";
+    }
+  }
+  
   async loadWebsitesList() {
     try {
-      // Get the styles from storage that were fetched using refetchCSS
       const stylesData = await browser.storage.local.get("styles");
-      const styles = stylesData.styles || {};
+      const styles = stylesData.styles?.website || {};
       
       this.websitesList.innerHTML = "";
       
-      // Use the keys from styles object
       const websites = Object.keys(styles);
       
       if (websites.length === 0) {
@@ -101,49 +143,12 @@ new(class ExtensionPopup {
         return;
       }
       
-      // Create array to hold all website items
-      const websiteItems = [];
-      let currentSiteItem = null;
-      
       for (const site of websites) {
-        // Remove the .css extension if present
         const displayName = site.replace(/\.css$/, "");
-        
-        const isChecked =
-          this.browserStorageSettings.websiteSettings?.[displayName] ?? true;
-        
         const listItem = document.createElement("li");
-        
-        // Check if this site matches the current site
-        const isCurrent = this.isCurrentSite(displayName);
-        if (isCurrent) {
-          listItem.classList.add("current-site");
-          currentSiteItem = listItem; // Store the current site item separately
-        }
-        
-        listItem.innerHTML = `
-          <label>
-            <input type="checkbox" name="${displayName}" ${isChecked ? "checked" : ""}>
-            ${displayName}
-            ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
-          </label>
-        `;
-        
-        // Add to array if not current site
-        if (!isCurrent) {
-          websiteItems.push(listItem);
-        }
+        listItem.textContent = displayName;
+        this.websitesList.appendChild(listItem);
       }
-      
-      // Add current site at the top if it exists
-      if (currentSiteItem) {
-        this.websitesList.appendChild(currentSiteItem);
-      }
-      
-      // Add all other sites
-      websiteItems.forEach(item => {
-        this.websitesList.appendChild(item);
-      });
     } catch (error) {
       console.error("Error loading websites list:", error);
       this.websitesList.innerHTML = "<li>Error loading websites list. Please try refetching styles.</li>";
@@ -152,21 +157,19 @@ new(class ExtensionPopup {
   
   isCurrentSite(siteName) {
     if (!this.currentSiteHostname) return false;
-    
-    // Direct match
     if (this.currentSiteHostname === siteName) return true;
-
     if (this.currentSiteHostname.startsWith("www.")) {
       const nonWww = this.currentSiteHostname.replace("www.", "");
       if (nonWww === siteName) return true;
     }
+    return false;
   }
   
   async refetchCSS() {
     this.refetchCSSButton.textContent = "Fetching...";
     try {
       const response = await fetch(
-        "https://sameerasw.github.io/my-internet/styles.json",
+        "https://github.com/sameerasw/my-internet/raw/refs/heads/experimental/styles.json",
         {
           headers: {
             "Cache-Control": "no-cache",
@@ -177,17 +180,15 @@ new(class ExtensionPopup {
       const styles = await response.json();
       await browser.storage.local.set({ styles });
       
-      // Reload the websites list after fetching new styles
+      this.loadCurrentSiteFeatures();
       this.loadWebsitesList();
-      
-      // Update styling on the active tab
       this.updateActiveTabStyling();
       
       this.refetchCSSButton.textContent = "Done!";
       setTimeout(() => {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
-      console.info("All styles refetched and updated from GitHub.");
+      console.info("All styles refetched and updated from GitHub." + styles);
     } catch (error) {
       this.refetchCSSButton.textContent = "Error!";
       setTimeout(() => {
@@ -198,14 +199,11 @@ new(class ExtensionPopup {
   }
   
   setupContentScriptInjection() {
-    // Listen for tab updates to apply CSS when needed
     browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       if (changeInfo.status === 'complete') {
         this.applyCSSToTab(tab);
       }
     });
-    
-    // Also handle tabs that are already open when the extension starts
     this.updateAllTabs();
   }
   
@@ -227,46 +225,42 @@ new(class ExtensionPopup {
     const url = new URL(tab.url);
     const hostname = url.hostname;
     
-    // First remove any existing CSS
     try {
       await browser.tabs.removeCSS(tab.id, { 
         code: "/* Placeholder for removing CSS */" 
       });
-    } catch (error) {
-      // Ignore errors as the tab might not have any CSS injected
-    }
+    } catch (error) {}
     
-    // Check if we should apply CSS to this site
-    if (!this.shouldApplyCSS(hostname)) {
-      return;
-    }
+    if (!this.shouldApplyCSS(hostname)) return;
     
     try {
-      // Get the styles from storage
       const stylesData = await browser.storage.local.get("styles");
-      const styles = stylesData.styles || {};
+      const styles = stylesData.styles?.website || {};
       
-      // Find matching CSS for this hostname
-      let cssToApply = null;
-      
-      // Check for direct match (with .css extension)
-      if (styles[hostname + '.css']) {
-        cssToApply = styles[hostname + '.css'];
-      } 
-      // Check for domain matches (e.g. youtube.com matches m.youtube.com)
-      else {
-        for (const site of Object.keys(styles)) {
-          const siteName = site.replace(/\.css$/, "");
-          if (hostname.includes(siteName)) {
-            cssToApply = styles[site];
-            break;
-          }
+      let siteKey = null;
+      for (const site of Object.keys(styles)) {
+        const siteName = site.replace(/\.css$/, "");
+        if (hostname.includes(siteName)) {
+          siteKey = site;
+          break;
         }
       }
       
-      if (cssToApply) {
-        await browser.tabs.insertCSS(tab.id, { code: cssToApply });
-        console.info(`Applied CSS to ${hostname}`);
+      if (siteKey && styles[siteKey]) {
+        const features = styles[siteKey];
+        const featureSettings = this.browserStorageSettings.featureSettings?.[siteKey] || {};
+        
+        let combinedCSS = "";
+        for (const [feature, css] of Object.entries(features)) {
+          if (featureSettings[feature] !== false) {
+            combinedCSS += css + "\n";
+          }
+        }
+        
+        if (combinedCSS) {
+          await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+          console.info(`Applied CSS to ${hostname}`);
+        }
       }
     } catch (error) {
       console.error(`Error applying CSS to ${hostname}:`, error);
@@ -274,27 +268,6 @@ new(class ExtensionPopup {
   }
   
   shouldApplyCSS(hostname) {
-    // Global enable/disable switch
-    if (!this.browserStorageSettings.enableStyling) {
-      return false;
-    }
-    
-    // Check website-specific settings
-    const websiteSettings = this.browserStorageSettings.websiteSettings || {};
-    
-    // First check for exact hostname match
-    if (websiteSettings[hostname] !== undefined) {
-      return websiteSettings[hostname];
-    }
-    
-    // Then check for domain matches (e.g. youtube.com matches m.youtube.com)
-    for (const site in websiteSettings) {
-      if (hostname.includes(site)) {
-        return websiteSettings[site];
-      }
-    }
-    
-    // Default to enabled if no specific setting found
-    return true;
+    return this.browserStorageSettings.enableStyling !== false;
   }
 })();

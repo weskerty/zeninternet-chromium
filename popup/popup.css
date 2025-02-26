@@ -403,3 +403,7 @@ input:checked + .slider:before {
   margin-left: auto;
   margin-right: 4px;
 }
+
+#addon-version{
+  font-size: 0.75em;
+}

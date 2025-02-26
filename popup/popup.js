@@ -23,6 +23,7 @@ new (class ExtensionPopup {
     });
 
     this.setupContentScriptInjection();
+    this.displayAddonVersion();
   }
 
   async getCurrentTabInfo() {
@@ -284,5 +285,13 @@ new (class ExtensionPopup {
 
   shouldApplyCSS(hostname) {
     return this.browserStorageSettings.enableStyling !== false;
+  }
+
+  async displayAddonVersion() {
+    const manifest = browser.runtime.getManifest();
+    const version = manifest.version;
+    document.getElementById(
+      "addon-version"
+    ).textContent = `Version: ${version}`;
   }
 })();

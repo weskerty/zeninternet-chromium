@@ -43,7 +43,7 @@ new(class ExtensionPopup {
       this.saveSettings();
       this.updateActiveTabStyling();
     });
-    
+
     this.currentSiteFeatures.addEventListener("change", (event) => {
       if (event.target.type === 'checkbox') {
         this.saveSettings();
@@ -169,7 +169,7 @@ new(class ExtensionPopup {
     this.refetchCSSButton.textContent = "Fetching...";
     try {
       const response = await fetch(
-        "https://github.com/sameerasw/my-internet/raw/refs/heads/experimental/styles.json",
+        "https://sameerasw.github.io/my-internet/styles.json",
         {
           headers: {
             "Cache-Control": "no-cache",

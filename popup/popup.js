@@ -254,7 +254,7 @@ new (class ExtensionPopup {
       let siteKey = null;
       for (const site of Object.keys(styles)) {
         const siteName = site.replace(/\.css$/, "");
-        if (hostname.includes(siteName)) {
+        if (hostname === siteName || hostname === `www.${siteName}`) {
           siteKey = site;
           break;
         }

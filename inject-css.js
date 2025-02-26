@@ -2,14 +2,18 @@ browser.storage.local.get("transparentZenSettings").then((settings) => {
   if (settings.transparentZenSettings?.enableStyling) {
     browser.storage.local.get("styles").then((data) => {
       const currentUrl = window.location.hostname;
-      const cssFileName = Object.keys(data.styles?.website || {}).find((key) =>
-        currentUrl.includes(key.replace(".css", ""))
+      const cssFileName = Object.keys(data.styles?.website || {}).find(
+        (key) => {
+          const siteName = key.replace(".css", "");
+          return currentUrl === siteName || currentUrl === `www.${siteName}`;
+        }
       );
 
       if (cssFileName) {
         const features = data.styles.website[cssFileName];
-        const featureSettings = settings.transparentZenSettings.featureSettings?.[cssFileName] || {};
-        
+        const featureSettings =
+          settings.transparentZenSettings.featureSettings?.[cssFileName] || {};
+
         let combinedCSS = "";
         for (const [feature, css] of Object.entries(features)) {
           if (featureSettings[feature] !== false) {

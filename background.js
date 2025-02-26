@@ -6,7 +6,10 @@ function applyCSSToTab(tab) {
     if (settings.transparentZenSettings?.enableStyling) {
       browser.storage.local.get("styles").then((data) => {
         const cssFileName = Object.keys(data.styles?.website || {}).find(
-          (key) => hostname.includes(key.replace(".css", ""))
+          (key) => {
+            const siteName = key.replace(".css", "");
+            return hostname === siteName || hostname === `www.${siteName}`;
+          }
         );
 
         if (cssFileName) {

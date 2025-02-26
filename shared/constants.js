@@ -1,1 +1,1 @@
-export const BROWSER_STORAGE_KEY = "zneInternetSettings";
+export const BROWSER_STORAGE_KEY = "transparentZenSettings";

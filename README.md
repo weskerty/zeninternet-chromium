@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/03ce72fc-e5b0-48fc-b0ae-40c6671b187d
 Checkout the [repository](https://github.com/sameerasw/my-internet) for website css styling which are used in this addon.
 
 #### To Do
-- [ ] Feature specific toggles for each website
+- [x] Feature specific toggles for each website
 - [ ] Custom css by user
 
 ## Prerequisites

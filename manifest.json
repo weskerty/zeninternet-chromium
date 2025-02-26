@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zen Internet",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Inject custom css from my repository in real time",
   "browser_specific_settings": {
     "gecko": {
@@ -12,10 +12,20 @@
     "48": "assets/images/logo_48.png",
     "96": "assets/images/logo_96.png"
   },
-  "permissions": ["activeTab", "storage", "tabs", "<all_urls>"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "<all_urls>",
+    "webNavigation"
+  ],
   "browser_action": {
     "default_popup": "popup/popup.html",
     "default_title": "Zen Internet"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
   },
   "content_scripts": [
     {

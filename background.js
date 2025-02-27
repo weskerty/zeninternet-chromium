@@ -98,7 +98,7 @@ browser.storage.local.get("transparentZenSettings").then((settings) => {
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   // if (logging) console.log("onUpdated called with", tabId, changeInfo, tab);
   // Apply CSS when a tab is updated
-  if (changeInfo.status === "complete") {
+  if (changeInfo.status === "complete" || changeInfo.status === "loading") {
     applyCSSToTab(tab);
   }
 });

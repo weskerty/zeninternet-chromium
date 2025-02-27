@@ -26,10 +26,6 @@ new (class ExtensionPopup {
 
     // Bind event listeners
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
-    document.getElementById("toggle-websites").addEventListener("click", () => {
-      this.websitesList.classList.toggle("collapsed");
-    });
-
     this.autoUpdateSwitch.addEventListener(
       "change",
       this.saveSettings.bind(this)
@@ -38,7 +34,6 @@ new (class ExtensionPopup {
     // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
     this.displayLastFetchedTime();
-    this.setupContentScriptInjection();
     this.displayAddonVersion();
   }
 
@@ -86,7 +81,6 @@ new (class ExtensionPopup {
       this.autoUpdateSwitch.checked = this.browserStorageSettings.autoUpdate;
     }
     this.loadCurrentSiteFeatures();
-    this.loadWebsitesList();
   }
 
   async loadSettings() {
@@ -120,7 +114,6 @@ new (class ExtensionPopup {
     browser.storage.local.set({
       [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
     });
-
     console.info("Settings saved", this.browserStorageSettings);
   }
 
@@ -181,38 +174,6 @@ new (class ExtensionPopup {
     }
   }
 
-  async loadWebsitesList() {
-    if (logging) console.log("loadWebsitesList called");
-    // Load the list of websites with available styles
-    try {
-      const stylesData = await browser.storage.local.get("styles");
-      const styles = stylesData.styles?.website || {};
-
-      this.websitesList.innerHTML = "";
-
-      const websites = Object.keys(styles);
-
-      if (websites.length === 0) {
-        const listItem = document.createElement("li");
-        listItem.textContent =
-          "No styles available. Click 'Refetch latest styles' to update.";
-        this.websitesList.appendChild(listItem);
-        return;
-      }
-
-      for (const site of websites) {
-        const displayName = site.replace(/\.css$/, "");
-        const listItem = document.createElement("li");
-        listItem.textContent = displayName;
-        this.websitesList.appendChild(listItem);
-      }
-    } catch (error) {
-      console.error("Error loading websites list:", error);
-      this.websitesList.innerHTML =
-        "<li>Error loading websites list. Please try refetching styles.</li>";
-    }
-  }
-
   isCurrentSite(siteName) {
     if (logging) console.log("isCurrentSite called with", siteName);
     // Check if the given site name matches the current site hostname
@@ -256,26 +217,6 @@ new (class ExtensionPopup {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
       console.error("Error refetching styles:", error);
-    }
-  }
-
-  setupContentScriptInjection() {
-    if (logging) console.log("setupContentScriptInjection called");
-    // Setup content script injection for tab updates
-    browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-      if (changeInfo.status === "complete") {
-        this.applyCSSToTab(tab);
-      }
-    });
-    this.updateAllTabs();
-  }
-
-  async updateAllTabs() {
-    if (logging) console.log("updateAllTabs called");
-    // Update CSS for all open tabs
-    const tabs = await browser.tabs.query({});
-    for (const tab of tabs) {
-      this.applyCSSToTab(tab);
     }
   }
 

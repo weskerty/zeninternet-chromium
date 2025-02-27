@@ -99,16 +99,16 @@ browser.storage.local.get("transparentZenSettings").then((settings) => {
 });
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (logging) console.log("onUpdated called with", tabId, changeInfo, tab);
+  // if (logging) console.log("onUpdated called with", tabId, changeInfo, tab);
   // Apply CSS when a tab is updated
   if (changeInfo.status === "complete") {
     applyCSSToTab(tab);
   }
 });
 
-browser.tabs.onActivated.addListener(async (activeInfo) => {
-  if (logging) console.log("onActivated called with", activeInfo);
-  // Apply CSS when a tab is activated
-  const tab = await browser.tabs.get(activeInfo.tabId);
-  applyCSSToTab(tab);
-});
+// browser.tabs.onActivated.addListener(async (activeInfo) => {
+//   if (logging) console.log("onActivated called with", activeInfo);
+//   // Apply CSS when a tab is activated
+//   const tab = await browser.tabs.get(activeInfo.tabId);
+//   applyCSSToTab(tab);
+// });

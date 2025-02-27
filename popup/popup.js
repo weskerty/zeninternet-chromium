@@ -133,6 +133,9 @@ new (class ExtensionPopup {
 
       const features = styles[currentSiteKey];
       for (const [feature, css] of Object.entries(features)) {
+        const displayFeatureName = feature.includes("-")
+          ? feature.split("-")[1]
+          : feature;
         const isChecked =
           this.browserStorageSettings.featureSettings?.[currentSiteKey]?.[
             feature
@@ -141,7 +144,7 @@ new (class ExtensionPopup {
         const featureToggle = document.createElement("div");
         featureToggle.className = "feature-toggle";
         featureToggle.innerHTML = `
-          <span class="feature-name">${feature}</span>
+          <span class="feature-name">${displayFeatureName}</span>
           <label class="toggle-switch">
             <input type="checkbox" name="${currentSiteKey}|${feature}" ${
           isChecked ? "checked" : ""

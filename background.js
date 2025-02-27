@@ -1,4 +1,7 @@
+let logging = true;
+
 function applyCSSToTab(tab) {
+  if (logging) console.log("applyCSSToTab called with", tab);
   // Apply CSS to the specified tab
   const url = new URL(tab.url);
   const hostname = url.hostname;
@@ -45,17 +48,20 @@ function applyCSSToTab(tab) {
 let autoUpdateInterval;
 
 function startAutoUpdate() {
+  if (logging) console.log("startAutoUpdate called");
   // Start the auto-update interval
   if (autoUpdateInterval) clearInterval(autoUpdateInterval);
   autoUpdateInterval = setInterval(refetchCSS, 2 * 60 * 60 * 1000);
 }
 
 function stopAutoUpdate() {
+  if (logging) console.log("stopAutoUpdate called");
   // Stop the auto-update interval
   if (autoUpdateInterval) clearInterval(autoUpdateInterval);
 }
 
 async function refetchCSS() {
+  if (logging) console.log("refetchCSS called");
   // Refetch CSS styles from the remote server
   try {
     const response = await fetch(
@@ -75,6 +81,7 @@ async function refetchCSS() {
 }
 
 browser.runtime.onMessage.addListener((message) => {
+  if (logging) console.log("onMessage received", message);
   // Handle messages for enabling/disabling auto-update
   if (message.action === "enableAutoUpdate") {
     startAutoUpdate();
@@ -85,12 +92,14 @@ browser.runtime.onMessage.addListener((message) => {
 
 // Initialize auto-update based on stored settings
 browser.storage.local.get("transparentZenSettings").then((settings) => {
+  if (logging) console.log("Initial settings loaded", settings);
   if (settings.transparentZenSettings?.autoUpdate) {
     startAutoUpdate();
   }
 });
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (logging) console.log("onUpdated called with", tabId, changeInfo, tab);
   // Apply CSS when a tab is updated
   if (changeInfo.status === "complete") {
     applyCSSToTab(tab);
@@ -98,6 +107,7 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 browser.tabs.onActivated.addListener(async (activeInfo) => {
+  if (logging) console.log("onActivated called with", activeInfo);
   // Apply CSS when a tab is activated
   const tab = await browser.tabs.get(activeInfo.tabId);
   applyCSSToTab(tab);

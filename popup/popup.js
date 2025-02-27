@@ -2,7 +2,8 @@ let logging = true;
 
 new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";
-  browserStorageSettings = {};
+  globalSettings = {};
+  siteSettings = {};
   enableStylingSwitch = document.getElementById("enable-styling");
   refetchCSSButton = document.getElementById("refetch-css");
   websitesList = document.getElementById("websites-list");
@@ -14,14 +15,11 @@ new (class ExtensionPopup {
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
     // Load settings and initialize the popup
-    this.loadSettings().then((settings) => {
-      if (settings) {
-        this.browserStorageSettings = settings;
-        this.getCurrentTabInfo().then(() => {
-          this.restoreSettings();
-          this.bindEvents();
-        });
-      }
+    this.loadSettings().then(() => {
+      this.getCurrentTabInfo().then(() => {
+        this.restoreSettings();
+        this.bindEvents();
+      });
     });
 
     // Bind event listeners
@@ -72,54 +70,73 @@ new (class ExtensionPopup {
 
   restoreSettings() {
     if (logging) console.log("restoreSettings called");
-    // Restore settings from storage
-    if (this.browserStorageSettings.enableStyling !== undefined) {
-      this.enableStylingSwitch.checked =
-        this.browserStorageSettings.enableStyling;
-    }
-    if (this.browserStorageSettings.autoUpdate !== undefined) {
-      this.autoUpdateSwitch.checked = this.browserStorageSettings.autoUpdate;
-    }
+    // Restore global settings
+    this.enableStylingSwitch.checked = this.globalSettings.enableStyling ?? true;
+    this.autoUpdateSwitch.checked = this.globalSettings.autoUpdate ?? false;
     this.loadCurrentSiteFeatures();
   }
 
   async loadSettings() {
     if (logging) console.log("loadSettings called");
-    // Load settings from browser storage
-    const settings = await browser.storage.local.get(this.BROWSER_STORAGE_KEY);
-    console.info("Settings loaded", settings?.[this.BROWSER_STORAGE_KEY]);
-    return settings?.[this.BROWSER_STORAGE_KEY] || {};
+    // Load global settings
+    const globalData = await browser.storage.local.get(this.BROWSER_STORAGE_KEY);
+    this.globalSettings = globalData[this.BROWSER_STORAGE_KEY] || {
+      enableStyling: true,
+      autoUpdate: false,
+      lastFetchedTime: null
+    };
+
+    // Load site-specific settings if on a specific site
+    if (this.currentSiteHostname) {
+      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+      const siteData = await browser.storage.local.get(siteKey);
+      this.siteSettings = siteData[siteKey] || {};
+      await this.loadCurrentSiteFeatures();
+    }
   }
 
   saveSettings() {
     if (logging) console.log("saveSettings called");
-    // Save settings to browser storage
-    this.browserStorageSettings.enableStyling =
-      this.enableStylingSwitch.checked;
-    this.browserStorageSettings.autoUpdate = this.autoUpdateSwitch.checked;
-
-    const featureSettings = {};
-    this.currentSiteFeatures
-      .querySelectorAll("input[type=checkbox]")
-      .forEach((checkbox) => {
-        const [site, feature] = checkbox.name.split("|");
-        if (!featureSettings[site]) {
-          featureSettings[site] = {};
-        }
-        featureSettings[site][feature] = checkbox.checked;
-      });
-
-    this.browserStorageSettings.featureSettings = featureSettings;
+    // Save global settings
+    this.globalSettings.enableStyling = this.enableStylingSwitch.checked;
+    this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
 
     browser.storage.local.set({
-      [this.BROWSER_STORAGE_KEY]: this.browserStorageSettings,
+      [this.BROWSER_STORAGE_KEY]: this.globalSettings
+    }).then(() => {
+      if (logging) console.log("Global settings saved");
+      this.updateActiveTabStyling();
     });
-    console.info("Settings saved", this.browserStorageSettings);
+
+    // Save site-specific settings
+    if (this.currentSiteHostname) {
+      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+      const featureSettings = {};
+      
+      this.currentSiteFeatures
+        .querySelectorAll("input[type=checkbox]")
+        .forEach((checkbox) => {
+          const [, feature] = checkbox.name.split("|");
+          featureSettings[feature] = checkbox.checked;
+        });
+
+      this.siteSettings = featureSettings;
+      browser.storage.local.set({
+        [siteKey]: featureSettings
+      }).then(() => {
+        if (logging) console.log("Site settings saved");
+        this.updateActiveTabStyling();
+      });
+    }
+
+    console.info("Settings saved", {
+      global: this.globalSettings,
+      site: this.siteSettings
+    });
   }
 
   async loadCurrentSiteFeatures() {
     if (logging) console.log("loadCurrentSiteFeatures called");
-    // Load features for the current site
     try {
       const stylesData = await browser.storage.local.get("styles");
       const styles = stylesData.styles?.website || {};
@@ -143,24 +160,25 @@ new (class ExtensionPopup {
         return;
       }
 
+      // Load site-specific settings before creating toggles
+      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+      const siteData = await browser.storage.local.get(siteKey);
+      this.siteSettings = siteData[siteKey] || {};
+
       const features = styles[currentSiteKey];
       for (const [feature, css] of Object.entries(features)) {
         const displayFeatureName = feature.includes("-")
           ? feature.split("-")[1]
           : feature;
-        const isChecked =
-          this.browserStorageSettings.featureSettings?.[currentSiteKey]?.[
-            feature
-          ] ?? true;
+
+        const isChecked = this.siteSettings[feature] ?? true;
 
         const featureToggle = document.createElement("div");
         featureToggle.className = "feature-toggle";
         featureToggle.innerHTML = `
           <span class="feature-name">${displayFeatureName}</span>
           <label class="toggle-switch">
-            <input type="checkbox" name="${currentSiteKey}|${feature}" ${
-          isChecked ? "checked" : ""
-        }>
+            <input type="checkbox" name="${currentSiteKey}|${feature}" ${isChecked ? "checked" : ""}>
             <span class="slider round"></span>
           </label>
         `;
@@ -176,7 +194,6 @@ new (class ExtensionPopup {
 
   isCurrentSite(siteName) {
     if (logging) console.log("isCurrentSite called with", siteName);
-    // Check if the given site name matches the current site hostname
     if (!this.currentSiteHostname) return false;
     if (this.currentSiteHostname === siteName) return true;
     if (this.currentSiteHostname === `www.${siteName}`) return true;
@@ -185,7 +202,6 @@ new (class ExtensionPopup {
 
   async refetchCSS() {
     if (logging) console.log("refetchCSS called");
-    // Refetch CSS styles from the remote server
     this.refetchCSSButton.textContent = "Fetching...";
     try {
       const response = await fetch(
@@ -202,7 +218,7 @@ new (class ExtensionPopup {
       await browser.storage.local.set({ lastFetchedTime: Date.now() });
 
       this.loadCurrentSiteFeatures();
-      this.loadWebsitesList();
+      // this.loadWebsitesList();
       this.updateActiveTabStyling();
 
       this.refetchCSSButton.textContent = "Done!";
@@ -222,7 +238,6 @@ new (class ExtensionPopup {
 
   async updateActiveTabStyling() {
     if (logging) console.log("updateActiveTabStyling called");
-    // Update CSS for the active tab
     const tabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
@@ -234,7 +249,6 @@ new (class ExtensionPopup {
 
   async applyCSSToTab(tab) {
     if (logging) console.log("applyCSSToTab called with", tab);
-    // Apply CSS to the specified tab
     const url = new URL(tab.url);
     const hostname = url.hostname;
 
@@ -261,8 +275,9 @@ new (class ExtensionPopup {
 
       if (siteKey && styles[siteKey]) {
         const features = styles[siteKey];
-        const featureSettings =
-          this.browserStorageSettings.featureSettings?.[siteKey] || {};
+        const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
+        const siteData = await browser.storage.local.get(siteStorageKey);
+        const featureSettings = siteData[siteStorageKey] || {};
 
         let combinedCSS = "";
         for (const [feature, css] of Object.entries(features)) {
@@ -283,13 +298,11 @@ new (class ExtensionPopup {
 
   shouldApplyCSS(hostname) {
     if (logging) console.log("shouldApplyCSS called with", hostname);
-    // Check if CSS should be applied to the given hostname
-    return this.browserStorageSettings.enableStyling !== false;
+    return this.globalSettings.enableStyling !== false;
   }
 
   async displayAddonVersion() {
     if (logging) console.log("displayAddonVersion called");
-    // Display the add-on version in the popup
     const manifest = browser.runtime.getManifest();
     const version = manifest.version;
     document.getElementById(
@@ -299,7 +312,6 @@ new (class ExtensionPopup {
 
   setupAutoUpdate() {
     if (logging) console.log("setupAutoUpdate called");
-    // Setup auto-update based on the switch state
     if (this.autoUpdateSwitch.checked) {
       browser.runtime.sendMessage({ action: "enableAutoUpdate" });
     } else {
@@ -309,7 +321,6 @@ new (class ExtensionPopup {
 
   displayLastFetchedTime() {
     if (logging) console.log("displayLastFetchedTime called");
-    // Display the last fetched time for styles
     browser.storage.local.get("lastFetchedTime").then((result) => {
       if (result.lastFetchedTime) {
         this.lastFetchedTime.textContent = `Last fetched: ${new Date(

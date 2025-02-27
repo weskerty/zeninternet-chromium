@@ -1,48 +1,45 @@
 let logging = true;
 
-function applyCSSToTab(tab) {
+async function applyCSSToTab(tab) {
   if (logging) console.log("applyCSSToTab called with", tab);
   // Apply CSS to the specified tab
   const url = new URL(tab.url);
   const hostname = url.hostname;
 
-  browser.storage.local.get("transparentZenSettings").then((settings) => {
-    if (settings.transparentZenSettings?.enableStyling) {
-      browser.storage.local.get("styles").then((data) => {
-        const cssFileName = Object.keys(data.styles?.website || {}).find(
-          (key) => {
-            const siteName = key.replace(".css", "");
-            return hostname === siteName || hostname === `www.${siteName}`;
-          }
-        );
+  try {
+    const settings = await browser.storage.local.get("transparentZenSettings");
+    const globalSettings = settings.transparentZenSettings || {};
+    if (globalSettings.enableStyling === false) return;
 
-        if (cssFileName) {
-          const features = data.styles.website[cssFileName];
-          const featureSettings =
-            settings.transparentZenSettings.featureSettings?.[cssFileName] ||
-            {};
+    const data = await browser.storage.local.get("styles");
+    const cssFileName = Object.keys(data.styles?.website || {}).find(
+      (key) => {
+        const siteName = key.replace(".css", "");
+        return hostname === siteName || hostname === `www.${siteName}`;
+      }
+    );
 
-          let combinedCSS = "";
-          for (const [feature, css] of Object.entries(features)) {
-            if (featureSettings[feature] !== false) {
-              combinedCSS += css + "\n";
-            }
-          }
+    if (!cssFileName) return;
 
-          if (combinedCSS) {
-            browser.tabs
-              .insertCSS(tab.id, { code: combinedCSS })
-              .then(() => {
-                console.log(`Injected custom CSS for ${hostname}`);
-              })
-              .catch((error) => {
-                console.error(`Error applying CSS to ${hostname}:`, error);
-              });
-          }
-        }
-      });
+    const features = data.styles.website[cssFileName];
+    const siteKey = `transparentZenSettings.${hostname}`;
+    const siteData = await browser.storage.local.get(siteKey);
+    const featureSettings = siteData[siteKey] || {};
+
+    let combinedCSS = "";
+    for (const [feature, css] of Object.entries(features)) {
+      if (featureSettings[feature] !== false) {
+        combinedCSS += css + "\n";
+      }
     }
-  });
+
+    if (combinedCSS) {
+      await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+      console.log(`Injected custom CSS for ${hostname}`);
+    }
+  } catch (error) {
+    console.error(`Error applying CSS to ${hostname}:`, error);
+  }
 }
 
 let autoUpdateInterval;

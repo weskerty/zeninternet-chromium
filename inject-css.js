@@ -1,4 +1,4 @@
-let logging = true;
+let logging = false;
 
 if (logging) console.log("inject-css.js script loaded");
 

@@ -1,4 +1,4 @@
-let logging = true;
+let logging = false;
 
 async function applyCSSToTab(tab) {
   if (logging) console.log("applyCSSToTab called with", tab);
@@ -103,9 +103,9 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-// browser.tabs.onActivated.addListener(async (activeInfo) => {
-//   if (logging) console.log("onActivated called with", activeInfo);
-//   // Apply CSS when a tab is activated
-//   const tab = await browser.tabs.get(activeInfo.tabId);
-//   applyCSSToTab(tab);
-// });
+browser.tabs.onActivated.addListener(async (activeInfo) => {
+  if (logging) console.log("onActivated called with", activeInfo);
+  // Apply CSS when a tab is activated
+  const tab = await browser.tabs.get(activeInfo.tabId);
+  applyCSSToTab(tab);
+});

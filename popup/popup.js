@@ -1,4 +1,4 @@
-let logging = true;
+let logging = false;
 
 new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";

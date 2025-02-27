@@ -10,6 +10,7 @@ new (class ExtensionPopup {
   lastFetchedTime = document.getElementById("last-fetched-time");
 
   constructor() {
+    // Load settings and initialize the popup
     this.loadSettings().then((settings) => {
       if (settings) {
         this.browserStorageSettings = settings;
@@ -19,6 +20,8 @@ new (class ExtensionPopup {
         });
       }
     });
+
+    // Bind event listeners
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
     document.getElementById("toggle-websites").addEventListener("click", () => {
       this.websitesList.classList.toggle("collapsed");
@@ -28,6 +31,8 @@ new (class ExtensionPopup {
       "change",
       this.saveSettings.bind(this)
     );
+
+    // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
     this.displayLastFetchedTime();
     this.setupContentScriptInjection();
@@ -51,6 +56,7 @@ new (class ExtensionPopup {
   }
 
   bindEvents() {
+    // Bind event listeners for settings changes
     this.enableStylingSwitch.addEventListener("change", () => {
       this.saveSettings();
       this.updateActiveTabStyling();
@@ -65,6 +71,7 @@ new (class ExtensionPopup {
   }
 
   restoreSettings() {
+    // Restore settings from storage
     if (this.browserStorageSettings.enableStyling !== undefined) {
       this.enableStylingSwitch.checked =
         this.browserStorageSettings.enableStyling;
@@ -77,12 +84,14 @@ new (class ExtensionPopup {
   }
 
   async loadSettings() {
+    // Load settings from browser storage
     const settings = await browser.storage.local.get(this.BROWSER_STORAGE_KEY);
     console.info("Settings loaded", settings?.[this.BROWSER_STORAGE_KEY]);
     return settings?.[this.BROWSER_STORAGE_KEY] || {};
   }
 
   saveSettings() {
+    // Save settings to browser storage
     this.browserStorageSettings.enableStyling =
       this.enableStylingSwitch.checked;
     this.browserStorageSettings.autoUpdate = this.autoUpdateSwitch.checked;
@@ -108,6 +117,7 @@ new (class ExtensionPopup {
   }
 
   async loadCurrentSiteFeatures() {
+    // Load features for the current site
     try {
       const stylesData = await browser.storage.local.get("styles");
       const styles = stylesData.styles?.website || {};
@@ -163,6 +173,7 @@ new (class ExtensionPopup {
   }
 
   async loadWebsitesList() {
+    // Load the list of websites with available styles
     try {
       const stylesData = await browser.storage.local.get("styles");
       const styles = stylesData.styles?.website || {};
@@ -193,6 +204,7 @@ new (class ExtensionPopup {
   }
 
   isCurrentSite(siteName) {
+    // Check if the given site name matches the current site hostname
     if (!this.currentSiteHostname) return false;
     if (this.currentSiteHostname === siteName) return true;
     if (this.currentSiteHostname === `www.${siteName}`) return true;
@@ -200,6 +212,7 @@ new (class ExtensionPopup {
   }
 
   async refetchCSS() {
+    // Refetch CSS styles from the remote server
     this.refetchCSSButton.textContent = "Fetching...";
     try {
       const response = await fetch(
@@ -235,6 +248,7 @@ new (class ExtensionPopup {
   }
 
   setupContentScriptInjection() {
+    // Setup content script injection for tab updates
     browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       if (changeInfo.status === "complete") {
         this.applyCSSToTab(tab);
@@ -244,6 +258,7 @@ new (class ExtensionPopup {
   }
 
   async updateAllTabs() {
+    // Update CSS for all open tabs
     const tabs = await browser.tabs.query({});
     for (const tab of tabs) {
       this.applyCSSToTab(tab);
@@ -251,6 +266,7 @@ new (class ExtensionPopup {
   }
 
   async updateActiveTabStyling() {
+    // Update CSS for the active tab
     const tabs = await browser.tabs.query({
       active: true,
       currentWindow: true,
@@ -261,6 +277,7 @@ new (class ExtensionPopup {
   }
 
   async applyCSSToTab(tab) {
+    // Apply CSS to the specified tab
     const url = new URL(tab.url);
     const hostname = url.hostname;
 
@@ -308,10 +325,12 @@ new (class ExtensionPopup {
   }
 
   shouldApplyCSS(hostname) {
+    // Check if CSS should be applied to the given hostname
     return this.browserStorageSettings.enableStyling !== false;
   }
 
   async displayAddonVersion() {
+    // Display the add-on version in the popup
     const manifest = browser.runtime.getManifest();
     const version = manifest.version;
     document.getElementById(
@@ -320,6 +339,7 @@ new (class ExtensionPopup {
   }
 
   setupAutoUpdate() {
+    // Setup auto-update based on the switch state
     if (this.autoUpdateSwitch.checked) {
       browser.runtime.sendMessage({ action: "enableAutoUpdate" });
     } else {
@@ -328,6 +348,7 @@ new (class ExtensionPopup {
   }
 
   displayLastFetchedTime() {
+    // Display the last fetched time for styles
     browser.storage.local.get("lastFetchedTime").then((result) => {
       if (result.lastFetchedTime) {
         this.lastFetchedTime.textContent = `Last fetched: ${new Date(

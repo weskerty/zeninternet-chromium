@@ -1,4 +1,5 @@
 function applyCSSToTab(tab) {
+  // Apply CSS to the specified tab
   const url = new URL(tab.url);
   const hostname = url.hostname;
 
@@ -44,15 +45,18 @@ function applyCSSToTab(tab) {
 let autoUpdateInterval;
 
 function startAutoUpdate() {
+  // Start the auto-update interval
   if (autoUpdateInterval) clearInterval(autoUpdateInterval);
   autoUpdateInterval = setInterval(refetchCSS, 2 * 60 * 60 * 1000);
 }
 
 function stopAutoUpdate() {
+  // Stop the auto-update interval
   if (autoUpdateInterval) clearInterval(autoUpdateInterval);
 }
 
 async function refetchCSS() {
+  // Refetch CSS styles from the remote server
   try {
     const response = await fetch(
       "https://sameerasw.github.io/my-internet/styles.json",
@@ -71,6 +75,7 @@ async function refetchCSS() {
 }
 
 browser.runtime.onMessage.addListener((message) => {
+  // Handle messages for enabling/disabling auto-update
   if (message.action === "enableAutoUpdate") {
     startAutoUpdate();
   } else if (message.action === "disableAutoUpdate") {
@@ -86,12 +91,14 @@ browser.storage.local.get("transparentZenSettings").then((settings) => {
 });
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  // Apply CSS when a tab is updated
   if (changeInfo.status === "complete") {
     applyCSSToTab(tab);
   }
 });
 
 browser.tabs.onActivated.addListener(async (activeInfo) => {
+  // Apply CSS when a tab is activated
   const tab = await browser.tabs.get(activeInfo.tabId);
   applyCSSToTab(tab);
 });

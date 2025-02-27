@@ -119,8 +119,15 @@ new (class ExtensionPopup {
       );
 
       if (!currentSiteKey) {
-        this.currentSiteFeatures.innerHTML =
-          "<div class='feature-toggle'>No styles available for this site.</div>";
+        const requestThemeButton = document.createElement("button");
+        requestThemeButton.className = "action-button primary";
+        requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
+        requestThemeButton.addEventListener("click", () => {
+          const issueUrl = `https://github.com/sameerasw/my-internet/issues/new?template=website-theme-request.md&title=[THEME] ${this.currentSiteHostname}&body=Please add a theme for ${this.currentSiteHostname}`;
+          window.open(issueUrl, "_blank");
+        });
+
+        this.currentSiteFeatures.appendChild(requestThemeButton);
         return;
       }
 
@@ -308,7 +315,7 @@ new (class ExtensionPopup {
       "addon-version"
     ).textContent = `Version: ${version}`;
   }
-  
+
   setupAutoUpdate() {
     if (this.autoUpdateSwitch.checked) {
       browser.runtime.sendMessage({ action: "enableAutoUpdate" });

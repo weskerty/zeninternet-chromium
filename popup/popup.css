@@ -404,6 +404,6 @@ input:checked + .slider:before {
   margin-right: 4px;
 }
 
-#addon-version{
+#addon-version, #last-fetched-time{
   font-size: 0.75em;
 }

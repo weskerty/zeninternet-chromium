@@ -41,6 +41,50 @@ function applyCSSToTab(tab) {
   });
 }
 
+let autoUpdateInterval;
+
+function startAutoUpdate() {
+  if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+  autoUpdateInterval = setInterval(refetchCSS, 2 * 60 * 60 * 1000);
+}
+
+function stopAutoUpdate() {
+  if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+}
+
+async function refetchCSS() {
+  try {
+    const response = await fetch(
+      "https://sameerasw.github.io/my-internet/styles.json",
+      {
+        headers: { "Cache-Control": "no-cache" },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch styles.json");
+    const styles = await response.json();
+    await browser.storage.local.set({ styles });
+    await browser.storage.local.set({ lastFetchedTime: Date.now() });
+    console.info("All styles refetched and updated from GitHub.");
+  } catch (error) {
+    console.error("Error refetching styles:", error);
+  }
+}
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === "enableAutoUpdate") {
+    startAutoUpdate();
+  } else if (message.action === "disableAutoUpdate") {
+    stopAutoUpdate();
+  }
+});
+
+// Initialize auto-update based on stored settings
+browser.storage.local.get("transparentZenSettings").then((settings) => {
+  if (settings.transparentZenSettings?.autoUpdate) {
+    startAutoUpdate();
+  }
+});
+
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
     applyCSSToTab(tab);

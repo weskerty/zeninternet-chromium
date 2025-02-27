@@ -6,6 +6,8 @@ new (class ExtensionPopup {
   websitesList = document.getElementById("websites-list");
   currentSiteFeatures = document.getElementById("current-site-toggles");
   currentSiteHostname = "";
+  autoUpdateSwitch = document.getElementById("auto-update");
+  lastFetchedTime = document.getElementById("last-fetched-time");
 
   constructor() {
     this.loadSettings().then((settings) => {
@@ -22,6 +24,12 @@ new (class ExtensionPopup {
       this.websitesList.classList.toggle("collapsed");
     });
 
+    this.autoUpdateSwitch.addEventListener(
+      "change",
+      this.saveSettings.bind(this)
+    );
+    this.setupAutoUpdate();
+    this.displayLastFetchedTime();
     this.setupContentScriptInjection();
     this.displayAddonVersion();
   }
@@ -61,6 +69,9 @@ new (class ExtensionPopup {
       this.enableStylingSwitch.checked =
         this.browserStorageSettings.enableStyling;
     }
+    if (this.browserStorageSettings.autoUpdate !== undefined) {
+      this.autoUpdateSwitch.checked = this.browserStorageSettings.autoUpdate;
+    }
     this.loadCurrentSiteFeatures();
     this.loadWebsitesList();
   }
@@ -74,6 +85,7 @@ new (class ExtensionPopup {
   saveSettings() {
     this.browserStorageSettings.enableStyling =
       this.enableStylingSwitch.checked;
+    this.browserStorageSettings.autoUpdate = this.autoUpdateSwitch.checked;
 
     const featureSettings = {};
     this.currentSiteFeatures
@@ -191,6 +203,7 @@ new (class ExtensionPopup {
       if (!response.ok) throw new Error("Failed to fetch styles.json");
       const styles = await response.json();
       await browser.storage.local.set({ styles });
+      await browser.storage.local.set({ lastFetchedTime: Date.now() });
 
       this.loadCurrentSiteFeatures();
       this.loadWebsitesList();
@@ -201,6 +214,7 @@ new (class ExtensionPopup {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
       console.info("All styles refetched and updated from GitHub." + styles);
+      this.displayLastFetchedTime();
     } catch (error) {
       this.refetchCSSButton.textContent = "Error!";
       setTimeout(() => {
@@ -293,5 +307,23 @@ new (class ExtensionPopup {
     document.getElementById(
       "addon-version"
     ).textContent = `Version: ${version}`;
+  }
+  
+  setupAutoUpdate() {
+    if (this.autoUpdateSwitch.checked) {
+      browser.runtime.sendMessage({ action: "enableAutoUpdate" });
+    } else {
+      browser.runtime.sendMessage({ action: "disableAutoUpdate" });
+    }
+  }
+
+  displayLastFetchedTime() {
+    browser.storage.local.get("lastFetchedTime").then((result) => {
+      if (result.lastFetchedTime) {
+        this.lastFetchedTime.textContent = `Last fetched: ${new Date(
+          result.lastFetchedTime
+        ).toLocaleString()}`;
+      }
+    });
   }
 })();

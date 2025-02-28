@@ -12,12 +12,14 @@ async function applyCSSToTab(tab) {
     if (globalSettings.enableStyling === false) return;
 
     const data = await browser.storage.local.get("styles");
-    const cssFileName = Object.keys(data.styles?.website || {}).find(
-      (key) => {
-        const siteName = key.replace(".css", "");
-        return hostname === siteName || hostname === `www.${siteName}`;
+    const cssFileName = Object.keys(data.styles?.website || {}).find((key) => {
+      const siteName = key.replace(".css", "");
+      if (siteName.startsWith("+")) {
+        const baseSiteName = siteName.slice(1);
+        return hostname.endsWith(baseSiteName);
       }
-    );
+      return hostname === siteName || hostname === `www.${siteName}`;
+    });
 
     if (!cssFileName) return;
 

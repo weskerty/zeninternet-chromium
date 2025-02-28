@@ -19,12 +19,14 @@ if (logging) console.log("inject-css.js script loaded");
     const currentUrl = window.location.hostname;
     if (logging) console.log("Current URL hostname", currentUrl);
 
-    const cssFileName = Object.keys(data.styles?.website || {}).find(
-      (key) => {
-        const siteName = key.replace(".css", "");
-        return currentUrl === siteName || currentUrl === `www.${siteName}`;
+    const cssFileName = Object.keys(data.styles?.website || {}).find((key) => {
+      const siteName = key.replace(".css", "");
+      if (siteName.startsWith("+")) {
+        const baseSiteName = siteName.slice(1);
+        return currentUrl.endsWith(baseSiteName);
       }
-    );
+      return currentUrl === siteName || currentUrl === `www.${siteName}`;
+    });
 
     if (!cssFileName) {
       if (logging) console.log("No CSS file found for current site");

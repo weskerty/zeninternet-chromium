@@ -71,7 +71,8 @@ new (class ExtensionPopup {
   restoreSettings() {
     if (logging) console.log("restoreSettings called");
     // Restore global settings
-    this.enableStylingSwitch.checked = this.globalSettings.enableStyling ?? true;
+    this.enableStylingSwitch.checked =
+      this.globalSettings.enableStyling ?? true;
     this.autoUpdateSwitch.checked = this.globalSettings.autoUpdate ?? false;
     this.loadCurrentSiteFeatures();
   }
@@ -79,11 +80,13 @@ new (class ExtensionPopup {
   async loadSettings() {
     if (logging) console.log("loadSettings called");
     // Load global settings
-    const globalData = await browser.storage.local.get(this.BROWSER_STORAGE_KEY);
+    const globalData = await browser.storage.local.get(
+      this.BROWSER_STORAGE_KEY
+    );
     this.globalSettings = globalData[this.BROWSER_STORAGE_KEY] || {
       enableStyling: true,
       autoUpdate: false,
-      lastFetchedTime: null
+      lastFetchedTime: null,
     };
 
     // Load site-specific settings if on a specific site
@@ -101,18 +104,20 @@ new (class ExtensionPopup {
     this.globalSettings.enableStyling = this.enableStylingSwitch.checked;
     this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
 
-    browser.storage.local.set({
-      [this.BROWSER_STORAGE_KEY]: this.globalSettings
-    }).then(() => {
-      if (logging) console.log("Global settings saved");
-      this.updateActiveTabStyling();
-    });
+    browser.storage.local
+      .set({
+        [this.BROWSER_STORAGE_KEY]: this.globalSettings,
+      })
+      .then(() => {
+        if (logging) console.log("Global settings saved");
+        this.updateActiveTabStyling();
+      });
 
     // Save site-specific settings
     if (this.currentSiteHostname) {
       const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
       const featureSettings = {};
-      
+
       this.currentSiteFeatures
         .querySelectorAll("input[type=checkbox]")
         .forEach((checkbox) => {
@@ -121,17 +126,19 @@ new (class ExtensionPopup {
         });
 
       this.siteSettings = featureSettings;
-      browser.storage.local.set({
-        [siteKey]: featureSettings
-      }).then(() => {
-        if (logging) console.log("Site settings saved");
-        this.updateActiveTabStyling();
-      });
+      browser.storage.local
+        .set({
+          [siteKey]: featureSettings,
+        })
+        .then(() => {
+          if (logging) console.log("Site settings saved");
+          this.updateActiveTabStyling();
+        });
     }
 
     console.info("Settings saved", {
       global: this.globalSettings,
-      site: this.siteSettings
+      site: this.siteSettings,
     });
   }
 
@@ -178,7 +185,9 @@ new (class ExtensionPopup {
         featureToggle.innerHTML = `
           <span class="feature-name">${displayFeatureName}</span>
           <label class="toggle-switch">
-            <input type="checkbox" name="${currentSiteKey}|${feature}" ${isChecked ? "checked" : ""}>
+            <input type="checkbox" name="${currentSiteKey}|${feature}" ${
+          isChecked ? "checked" : ""
+        }>
             <span class="slider round"></span>
           </label>
         `;
@@ -195,6 +204,10 @@ new (class ExtensionPopup {
   isCurrentSite(siteName) {
     if (logging) console.log("isCurrentSite called with", siteName);
     if (!this.currentSiteHostname) return false;
+    if (siteName.startsWith("+")) {
+      const baseSiteName = siteName.slice(1);
+      return this.currentSiteHostname.endsWith(baseSiteName);
+    }
     if (this.currentSiteHostname === siteName) return true;
     if (this.currentSiteHostname === `www.${siteName}`) return true;
     return false;
@@ -267,7 +280,13 @@ new (class ExtensionPopup {
       let siteKey = null;
       for (const site of Object.keys(styles)) {
         const siteName = site.replace(/\.css$/, "");
-        if (hostname === siteName || hostname === `www.${siteName}`) {
+        if (siteName.startsWith("+")) {
+          const baseSiteName = siteName.slice(1);
+          if (hostname.endsWith(baseSiteName)) {
+            siteKey = site;
+            break;
+          }
+        } else if (hostname === siteName || hostname === `www.${siteName}`) {
           siteKey = site;
           break;
         }

@@ -13,6 +13,12 @@ https://github.com/user-attachments/assets/03ce72fc-e5b0-48fc-b0ae-40c6671b187d
 ## Supported Websites
 Checkout the [repository](https://github.com/sameerasw/my-internet) for website css styling which are used in this addon.
 
+### Unsupported websites now can be forced!
+
+https://github.com/user-attachments/assets/85f795cc-049f-4338-a74b-8f5d2a9eb5bd
+
+
+
 #### To Do
 - [x] Feature specific toggles for each website
 - [ ] Custom css by user

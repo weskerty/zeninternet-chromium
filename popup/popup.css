@@ -173,8 +173,8 @@ input:checked + .slider:before {
 .features-container {
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 12px;
+  margin-bottom: 8px;
 }
 
 .features-list {
@@ -406,4 +406,20 @@ input:checked + .slider:before {
 
 #addon-version, #last-fetched-time{
   font-size: 0.75em;
+}
+
+.forcing-container{
+  background-color: var(--secondary-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.warning{
+  color: var(--warning-color);
+  margin-top: 8px;
+}
+
+#reload{
+  margin-top: 16px;
 }

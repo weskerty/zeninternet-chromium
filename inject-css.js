@@ -1,3 +1,5 @@
+import { SKIP_FORCE_THEMING_KEY } from "./shared/constants.js";
+
 let logging = false;
 
 if (logging) console.log("inject-css.js script loaded");
@@ -28,7 +30,16 @@ if (logging) console.log("inject-css.js script loaded");
       return currentUrl === siteName || currentUrl === `www.${siteName}`;
     });
 
+    const skipListData = await browser.storage.local.get(
+      SKIP_FORCE_THEMING_KEY
+    );
+    const skipList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
+
     if (!cssFileName && settings.transparentZenSettings?.forceStyling) {
+      if (skipList.includes(currentUrl)) {
+        if (logging) console.log("Skipping forced theming for this site");
+        return;
+      }
       cssFileName = "example.com.css";
     }
 

@@ -1,3 +1,4 @@
+let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let logging = false;
 
 async function applyCSSToTab(tab) {
@@ -12,6 +13,11 @@ async function applyCSSToTab(tab) {
     if (globalSettings.enableStyling === false) return;
 
     const data = await browser.storage.local.get("styles");
+    const skipListData = await browser.storage.local.get(
+      SKIP_FORCE_THEMING_KEY
+    );
+    const skipList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
+
     const cssFileName =
       Object.keys(data.styles?.website || {}).find((key) => {
         const siteName = key.replace(".css", "");
@@ -20,7 +26,10 @@ async function applyCSSToTab(tab) {
           return hostname.endsWith(baseSiteName);
         }
         return hostname === siteName || hostname === `www.${siteName}`;
-      }) || (globalSettings.forceStyling ? "example.com.css" : null);
+      }) ||
+      (globalSettings.forceStyling && !skipList.includes(hostname)
+        ? "example.com.css"
+        : null);
 
     if (!cssFileName) return;
 

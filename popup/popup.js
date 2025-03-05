@@ -1,4 +1,5 @@
 let logging = false;
+let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 
 new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";
@@ -12,14 +13,19 @@ new (class ExtensionPopup {
   autoUpdateSwitch = document.getElementById("auto-update");
   lastFetchedTime = document.getElementById("last-fetched-time");
   forceStylingSwitch = document.getElementById("force-styling");
+  skipForceThemingSwitch = document.getElementById("skip-force-theming");
+  skipForceThemingList = [];
+  reloadButton = document.getElementById("reload");
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
     // Load settings and initialize the popup
     this.loadSettings().then(() => {
-      this.getCurrentTabInfo().then(() => {
-        this.restoreSettings();
-        this.bindEvents();
+      this.loadSkipForceThemingList().then(() => {
+        this.getCurrentTabInfo().then(() => {
+          this.restoreSettings();
+          this.bindEvents();
+        });
       });
     });
 
@@ -33,6 +39,7 @@ new (class ExtensionPopup {
       "change",
       this.saveSettings.bind(this)
     );
+    this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
 
     // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
@@ -71,6 +78,12 @@ new (class ExtensionPopup {
         this.updateActiveTabStyling();
       }
     });
+
+    this.skipForceThemingSwitch.addEventListener("change", () => {
+      this.saveSkipForceThemingList();
+    });
+
+    this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
   }
 
   restoreSettings() {
@@ -80,6 +93,9 @@ new (class ExtensionPopup {
       this.globalSettings.enableStyling ?? true;
     this.autoUpdateSwitch.checked = this.globalSettings.autoUpdate ?? false;
     this.forceStylingSwitch.checked = this.globalSettings.forceStyling ?? false;
+    this.skipForceThemingSwitch.checked = this.skipForceThemingList.includes(
+      this.currentSiteHostname
+    );
     this.loadCurrentSiteFeatures();
   }
 
@@ -150,6 +166,26 @@ new (class ExtensionPopup {
     });
   }
 
+  async loadSkipForceThemingList() {
+    const data = await browser.storage.local.get(SKIP_FORCE_THEMING_KEY);
+    this.skipForceThemingList = data[SKIP_FORCE_THEMING_KEY] || [];
+  }
+
+  saveSkipForceThemingList() {
+    const isChecked = this.skipForceThemingSwitch.checked;
+    const index = this.skipForceThemingList.indexOf(this.currentSiteHostname);
+
+    if (isChecked && index === -1) {
+      this.skipForceThemingList.push(this.currentSiteHostname);
+    } else if (!isChecked && index !== -1) {
+      this.skipForceThemingList.splice(index, 1);
+    }
+
+    browser.storage.local.set({
+      [SKIP_FORCE_THEMING_KEY]: this.skipForceThemingList,
+    });
+  }
+
   async loadCurrentSiteFeatures() {
     if (logging) console.log("loadCurrentSiteFeatures called");
     try {
@@ -190,6 +226,18 @@ new (class ExtensionPopup {
       this.siteSettings = siteData[siteKey] || {};
 
       const features = styles[currentSiteKey];
+
+      if (this.globalSettings.forceStyling) {
+        const skipForceThemingToggle = document.createElement("div");
+        skipForceThemingToggle.className = "toggle-container";
+        skipForceThemingToggle.innerHTML = `
+        <div class="actions secondary">
+          <span class="toggle-label warning">No themes found for this website ;(</span>
+        </div>
+        `;
+
+        this.currentSiteFeatures.appendChild(skipForceThemingToggle);
+      }
       for (const [feature, css] of Object.entries(features)) {
         const displayFeatureName = feature.includes("-")
           ? feature.split("-")[1]
@@ -364,5 +412,10 @@ new (class ExtensionPopup {
         ).toLocaleString()}`;
       }
     });
+  }
+
+  reloadPage() {
+    if (logging) console.log("reloadPage called");
+    browser.tabs.reload();
   }
 })();

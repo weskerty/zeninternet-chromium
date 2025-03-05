@@ -20,7 +20,7 @@
     </header>
 
     <main class="app-content">
-      <div class="toggle-container">
+      <div class="toggle-container features-container">
         <label class="toggle-switch">
           <input type="checkbox" id="enable-styling">
           <span class="slider round"></span>
@@ -32,7 +32,12 @@
       <div id="current-site-features" class="features-container">
         <h2 class="section-title">Current Site Features</h2>
         <div id="current-site-toggles" class="features-list"></div>
-        <p>Disabling a feature may require a reload</p>
+        <div class="actions">
+          <!-- reload botton -->
+          <button id="reload" class="action-button secondary">
+            Reload to apply <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
       </div>
 
       <!-- All Websites Section (Collapsible) -->
@@ -57,14 +62,23 @@
         </label>
         <span class="toggle-label">Auto Update Styles</span>
       </div>
-      <div class="toggle-container">
-        <label class="toggle-switch">
-          <input type="checkbox" id="force-styling">
-          <span class="slider round"></span>
-        </label>
-        <span class="toggle-label">Force Styling</span>
-      </div>
       <div id="last-fetched-time" class="last-fetched-time"></div>
+      <div class="forcing-container">
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="force-styling">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">Force Styling</span>
+        </div>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="skip-force-theming">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">Skip Forcing for this Site</span>
+        </div>
+      </div>
 
     </main>
 

@@ -19,7 +19,7 @@ if (logging) console.log("inject-css.js script loaded");
     const currentUrl = window.location.hostname;
     if (logging) console.log("Current URL hostname", currentUrl);
 
-    const cssFileName = Object.keys(data.styles?.website || {}).find((key) => {
+    let cssFileName = Object.keys(data.styles?.website || {}).find((key) => {
       const siteName = key.replace(".css", "");
       if (siteName.startsWith("+")) {
         const baseSiteName = siteName.slice(1);
@@ -27,6 +27,10 @@ if (logging) console.log("inject-css.js script loaded");
       }
       return currentUrl === siteName || currentUrl === `www.${siteName}`;
     });
+
+    if (!cssFileName && settings.transparentZenSettings?.forceStyling) {
+      cssFileName = "example.com.css";
+    }
 
     if (!cssFileName) {
       if (logging) console.log("No CSS file found for current site");

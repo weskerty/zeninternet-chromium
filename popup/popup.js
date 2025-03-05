@@ -11,6 +11,7 @@ new (class ExtensionPopup {
   currentSiteHostname = "";
   autoUpdateSwitch = document.getElementById("auto-update");
   lastFetchedTime = document.getElementById("last-fetched-time");
+  forceStylingSwitch = document.getElementById("force-styling");
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
@@ -25,6 +26,10 @@ new (class ExtensionPopup {
     // Bind event listeners
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
     this.autoUpdateSwitch.addEventListener(
+      "change",
+      this.saveSettings.bind(this)
+    );
+    this.forceStylingSwitch.addEventListener(
       "change",
       this.saveSettings.bind(this)
     );
@@ -74,6 +79,7 @@ new (class ExtensionPopup {
     this.enableStylingSwitch.checked =
       this.globalSettings.enableStyling ?? true;
     this.autoUpdateSwitch.checked = this.globalSettings.autoUpdate ?? false;
+    this.forceStylingSwitch.checked = this.globalSettings.forceStyling ?? false;
     this.loadCurrentSiteFeatures();
   }
 
@@ -87,6 +93,7 @@ new (class ExtensionPopup {
       enableStyling: true,
       autoUpdate: false,
       lastFetchedTime: null,
+      forceStyling: false,
     };
 
     // Load site-specific settings if on a specific site
@@ -103,6 +110,7 @@ new (class ExtensionPopup {
     // Save global settings
     this.globalSettings.enableStyling = this.enableStylingSwitch.checked;
     this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
+    this.globalSettings.forceStyling = this.forceStylingSwitch.checked;
 
     browser.storage.local
       .set({
@@ -150,11 +158,17 @@ new (class ExtensionPopup {
 
       this.currentSiteFeatures.innerHTML = "";
 
-      const currentSiteKey = Object.keys(styles).find((site) =>
+      let currentSiteKey = Object.keys(styles).find((site) =>
         this.isCurrentSite(site.replace(".css", ""))
       );
 
-      if (!currentSiteKey) {
+      if (!currentSiteKey && this.globalSettings.forceStyling) {
+        currentSiteKey = Object.keys(styles).find(
+          (site) => site === "example.com.css"
+        );
+      }
+
+      if (!currentSiteKey || currentSiteKey === "example.com.css") {
         const requestThemeButton = document.createElement("button");
         requestThemeButton.className = "action-button primary";
         requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
@@ -164,6 +178,9 @@ new (class ExtensionPopup {
         });
 
         this.currentSiteFeatures.appendChild(requestThemeButton);
+      }
+
+      if (!currentSiteKey) {
         return;
       }
 

@@ -16,3 +16,5 @@ builds/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+.zip

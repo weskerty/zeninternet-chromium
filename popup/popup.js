@@ -227,7 +227,7 @@ new (class ExtensionPopup {
 
       const features = styles[currentSiteKey];
 
-      if (this.globalSettings.forceStyling) {
+      if (!currentSiteKey || currentSiteKey === "example.com.css") {
         const skipForceThemingToggle = document.createElement("div");
         skipForceThemingToggle.className = "toggle-container";
         skipForceThemingToggle.innerHTML = `

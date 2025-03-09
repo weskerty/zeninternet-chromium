@@ -31,6 +31,10 @@ new (class ExtensionPopup {
 
     // Bind event listeners
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
+    this.refetchCSSButton.addEventListener(
+      "auxclick",
+      this.handleMiddleClick.bind(this)
+    );
     this.autoUpdateSwitch.addEventListener(
       "change",
       this.saveSettings.bind(this)
@@ -417,5 +421,17 @@ new (class ExtensionPopup {
   reloadPage() {
     if (logging) console.log("reloadPage called");
     browser.tabs.reload();
+  }
+
+  handleMiddleClick(event) {
+    if (event.button === 1) {
+      // Middle click
+      if (confirm("Are you sure you want to clear all settings?")) {
+        browser.storage.local.clear().then(() => {
+          alert("All settings have been cleared.");
+          location.reload(); // Reload the popup to reflect changes
+        });
+      }
+    }
   }
 })();

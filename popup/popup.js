@@ -20,6 +20,7 @@ new (class ExtensionPopup {
   skipForceThemingList = [];
   reloadButton = document.getElementById("reload");
   modeIndicator = document.getElementById("mode-indicator");
+  whatsNewButton = document.getElementById("whats-new");
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
@@ -53,6 +54,9 @@ new (class ExtensionPopup {
       "change",
       this.handleWhitelistModeChange.bind(this)
     );
+
+    // Add event listener for the "What's New" button
+    this.whatsNewButton.addEventListener("click", this.openWhatsNew.bind(this));
 
     // Add event listener for the data viewer button
     document.getElementById("view-data")?.addEventListener("click", () => {
@@ -545,5 +549,12 @@ new (class ExtensionPopup {
       this.whitelistModeLabel.textContent = "Blacklist Mode";
       this.siteToggleLabel.textContent = "Skip Forcing for this Site";
     }
+  }
+
+  // Open the What's New page
+  openWhatsNew() {
+    browser.tabs.create({
+      url: "https://addons.mozilla.org/en-US/firefox/addon/zen-internet/versions/",
+    });
   }
 })();

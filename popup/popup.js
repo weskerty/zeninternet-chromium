@@ -54,6 +54,13 @@ new (class ExtensionPopup {
       this.handleWhitelistModeChange.bind(this)
     );
 
+    // Add event listener for the data viewer button
+    document.getElementById("view-data")?.addEventListener("click", () => {
+      browser.tabs.create({
+        url: browser.runtime.getURL("data-viewer/data-viewer.html"),
+      });
+    });
+
     // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
     this.displayLastFetchedTime();

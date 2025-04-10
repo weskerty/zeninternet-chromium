@@ -33,5 +33,10 @@
       "js": ["inject-css.js"],
       "run_at": "document_start"
     }
+  ],
+  "web_accessible_resources": [
+    "data-viewer/data-viewer.html",
+    "data-viewer/data-viewer.js",
+    "data-viewer/data-viewer.css"
   ]
 }

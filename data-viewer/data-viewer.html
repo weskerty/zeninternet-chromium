@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenInternet - Data Viewer</title>
+    <link rel="stylesheet" href="../popup/popup.css">
+    <link rel="stylesheet" href="data-viewer.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="logo-container">
+                <img src="../assets/images/logo_48.png" alt="ZenInternet Logo" class="logo-img">
+                <h1 class="app-title">ZenInternet Data Viewer</h1>
+            </div>
+            <div class="author">by <a href="https://www.sameerasw.com/" target="_blank">@sameerasw</a></div>
+            <div id="addon-version" class="addon-version"></div>
+        </header>
+
+        <main class="app-content">
+            <div class="data-section">
+                <h2 class="section-title">Global Settings</h2>
+                <div id="global-settings-data" class="data-container"></div>
+            </div>
+
+            <div class="data-section">
+                <h2 class="section-title">Skip/Enable List</h2>
+                <div id="skip-list-data" class="data-container"></div>
+            </div>
+
+            <div class="data-section">
+                <h2 class="section-title">Websites and CSS</h2>
+                <div id="combined-websites-data" class="data-container"></div>
+            </div>
+
+            <div class="actions">
+                <button id="back-button" class="action-button secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Extension
+                </button>
+            </div>
+            
+            <div class="danger-zone">
+                <h3 class="danger-title">Danger Zone</h3>
+                <div class="danger-actions">
+                    <button id="delete-all-data" class="action-button danger">
+                        <i class="fas fa-trash"></i> Delete All Data
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank">
+                <i class="fas fa-book"></i> Styles Repository
+            </a>
+            <div class="footer-divider"></div>
+            <a href="https://github.com/sameerasw/zeninternet" class="footer-link" target="_blank">
+                <i class="fa-brands fa-github"></i> Project Repository
+            </a>
+        </footer>
+    </div>
+    <script src="data-viewer.js"></script>
+</body>
+
+</html>

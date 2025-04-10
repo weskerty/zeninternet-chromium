@@ -21,54 +21,91 @@ if (logging) console.log("inject-css.js script loaded");
     const currentUrl = window.location.hostname;
     if (logging) console.log("Current URL hostname", currentUrl);
 
-    let cssFileName = Object.keys(data.styles?.website || {}).find((key) => {
+    // Find the best matching CSS file
+    let bestMatch = null;
+    let bestMatchLength = 0;
+
+    for (const key of Object.keys(data.styles?.website || {})) {
       const siteName = key.replace(".css", "");
       if (siteName.startsWith("+")) {
         const baseSiteName = siteName.slice(1);
-        return currentUrl.endsWith(baseSiteName);
+        if (
+          currentUrl.endsWith(baseSiteName) &&
+          baseSiteName.length > bestMatchLength
+        ) {
+          bestMatch = key;
+          bestMatchLength = baseSiteName.length;
+        }
+      } else if (currentUrl === siteName || currentUrl === `www.${siteName}`) {
+        // Exact match has priority
+        bestMatch = key;
+        break;
+      } else if (
+        currentUrl.endsWith(siteName) &&
+        siteName.length > bestMatchLength
+      ) {
+        bestMatch = key;
+        bestMatchLength = siteName.length;
       }
-      return currentUrl === siteName || currentUrl === `www.${siteName}`;
-    });
-
-    const skipListData = await browser.storage.local.get(
-      SKIP_FORCE_THEMING_KEY
-    );
-    const skipList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
-
-    if (!cssFileName && settings.transparentZenSettings?.forceStyling) {
-      if (skipList.includes(currentUrl)) {
-        if (logging) console.log("Skipping forced theming for this site");
-        return;
-      }
-      cssFileName = "example.com.css";
     }
 
-    if (!cssFileName) {
-      if (logging) console.log("No CSS file found for current site");
+    // If a direct match was found, use it
+    if (bestMatch) {
+      await injectCSS(currentUrl, data.styles.website[bestMatch]);
       return;
     }
 
-    if (logging) console.log("CSS file found for current site", cssFileName);
+    // If no direct match was found and force styling is enabled, check whitelist/blacklist mode
+    if (settings.transparentZenSettings?.forceStyling) {
+      const skipListData = await browser.storage.local.get(
+        SKIP_FORCE_THEMING_KEY
+      );
+      const siteList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
+      const isWhitelistMode =
+        settings.transparentZenSettings?.whitelistMode || false;
+      const siteInList = siteList.includes(currentUrl);
 
-    const features = data.styles.website[cssFileName];
-    const siteKey = `transparentZenSettings.${currentUrl}`;
-    const siteData = await browser.storage.local.get(siteKey);
-    const featureSettings = siteData[siteKey] || {};
-
-    let combinedCSS = "";
-    for (const [feature, css] of Object.entries(features)) {
-      if (featureSettings[feature] !== false) {
-        combinedCSS += css + "\n";
+      // In whitelist mode: apply only if site is in the list
+      // In blacklist mode: apply only if site is NOT in the list
+      if (
+        (isWhitelistMode && siteInList) ||
+        (!isWhitelistMode && !siteInList)
+      ) {
+        await injectCSS(currentUrl, data.styles.website["example.com.css"]);
+      } else {
+        if (logging)
+          console.log(
+            `Styling skipped due to ${
+              isWhitelistMode ? "whitelist" : "blacklist"
+            } mode settings`
+          );
       }
-    }
-
-    if (combinedCSS) {
-      const style = document.createElement("style");
-      style.textContent = combinedCSS;
-      document.head.appendChild(style);
-      if (logging) console.log(`Injected custom CSS for ${currentUrl}`);
+    } else {
+      if (logging) console.log("No CSS file found for current site");
     }
   } catch (error) {
     console.error("Error injecting CSS:", error);
   }
 })();
+
+async function injectCSS(hostname, features) {
+  if (!features) return;
+
+  const siteKey = `transparentZenSettings.${hostname}`;
+  const siteData = await browser.storage.local.get(siteKey);
+  const featureSettings = siteData[siteKey] || {};
+
+  let combinedCSS = "";
+  for (const [feature, css] of Object.entries(features)) {
+    if (featureSettings[feature] !== false) {
+      combinedCSS += css + "\n";
+    }
+  }
+
+  if (combinedCSS) {
+    const style = document.createElement("style");
+    style.textContent = combinedCSS;
+    document.head.appendChild(style);
+    if (logging) console.log(`Injected custom CSS for ${hostname}`);
+  }
+}

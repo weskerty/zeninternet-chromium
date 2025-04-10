@@ -16,41 +16,82 @@ async function applyCSSToTab(tab) {
     const skipListData = await browser.storage.local.get(
       SKIP_FORCE_THEMING_KEY
     );
-    const skipList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
+    const siteList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
+    const isWhitelistMode = globalSettings.whitelistMode || false;
 
-    const cssFileName =
-      Object.keys(data.styles?.website || {}).find((key) => {
-        const siteName = key.replace(".css", "");
-        if (siteName.startsWith("+")) {
-          const baseSiteName = siteName.slice(1);
-          return hostname.endsWith(baseSiteName);
+    // Find the best matching CSS file
+    let bestMatch = null;
+    let bestMatchLength = 0;
+
+    for (const key of Object.keys(data.styles?.website || {})) {
+      const siteName = key.replace(".css", "");
+      if (siteName.startsWith("+")) {
+        const baseSiteName = siteName.slice(1);
+        if (
+          hostname.endsWith(baseSiteName) &&
+          baseSiteName.length > bestMatchLength
+        ) {
+          bestMatch = key;
+          bestMatchLength = baseSiteName.length;
         }
-        return hostname === siteName || hostname === `www.${siteName}`;
-      }) ||
-      (globalSettings.forceStyling && !skipList.includes(hostname)
-        ? "example.com.css"
-        : null);
-
-    if (!cssFileName) return;
-
-    const features = data.styles.website[cssFileName];
-    const siteKey = `transparentZenSettings.${hostname}`;
-    const siteData = await browser.storage.local.get(siteKey);
-    const featureSettings = siteData[siteKey] || {};
-
-    let combinedCSS = "";
-    for (const [feature, css] of Object.entries(features)) {
-      if (featureSettings[feature] !== false) {
-        combinedCSS += css + "\n";
+      } else if (hostname === siteName || hostname === `www.${siteName}`) {
+        // Exact match has priority
+        bestMatch = key;
+        break;
+      } else if (
+        hostname.endsWith(siteName) &&
+        siteName.length > bestMatchLength
+      ) {
+        bestMatch = key;
+        bestMatchLength = siteName.length;
       }
     }
 
-    if (combinedCSS) {
-      await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
-      console.log(`Injected custom CSS for ${hostname}`);
+    // If we found a direct match, use it
+    if (bestMatch) {
+      await applyCSS(tab.id, hostname, data.styles.website[bestMatch]);
+      return;
+    }
+
+    // Otherwise, check if we should apply forced styling
+    if (globalSettings.forceStyling) {
+      const siteInList = siteList.includes(hostname);
+
+      // In whitelist mode: apply only if site is in the list
+      // In blacklist mode: apply only if site is NOT in the list
+      if (
+        (isWhitelistMode && siteInList) ||
+        (!isWhitelistMode && !siteInList)
+      ) {
+        await applyCSS(
+          tab.id,
+          hostname,
+          data.styles.website["example.com.css"]
+        );
+      }
     }
   } catch (error) {
     console.error(`Error applying CSS to ${hostname}:`, error);
+  }
+}
+
+async function applyCSS(tabId, hostname, features) {
+  if (!features) return;
+
+  const siteKey = `transparentZenSettings.${hostname}`;
+  const siteData = await browser.storage.local.get(siteKey);
+  const featureSettings = siteData[siteKey] || {};
+
+  let combinedCSS = "";
+  for (const [feature, css] of Object.entries(features)) {
+    if (featureSettings[feature] !== false) {
+      combinedCSS += css + "\n";
+    }
+  }
+
+  if (combinedCSS) {
+    await browser.tabs.insertCSS(tabId, { code: combinedCSS });
+    console.log(`Injected custom CSS for ${hostname}`);
   }
 }
 

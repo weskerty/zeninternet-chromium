@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 :root {
   --radius-sm: 6px;
@@ -7,7 +7,7 @@
   --transition: all 0.2s ease;
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   --accent-color: #f98764; /* Subtle Zen-themed orange */
-  --hover-color: #fa9475;  /* Lighter hover state */
+  --hover-color: #fa9475; /* Lighter hover state */
   --success-color: #40c057;
   --warning-color: #fab005;
   --danger-color: #fa5252;
@@ -22,7 +22,7 @@ body {
   width: 360px;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: "Inter", Arial, sans-serif;
   color: var(--text-primary);
   background-color: var(--bg-color);
   font-size: 14px;
@@ -106,8 +106,14 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .toggle-switch {
@@ -243,7 +249,7 @@ input:checked + .slider:before {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background-color: var(--bg-color);
-  
+
   /* Firefox scrollbar styling */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-color) transparent;
@@ -355,6 +361,14 @@ input:checked + .slider:before {
   padding-left: 9px !important; /* Compensate for the border */
 }
 
+/* Mode Indicator */
+.mode-indicator {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  margin: 8px 0;
+  font-style: italic;
+}
+
 .current-badge {
   display: inline-block;
   background-color: var(--accent-color);
@@ -387,8 +401,12 @@ input:checked + .slider:before {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0.7; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Make sure the text doesn't overflow */
@@ -404,22 +422,29 @@ input:checked + .slider:before {
   margin-right: 4px;
 }
 
-#addon-version, #last-fetched-time{
+#addon-version,
+#last-fetched-time {
   font-size: 0.75em;
 }
 
-.forcing-container{
+.forcing-container {
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 16px;
 }
 
-.warning{
+.warning {
   color: var(--warning-color);
   margin-top: 8px;
 }
 
-#reload{
+#reload {
   margin-top: 16px;
+}
+
+.mode-hint {
+  font-size: 0.75em;
+  color: var(--text-secondary);
+  margin-left: 8px;
 }

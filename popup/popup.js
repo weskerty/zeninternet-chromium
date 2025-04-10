@@ -13,9 +13,13 @@ new (class ExtensionPopup {
   autoUpdateSwitch = document.getElementById("auto-update");
   lastFetchedTime = document.getElementById("last-fetched-time");
   forceStylingSwitch = document.getElementById("force-styling");
+  whitelistModeSwitch = document.getElementById("whitelist-mode");
+  whitelistModeLabel = document.getElementById("whitelist-mode-label");
   skipForceThemingSwitch = document.getElementById("skip-force-theming");
+  siteToggleLabel = document.getElementById("site-toggle-label");
   skipForceThemingList = [];
   reloadButton = document.getElementById("reload");
+  modeIndicator = document.getElementById("mode-indicator");
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
@@ -44,6 +48,11 @@ new (class ExtensionPopup {
       this.saveSettings.bind(this)
     );
     this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
+
+    this.whitelistModeSwitch.addEventListener(
+      "change",
+      this.handleWhitelistModeChange.bind(this)
+    );
 
     // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
@@ -97,9 +106,18 @@ new (class ExtensionPopup {
       this.globalSettings.enableStyling ?? true;
     this.autoUpdateSwitch.checked = this.globalSettings.autoUpdate ?? false;
     this.forceStylingSwitch.checked = this.globalSettings.forceStyling ?? false;
-    this.skipForceThemingSwitch.checked = this.skipForceThemingList.includes(
+    this.whitelistModeSwitch.checked =
+      this.globalSettings.whitelistMode ?? false;
+
+    this.updateModeLabels();
+
+    // In whitelist mode, checked means "include this site"
+    // In blacklist mode, checked means "skip this site"
+    const isInList = this.skipForceThemingList.includes(
       this.currentSiteHostname
     );
+    this.skipForceThemingSwitch.checked = isInList;
+
     this.loadCurrentSiteFeatures();
   }
 
@@ -131,6 +149,7 @@ new (class ExtensionPopup {
     this.globalSettings.enableStyling = this.enableStylingSwitch.checked;
     this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
     this.globalSettings.forceStyling = this.forceStylingSwitch.checked;
+    this.globalSettings.whitelistMode = this.whitelistModeSwitch.checked;
 
     browser.storage.local
       .set({
@@ -180,14 +199,20 @@ new (class ExtensionPopup {
     const index = this.skipForceThemingList.indexOf(this.currentSiteHostname);
 
     if (isChecked && index === -1) {
+      // Add to the list (whitelist: include, blacklist: skip)
       this.skipForceThemingList.push(this.currentSiteHostname);
     } else if (!isChecked && index !== -1) {
+      // Remove from the list (whitelist: exclude, blacklist: include)
       this.skipForceThemingList.splice(index, 1);
     }
 
-    browser.storage.local.set({
-      [SKIP_FORCE_THEMING_KEY]: this.skipForceThemingList,
-    });
+    browser.storage.local
+      .set({
+        [SKIP_FORCE_THEMING_KEY]: this.skipForceThemingList,
+      })
+      .then(() => {
+        this.updateActiveTabStyling();
+      });
   }
 
   async loadCurrentSiteFeatures() {
@@ -335,34 +360,51 @@ new (class ExtensionPopup {
     const hostname = url.hostname;
 
     try {
-      await browser.tabs.removeCSS(tab.id, {
-        code: "/* Placeholder for removing CSS */",
-      });
-    } catch (error) {}
+      // Try to remove any existing CSS first
+      try {
+        await browser.tabs.removeCSS(tab.id, {
+          code: "/* Placeholder for removing CSS */",
+        });
+      } catch (error) {
+        // Ignore errors as they may occur if no CSS was previously applied
+      }
 
-    if (!this.shouldApplyCSS(hostname)) return;
+      if (!this.shouldApplyCSS(hostname)) return;
 
-    try {
       const stylesData = await browser.storage.local.get("styles");
       const styles = stylesData.styles?.website || {};
 
-      let siteKey = null;
+      // First try to find a direct match for a CSS file
+      let bestMatch = null;
+      let bestMatchLength = 0;
+
       for (const site of Object.keys(styles)) {
         const siteName = site.replace(/\.css$/, "");
         if (siteName.startsWith("+")) {
           const baseSiteName = siteName.slice(1);
-          if (hostname.endsWith(baseSiteName)) {
-            siteKey = site;
-            break;
+          if (
+            hostname.endsWith(baseSiteName) &&
+            baseSiteName.length > bestMatchLength
+          ) {
+            bestMatch = site;
+            bestMatchLength = baseSiteName.length;
           }
         } else if (hostname === siteName || hostname === `www.${siteName}`) {
-          siteKey = site;
+          // Exact match has priority
+          bestMatch = site;
           break;
+        } else if (
+          hostname.endsWith(siteName) &&
+          siteName.length > bestMatchLength
+        ) {
+          bestMatch = site;
+          bestMatchLength = siteName.length;
         }
       }
 
-      if (siteKey && styles[siteKey]) {
-        const features = styles[siteKey];
+      // If we found a direct match, use it
+      if (bestMatch) {
+        const features = styles[bestMatch];
         const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
         const siteData = await browser.storage.local.get(siteStorageKey);
         const featureSettings = siteData[siteStorageKey] || {};
@@ -376,7 +418,36 @@ new (class ExtensionPopup {
 
         if (combinedCSS) {
           await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
-          console.info(`Applied CSS to ${hostname}`);
+          console.info(`Applied CSS to ${hostname} (direct match)`);
+        }
+      } else if (this.globalSettings.forceStyling) {
+        // Otherwise check for forced styling
+        const isInList = this.skipForceThemingList.includes(hostname);
+        const isWhitelistMode = this.globalSettings.whitelistMode;
+
+        // Determine if we should apply forced styling
+        const shouldApplyForcedStyling =
+          (isWhitelistMode && isInList) || (!isWhitelistMode && !isInList);
+
+        if (shouldApplyForcedStyling && styles["example.com.css"]) {
+          const features = styles["example.com.css"];
+          const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
+          const siteData = await browser.storage.local.get(siteStorageKey);
+          const featureSettings = siteData[siteStorageKey] || {};
+
+          let combinedCSS = "";
+          for (const [feature, css] of Object.entries(features)) {
+            if (featureSettings[feature] !== false) {
+              combinedCSS += css + "\n";
+            }
+          }
+
+          if (combinedCSS) {
+            await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+            console.info(`Applied forced CSS to ${hostname}`);
+          }
+        } else {
+          console.info(`Skipping forced styling for ${hostname}`);
         }
       }
     } catch (error) {
@@ -432,6 +503,40 @@ new (class ExtensionPopup {
           location.reload(); // Reload the popup to reflect changes
         });
       }
+    }
+  }
+
+  handleWhitelistModeChange() {
+    this.updateModeLabels();
+    this.saveSettings();
+  }
+
+  updateModeIndicator() {
+    if (this.whitelistModeSwitch.checked) {
+      this.modeIndicator.textContent =
+        "In Whitelist Mode (apply only to listed sites)";
+    } else {
+      this.modeIndicator.textContent =
+        "In Blacklist Mode (apply to all except listed sites)";
+    }
+  }
+
+  updateSiteToggleLabel() {
+    // Update the label based on the current mode
+    if (this.whitelistModeSwitch.checked) {
+      this.siteToggleLabel.textContent = "Enable for this Site";
+    } else {
+      this.siteToggleLabel.textContent = "Skip Forcing for this Site";
+    }
+  }
+
+  updateModeLabels() {
+    if (this.whitelistModeSwitch.checked) {
+      this.whitelistModeLabel.textContent = "Whitelist Mode";
+      this.siteToggleLabel.textContent = "Enable for this Site";
+    } else {
+      this.whitelistModeLabel.textContent = "Blacklist Mode";
+      this.siteToggleLabel.textContent = "Skip Forcing for this Site";
     }
   }
 })();

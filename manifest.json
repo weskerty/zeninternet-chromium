@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zen Internet",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Inject custom css from my repository in real time",
   "browser_specific_settings": {
     "gecko": {
@@ -17,7 +17,9 @@
     "storage",
     "tabs",
     "<all_urls>",
-    "webNavigation"
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "browser_action": {
     "default_popup": "popup/popup.html",
@@ -25,18 +27,20 @@
   },
   "background": {
     "scripts": ["background.js"],
-    "persistent": false
+    "persistent": true
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["inject-css.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "web_accessible_resources": [
     "data-viewer/data-viewer.html",
     "data-viewer/data-viewer.js",
-    "data-viewer/data-viewer.css"
+    "data-viewer/data-viewer.css",
+    "styling/*"
   ]
 }

@@ -125,7 +125,11 @@ async function getStylesForHostname(hostname, settings) {
         (isWhitelistMode && siteInList) ||
         (!isWhitelistMode && !siteInList)
       ) {
-        return cssCache.get("example.com");
+        if (cssCache.has("example.com")) {
+          return cssCache.get("example.com");
+        } else {
+          return "/* Default fallback CSS */";
+        }
       }
     }
   }

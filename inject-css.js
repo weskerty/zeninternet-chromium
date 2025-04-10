@@ -51,9 +51,9 @@ function applyStyles(css) {
   try {
     // For immediate application, directly set textContent
     // as this is more reliably applied in early document stages
-    styleElement.textContent = `${css}
-    /* Remove FOUC prevention once styles are loaded */
-    body { opacity: 1 !important; }`;
+    styleElement.textContent = css.trim() + `
+/* Remove FOUC prevention once styles are loaded */
+body { opacity: 1 !important; }`;
 
     // After a very short delay (to ensure CSS application), ensure body is visible
     setTimeout(() => {

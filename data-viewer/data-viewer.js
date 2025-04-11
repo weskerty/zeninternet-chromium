@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     "combined-websites-data"
   );
   const backButton = document.getElementById("back-button");
-  const refreshButton = document.getElementById("refresh-data");
   const deleteAllButton = document.getElementById("delete-all-data");
   const versionElement = document.getElementById("addon-version");
 
@@ -23,12 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.close();
   });
 
-  // Event listener for refresh button
-  refreshButton.addEventListener("click", function () {
-    loadAllData();
-  });
-
-  // Event listener for delete all data button
+  // Event listener for delete all data button - Fixed implementation
   deleteAllButton.addEventListener("click", function() {
     if (confirm("WARNING: This will delete ALL extension data including settings, website styles, and preferences. This action cannot be undone!\n\nAre you sure you want to proceed?")) {
       deleteAllData();

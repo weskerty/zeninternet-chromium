@@ -1,22 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
-:root {
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --transition: all 0.2s ease;
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  --accent-color: #f98764; /* Subtle Zen-themed orange */
-  --hover-color: #fa9475; /* Lighter hover state */
-  --success-color: #40c057;
-  --warning-color: #fab005;
-  --danger-color: #fa5252;
-  --bg-color: #1e1e2e;
-  --secondary-bg: #2a2a3c;
-  --border-color: #4c4c63;
-  --text-primary: #e2e8f0;
-  --text-secondary: #a0a0b8;
-}
+@import url("../theme.css");
 
 body {
   width: 360px;
@@ -37,7 +20,11 @@ body {
 
 /* Header Styles */
 .app-header {
-  background: linear-gradient(135deg, #2c3e50, #1a2530);
+  background: linear-gradient(
+    135deg,
+    var(--header-bg-start),
+    var(--header-bg-end)
+  );
   color: white;
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -55,6 +42,7 @@ body {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  filter: var(--logo-filter); /* Apply the logo filter based on theme */
 }
 
 .app-title {

@@ -38,6 +38,7 @@
     }
   ],
   "web_accessible_resources": [
+    "theme.css",
     "data-viewer/data-viewer.html",
     "data-viewer/data-viewer.js",
     "data-viewer/data-viewer.css",

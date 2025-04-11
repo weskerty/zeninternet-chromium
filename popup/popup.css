@@ -29,7 +29,7 @@ body {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow);
-  position: relative; /* Add this for positioning the whats-new button */
+  position: relative;
 }
 
 .logo-container {
@@ -42,7 +42,7 @@ body {
   width: 32px;
   height: 32px;
   object-fit: contain;
-  filter: var(--logo-filter); /* Apply the logo filter based on theme */
+  filter: var(--logo-filter);
 }
 
 .app-title {
@@ -392,9 +392,9 @@ input:checked + .slider:before {
 
 /* Current site highlighting */
 .current-site {
-  background-color: rgba(229, 152, 102, 0.1); /* Subtle orange background */
-  border-left: 3px solid var(--accent-color); /* Orange accent bar */
-  padding-left: 9px !important; /* Compensate for the border */
+  background-color: rgba(229, 152, 102, 0.1);
+  border-left: 3px solid var(--accent-color);
+  padding-left: 9px !important;
 }
 
 /* Mode Indicator */

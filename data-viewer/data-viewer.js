@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.close();
   });
 
-  // Event listener for delete all data button - Fixed implementation
+  // Event listener for delete all data button
   deleteAllButton.addEventListener("click", function () {
     if (
       confirm(

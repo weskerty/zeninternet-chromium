@@ -23,8 +23,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Event listener for delete all data button - Fixed implementation
-  deleteAllButton.addEventListener("click", function() {
-    if (confirm("WARNING: This will delete ALL extension data including settings, website styles, and preferences. This action cannot be undone!\n\nAre you sure you want to proceed?")) {
+  deleteAllButton.addEventListener("click", function () {
+    if (
+      confirm(
+        "WARNING: This will delete ALL extension data including settings, website styles, and preferences. This action cannot be undone!\n\nAre you sure you want to proceed?"
+      )
+    ) {
       deleteAllData();
     }
   });
@@ -33,10 +37,12 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       // Clear all storage data
       await browser.storage.local.clear();
-      
+
       // Show confirmation message
-      alert("All data has been deleted successfully. The page will now reload.");
-      
+      alert(
+        "All data has been deleted successfully. The page will now reload."
+      );
+
       // Reload the page to show empty state
       window.location.reload();
     } catch (error) {
@@ -132,10 +138,18 @@ document.addEventListener("DOMContentLoaded", function () {
     // Add Clear List button
     if (skipList.length > 0) {
       const clearListButton = document.createElement("button");
-      clearListButton.classList.add("action-button", "secondary", "clear-list-button");
+      clearListButton.classList.add(
+        "action-button",
+        "secondary",
+        "clear-list-button"
+      );
       clearListButton.innerHTML = '<i class="fas fa-trash"></i> Clear List';
-      clearListButton.addEventListener("click", function() {
-        if (confirm(`Are you sure you want to clear the entire ${modeType} list? This will affect how styling is applied to websites.`)) {
+      clearListButton.addEventListener("click", function () {
+        if (
+          confirm(
+            `Are you sure you want to clear the entire ${modeType} list? This will affect how styling is applied to websites.`
+          )
+        ) {
           clearSkipList();
         }
       });
@@ -178,7 +192,9 @@ document.addEventListener("DOMContentLoaded", function () {
       loadAllData(); // Reload data to reflect changes
     } catch (error) {
       console.error("Error clearing skip list:", error);
-      alert("An error occurred while trying to clear the list: " + error.message);
+      alert(
+        "An error occurred while trying to clear the list: " + error.message
+      );
     }
   }
 
@@ -286,7 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const domainName = siteName.startsWith("+")
         ? siteName.slice(1)
         : siteName;
-      const settingsData = 
+      const settingsData =
         siteSettings[domainName] || siteSettings[`www.${domainName}`] || {};
 
       header.innerHTML = `

@@ -359,8 +359,8 @@ body {
 .danger-zone {
   margin-top: 24px;
   padding: 16px;
-  background-color: rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.3);
+  background-color: var(--danger-bg-color);
+  border: 1px solid var(--danger-border-color);
   border-radius: var(--radius-md);
 }
 
@@ -380,11 +380,35 @@ body {
 .action-button.danger {
   background-color: var(--danger-color);
   color: white;
+  border: none;
+  padding: 10px 16px;
 }
 
 .action-button.danger:hover {
-  background-color: #e03444;
+  background-color: var(--danger-hover-color);
   box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
+}
+
+/* Ensure the delete button has proper dimensions and appearance */
+#delete-all-data {
+  min-width: 160px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+#delete-all-data i {
+  font-size: 14px;
+}
+
+/* Override any potential conflicting styles */
+.action-button.danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Responsive adjustments */

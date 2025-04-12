@@ -1,6 +1,22 @@
 /* Data Viewer specific styles */
 @import url("../theme.css");
 
+/* Toggle setting container style */
+.toggle-setting-container {
+  background-color: var(--secondary-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 24px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.setting-description {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding-left: 58px;
+}
+
 /* General layout adjustments */
 .app-content {
   max-width: 960px;

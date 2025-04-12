@@ -484,3 +484,28 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   margin-left: 8px;
 }
+
+/* Add these styles at the end of the file */
+
+/* Overridden feature styles */
+.overridden-feature {
+  opacity: 0.7;
+  position: relative;
+}
+
+.overridden-label {
+  color: var(--warning-color);
+  font-size: 11px;
+  font-style: italic;
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+.disabled-toggle .slider {
+  background-color: var(--border-color) !important;
+  cursor: not-allowed;
+}
+
+.disabled-toggle input:checked + .slider {
+  background-color: rgba(var(--accent-color), 0.5) !important;
+}

@@ -189,11 +189,20 @@ async function injectCSS(hostname, features) {
   if (!features) return;
 
   const siteKey = `transparentZenSettings.${hostname}`;
+  const settings = await browser.storage.local.get("transparentZenSettings");
+  const globalSettings = settings.transparentZenSettings || {};
   const siteData = await browser.storage.local.get(siteKey);
   const featureSettings = siteData[siteKey] || {};
 
   let combinedCSS = "";
   for (const [feature, css] of Object.entries(features)) {
+    // Skip any transparency feature if disableTransparency is enabled globally
+    if (globalSettings.disableTransparency && feature.toLowerCase().includes("transparency")) {
+      if (logging) console.log(`Skipping transparency feature: ${feature}`);
+      continue;
+    }
+    
+    // Apply the feature if it's not explicitly disabled
     if (featureSettings[feature] !== false) {
       combinedCSS += css + "\n";
     }

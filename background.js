@@ -238,12 +238,20 @@ async function applyCSSToTab(tab) {
 async function applyCSS(tabId, hostname, features) {
   if (!features) return;
 
+  const settingsData = await browser.storage.local.get("transparentZenSettings");
+  const globalSettings = settingsData.transparentZenSettings || {};
   const siteKey = `transparentZenSettings.${hostname}`;
   const siteData = await browser.storage.local.get(siteKey);
   const featureSettings = siteData[siteKey] || {};
 
   let combinedCSS = "";
   for (const [feature, css] of Object.entries(features)) {
+    // Skip any transparency feature if disableTransparency is enabled globally
+    if (globalSettings.disableTransparency && feature.toLowerCase().includes("transparency")) {
+      if (logging) console.log(`Skipping transparency feature: ${feature}`);
+      continue;
+    }
+    
     if (featureSettings[feature] !== false) {
       combinedCSS += css + "\n";
     }

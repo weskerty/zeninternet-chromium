@@ -92,20 +92,36 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
 
 // Get appropriate styles for a hostname based on all rules
 async function getStylesForHostname(hostname, settings) {
-  // Check for exact matches
+  console.log("DEBUG: Finding styles for hostname:", hostname);
+
+  // Check for exact matches first (highest priority)
   if (cssCache.has(hostname)) {
+    console.log("DEBUG: Found exact hostname match in cache");
     return cssCache.get(hostname);
   } else if (cssCache.has(`www.${hostname}`)) {
+    console.log("DEBUG: Found www prefix match in cache");
     return cssCache.get(`www.${hostname}`);
   } else {
     // Check for wildcard matches (+domain.com)
     for (const [cachedSite, cachedCSS] of cssCache.entries()) {
       if (cachedSite.startsWith("+")) {
         const baseSite = cachedSite.slice(1);
-        if (hostname.endsWith(baseSite)) {
+        // Ensure we're matching with proper domain boundary (dot or exact match)
+        if (hostname === baseSite || hostname.endsWith(`.${baseSite}`)) {
+          console.log(
+            `DEBUG: Found wildcard match: ${cachedSite} for ${hostname}`
+          );
           return cachedCSS;
         }
-      } else if (hostname.endsWith(cachedSite)) {
+      } else if (
+        cachedSite !== hostname &&
+        cachedSite !== `www.${hostname}` &&
+        hostname.endsWith(`.${cachedSite}`)
+      ) {
+        // Only match subdomains, not partial domain names
+        console.log(
+          `DEBUG: Found subdomain match: ${cachedSite} for ${hostname}`
+        );
         return cachedCSS;
       }
     }
@@ -197,35 +213,48 @@ async function applyCSSToTab(tab) {
     // Find the best matching CSS file
     let bestMatch = null;
     let bestMatchLength = 0;
+    let matchType = "none";
 
     for (const key of Object.keys(data.styles?.website || {})) {
       const siteName = key.replace(".css", "");
+
+      // Exact match has highest priority
+      if (hostname === siteName || hostname === `www.${siteName}`) {
+        bestMatch = key;
+        matchType = "exact";
+        console.log("DEBUG: Found exact match:", key);
+        break;
+      }
+
+      // Then check wildcard matches
       if (siteName.startsWith("+")) {
-        const baseSiteName = siteName.slice(1);
+        const baseSite = siteName.slice(1);
+        // Ensure we're matching with proper domain boundary
         if (
-          hostname.endsWith(baseSiteName) &&
-          baseSiteName.length > bestMatchLength
+          (hostname === baseSite || hostname.endsWith(`.${baseSite}`)) &&
+          baseSite.length > bestMatchLength
         ) {
           bestMatch = key;
-          bestMatchLength = baseSiteName.length;
+          bestMatchLength = baseSite.length;
+          matchType = "wildcard";
           console.log(
             "DEBUG: Found wildcard match:",
             key,
             "with length",
-            baseSiteName.length
+            baseSite.length
           );
         }
-      } else if (hostname === siteName || hostname === `www.${siteName}`) {
-        // Exact match has priority
-        bestMatch = key;
-        console.log("DEBUG: Found exact match:", key);
-        break;
-      } else if (
-        hostname.endsWith(siteName) &&
+      }
+      // Last, check subdomain matches with proper domain boundary
+      else if (
+        hostname !== siteName &&
+        hostname !== `www.${siteName}` &&
+        hostname.endsWith(`.${siteName}`) &&
         siteName.length > bestMatchLength
       ) {
         bestMatch = key;
         bestMatchLength = siteName.length;
+        matchType = "subdomain";
         console.log(
           "DEBUG: Found domain suffix match:",
           key,
@@ -237,7 +266,7 @@ async function applyCSSToTab(tab) {
 
     // If we found a direct match, use it
     if (bestMatch) {
-      console.log("DEBUG: Using direct match:", bestMatch);
+      console.log("DEBUG: Using match:", bestMatch, "of type:", matchType);
       await applyCSS(tab.id, hostname, data.styles.website[bestMatch]);
       return;
     } else {

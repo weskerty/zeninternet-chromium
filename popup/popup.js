@@ -331,12 +331,21 @@ new (class ExtensionPopup {
   isCurrentSite(siteName) {
     if (logging) console.log("isCurrentSite called with", siteName);
     if (!this.currentSiteHostname) return false;
-    if (siteName.startsWith("+")) {
-      const baseSiteName = siteName.slice(1);
-      return this.currentSiteHostname.endsWith(baseSiteName);
-    }
+
+    // Exact match has priority
     if (this.currentSiteHostname === siteName) return true;
     if (this.currentSiteHostname === `www.${siteName}`) return true;
+
+    // Wildcard match (with proper domain boundary)
+    if (siteName.startsWith("+")) {
+      const baseSiteName = siteName.slice(1);
+      return (
+        this.currentSiteHostname === baseSiteName ||
+        this.currentSiteHostname.endsWith(`.${baseSiteName}`)
+      );
+    }
+
+    // Don't match partial domain names
     return false;
   }
 
@@ -413,25 +422,38 @@ new (class ExtensionPopup {
 
       for (const site of Object.keys(styles)) {
         const siteName = site.replace(/\.css$/, "");
+
+        // Exact match has highest priority
+        if (hostname === siteName || hostname === `www.${siteName}`) {
+          bestMatch = site;
+          if (logging) console.log("Popup: Found exact match:", site);
+          break;
+        }
+
+        // Then check wildcard matches
         if (siteName.startsWith("+")) {
           const baseSiteName = siteName.slice(1);
+          // Ensure we're matching with proper domain boundary
           if (
-            hostname.endsWith(baseSiteName) &&
+            (hostname === baseSiteName ||
+              hostname.endsWith(`.${baseSiteName}`)) &&
             baseSiteName.length > bestMatchLength
           ) {
             bestMatch = site;
             bestMatchLength = baseSiteName.length;
+            if (logging) console.log("Popup: Found wildcard match:", site);
           }
-        } else if (hostname === siteName || hostname === `www.${siteName}`) {
-          // Exact match has priority
-          bestMatch = site;
-          break;
-        } else if (
-          hostname.endsWith(siteName) &&
+        }
+        // Last, check subdomain matches with proper domain boundary
+        else if (
+          hostname !== siteName &&
+          hostname !== `www.${siteName}` &&
+          hostname.endsWith(`.${siteName}`) &&
           siteName.length > bestMatchLength
         ) {
           bestMatch = site;
           bestMatchLength = siteName.length;
+          if (logging) console.log("Popup: Found subdomain match:", site);
         }
       }
 

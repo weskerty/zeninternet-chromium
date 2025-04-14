@@ -334,11 +334,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Get site settings if available
       const siteName = website.replace(".css", "");
-      const domainName = siteName.startsWith("+")
-        ? siteName.slice(1)
-        : siteName;
-      const settingsData =
-        siteSettings[domainName] || siteSettings[`www.${domainName}`] || {};
+      let domainName;
+      // Declare settingsData at a higher scope so it's accessible throughout the function
+      let settingsData = {};
+
+      // Handle wildcard sites correctly
+      if (siteName.startsWith("+")) {
+        domainName = siteName.slice(1);
+        // For wildcard sites, we need to find any matching domain in settings
+        const matchingDomains = Object.keys(siteSettings).filter(
+          (domain) => domain === domainName || domain.endsWith(`.${domainName}`)
+        );
+
+        // Use the first matching domain's settings if any found
+        const settingsKey =
+          matchingDomains.length > 0 ? matchingDomains[0] : null;
+        settingsData = settingsKey ? siteSettings[settingsKey] : {};
+      } else {
+        // For direct domains, just check the domain and www.domain
+        domainName = siteName;
+        settingsData =
+          siteSettings[domainName] || siteSettings[`www.${domainName}`] || {};
+      }
 
       header.innerHTML = `
         <div class="website-header-content">

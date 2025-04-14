@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const backButton = document.getElementById("back-button");
   const deleteAllButton = document.getElementById("delete-all-data");
   const versionElement = document.getElementById("addon-version");
-  const disableTransparencyToggle = document.getElementById("disable-transparency");
+  const disableTransparencyToggle = document.getElementById(
+    "disable-transparency"
+  );
 
   // Load and display the data
   loadAllData();
@@ -24,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Event listener for disable transparency toggle
-  disableTransparencyToggle.addEventListener("change", function() {
+  disableTransparencyToggle.addEventListener("change", function () {
     saveTransparencySettings(this.checked);
   });
 
@@ -61,15 +63,22 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
       const settings = data[BROWSER_STORAGE_KEY] || {};
-      
+
       // Update the disableTransparency setting
       settings.disableTransparency = isDisabled;
-      
+
       await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      alert(`Transparency has been ${isDisabled ? 'disabled' : 'enabled'} globally. This will affect all websites.`);
+      alert(
+        `Transparency has been ${
+          isDisabled ? "disabled" : "enabled"
+        } globally. This will affect all websites.`
+      );
     } catch (error) {
       console.error("Error saving transparency settings:", error);
-      alert("An error occurred while saving the transparency setting: " + error.message);
+      alert(
+        "An error occurred while saving the transparency setting: " +
+          error.message
+      );
     }
   }
 
@@ -86,9 +95,10 @@ document.addEventListener("DOMContentLoaded", function () {
       // Display global settings
       const globalSettings = data[BROWSER_STORAGE_KEY] || {};
       displayGlobalSettings(globalSettings);
-      
+
       // Set the disable transparency toggle state
-      disableTransparencyToggle.checked = globalSettings.disableTransparency || false;
+      disableTransparencyToggle.checked =
+        globalSettings.disableTransparency || false;
 
       // Display skip/enable list
       const skipList = data[SKIP_FORCE_THEMING_KEY] || [];

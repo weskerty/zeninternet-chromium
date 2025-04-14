@@ -278,35 +278,42 @@ new (class ExtensionPopup {
 
         this.currentSiteFeatures.appendChild(skipForceThemingToggle);
       }
-      
+
       // Check if transparency is globally disabled
-      const isTransparencyDisabled = this.globalSettings.disableTransparency === true;
-      
+      const isTransparencyDisabled =
+        this.globalSettings.disableTransparency === true;
+
       for (const [feature, css] of Object.entries(features)) {
         const displayFeatureName = feature.includes("-")
           ? feature.split("-")[1]
           : feature;
 
         const isChecked = this.siteSettings[feature] ?? true;
-        const isTransparencyFeature = feature.toLowerCase().includes("transparency");
+        const isTransparencyFeature = feature
+          .toLowerCase()
+          .includes("transparency");
         const isOverridden = isTransparencyDisabled && isTransparencyFeature;
 
         const featureToggle = document.createElement("div");
         featureToggle.className = "feature-toggle";
-        
+
         // Create the base toggle HTML
         let toggleHTML = `
-          <span class="feature-name">${displayFeatureName}${isOverridden ? ' <span class="overridden-label">[overridden]</span>' : ''}</span>
-          <label class="toggle-switch ${isOverridden ? 'disabled-toggle' : ''}">
+          <span class="feature-name">${displayFeatureName}${
+          isOverridden
+            ? ' <span class="overridden-label">[overridden]</span>'
+            : ""
+        }</span>
+          <label class="toggle-switch ${isOverridden ? "disabled-toggle" : ""}">
             <input type="checkbox" name="${currentSiteKey}|${feature}" ${
           isChecked ? "checked" : ""
         } ${isOverridden ? "disabled" : ""}>
             <span class="slider round"></span>
           </label>
         `;
-        
+
         featureToggle.innerHTML = toggleHTML;
-        
+
         // If this is a transparency feature and it's disabled globally, add a class
         if (isOverridden) {
           featureToggle.classList.add("overridden-feature");

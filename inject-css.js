@@ -51,7 +51,9 @@ function applyStyles(css) {
   try {
     // For immediate application, directly set textContent
     // as this is more reliably applied in early document stages
-    styleElement.textContent = css.trim() + `
+    styleElement.textContent =
+      css.trim() +
+      `
 /* Remove FOUC prevention once styles are loaded */
 body { opacity: 1 !important; }`;
 
@@ -197,11 +199,14 @@ async function injectCSS(hostname, features) {
   let combinedCSS = "";
   for (const [feature, css] of Object.entries(features)) {
     // Skip any transparency feature if disableTransparency is enabled globally
-    if (globalSettings.disableTransparency && feature.toLowerCase().includes("transparency")) {
+    if (
+      globalSettings.disableTransparency &&
+      feature.toLowerCase().includes("transparency")
+    ) {
       if (logging) console.log(`Skipping transparency feature: ${feature}`);
       continue;
     }
-    
+
     // Apply the feature if it's not explicitly disabled
     if (featureSettings[feature] !== false) {
       combinedCSS += css + "\n";

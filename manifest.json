@@ -29,14 +29,6 @@
     "scripts": ["background.js"],
     "persistent": true
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["inject-css.js"],
-      "run_at": "document_start",
-      "all_frames": true
-    }
-  ],
   "web_accessible_resources": [
     "theme.css",
     "data-viewer/data-viewer.html",

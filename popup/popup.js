@@ -238,13 +238,38 @@ new (class ExtensionPopup {
         this.isCurrentSite(site.replace(".css", ""))
       );
 
+      // Check if we have any styles at all, including example.com
+      const hasExampleSite = "example.com.css" in styles;
+      const hasNoStyles = Object.keys(styles).length === 0;
+
+      // Disable the force styling toggle if we found a theme for this site
+      if (currentSiteKey && currentSiteKey !== "example.com.css") {
+        // We found a specific theme for this site, no need for force styling
+        // Disable the skip/enable toggle
+        this.skipForceThemingSwitch.disabled = true;
+        this.siteToggleLabel.innerHTML = `${
+          this.whitelistModeSwitch.checked ? "Enable" : "Skip Forcing"
+        } for this Site <span class="overridden-label">×</span>`;
+      } else {
+        // No specific theme found, enable the toggle
+        this.skipForceThemingSwitch.disabled = false;
+        this.siteToggleLabel.innerHTML = this.whitelistModeSwitch.checked
+          ? "Enable for this Site"
+          : "Skip Forcing for this Site";
+      }
+
       if (!currentSiteKey && this.globalSettings.forceStyling) {
         currentSiteKey = Object.keys(styles).find(
           (site) => site === "example.com.css"
         );
       }
 
-      if (!currentSiteKey || currentSiteKey === "example.com.css") {
+      // Only show the request theme button if we have at least the example.com style
+      // but no specific theme for this site
+      if (
+        (!currentSiteKey || currentSiteKey === "example.com.css") &&
+        hasExampleSite
+      ) {
         const requestThemeButton = document.createElement("button");
         requestThemeButton.className = "action-button primary";
         requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
@@ -254,6 +279,16 @@ new (class ExtensionPopup {
         });
 
         this.currentSiteFeatures.appendChild(requestThemeButton);
+      } else if (hasNoStyles) {
+        // No styles at all, suggest to fetch first
+        const fetchFirstMessage = document.createElement("div");
+        fetchFirstMessage.className = "toggle-container";
+        fetchFirstMessage.innerHTML = `
+          <div class="actions secondary">
+            <span class="toggle-label warning">Please fetch styles first using the "Refetch latest styles" button</span>
+          </div>
+        `;
+        this.currentSiteFeatures.appendChild(fetchFirstMessage);
       }
 
       if (!currentSiteKey) {
@@ -267,12 +302,12 @@ new (class ExtensionPopup {
 
       const features = styles[currentSiteKey];
 
-      if (!currentSiteKey || currentSiteKey === "example.com.css") {
+      if (currentSiteKey === "example.com.css") {
         const skipForceThemingToggle = document.createElement("div");
         skipForceThemingToggle.className = "toggle-container";
         skipForceThemingToggle.innerHTML = `
         <div class="actions secondary">
-          <span class="toggle-label warning">No themes found for this website ;(</span>
+          <span class="toggle-label warning">No specific theme found for this website. Using default styling.</span>
         </div>
         `;
 

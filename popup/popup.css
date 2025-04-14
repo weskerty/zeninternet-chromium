@@ -509,3 +509,18 @@ input:checked + .slider:before {
 .disabled-toggle input:checked + .slider {
   background-color: rgba(var(--accent-color), 0.5) !important;
 }
+
+/* Add these styles for the disabled toggle */
+.toggle-switch.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-switch.disabled .slider {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+}
+
+.toggle-switch.disabled input:checked + .slider {
+  background-color: rgba(249, 135, 100, 0.5);
+}

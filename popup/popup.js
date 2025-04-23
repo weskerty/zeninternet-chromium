@@ -50,6 +50,11 @@ new (class ExtensionPopup {
     );
     this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
 
+    // Add toggle features button event listener
+    document
+      .getElementById("toggle-features")
+      ?.addEventListener("click", this.toggleFeatures.bind(this));
+
     this.whitelistModeSwitch.addEventListener(
       "change",
       this.handleWhitelistModeChange.bind(this)
@@ -242,8 +247,40 @@ new (class ExtensionPopup {
       const hasExampleSite = "example.com.css" in styles;
       const hasNoStyles = Object.keys(styles).length === 0;
 
+      // Only collapse if we found a specific theme for this site
+      // Otherwise keep it expanded to show the request theme button
+      const hasSpecificTheme =
+        currentSiteKey && currentSiteKey !== "example.com.css";
+
+      // Apply collapsed class based on whether we have a theme
+      const featuresList = document.getElementById("current-site-toggles");
+      const actionsContainer = document.getElementById("current-site-actions");
+
+      if (hasSpecificTheme) {
+        featuresList.classList.add("collapsed");
+        if (actionsContainer) actionsContainer.classList.add("collapsed");
+
+        // Update the icon to show collapsed state
+        const toggleButton = document.getElementById("toggle-features");
+        if (toggleButton) {
+          const icon = toggleButton.querySelector("i");
+          if (icon) icon.className = "fas fa-chevron-down";
+        }
+      } else {
+        // Keep expanded when no theme was found or using default
+        featuresList.classList.remove("collapsed");
+        if (actionsContainer) actionsContainer.classList.remove("collapsed");
+
+        // Update the icon to show expanded state
+        const toggleButton = document.getElementById("toggle-features");
+        if (toggleButton) {
+          const icon = toggleButton.querySelector("i");
+          if (icon) icon.className = "fas fa-chevron-up";
+        }
+      }
+
       // Disable the force styling toggle if we found a theme for this site
-      if (currentSiteKey && currentSiteKey !== "example.com.css") {
+      if (hasSpecificTheme) {
         // We found a specific theme for this site, no need for force styling
         // Disable the skip/enable toggle
         this.skipForceThemingSwitch.disabled = true;
@@ -635,5 +672,28 @@ new (class ExtensionPopup {
     browser.tabs.create({
       url: "https://addons.mozilla.org/en-US/firefox/addon/zen-internet/versions/",
     });
+  }
+
+  // Toggle features section visibility
+  toggleFeatures() {
+    const featuresList = document.getElementById("current-site-toggles");
+    const actionsContainer = document.getElementById("current-site-actions");
+    const toggleButton = document.getElementById("toggle-features");
+
+    featuresList.classList.toggle("collapsed");
+    if (actionsContainer) {
+      actionsContainer.classList.toggle(
+        "collapsed",
+        featuresList.classList.contains("collapsed")
+      );
+    }
+
+    // Update the icon
+    const icon = toggleButton.querySelector("i");
+    if (featuresList.classList.contains("collapsed")) {
+      icon.className = "fas fa-chevron-down";
+    } else {
+      icon.className = "fas fa-chevron-up";
+    }
   }
 })();

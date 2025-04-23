@@ -32,24 +32,18 @@
 
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
-        <h2 class="section-title">Current Site Features</h2>
-        <div id="current-site-toggles" class="features-list"></div>
-        <div class="actions">
+        <button class="collapsible-button" id="toggle-features">
+          <span>Current Site Features</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div id="current-site-toggles" class="features-list collapsed"></div>
+        <div class="actions" id="current-site-actions">
           <!-- reload botton -->
           <button id="reload" class="action-button secondary">
             Reload to apply <i class="fas fa-sync-alt"></i>
           </button>
         </div>
       </div>
-
-      <!-- All Websites Section (Collapsible) -->
-      <!-- <div class="websites-container">
-        <button class="collapsible-button" id="toggle-websites">
-          <span>All Websites</span>
-          <i class="fas fa-chevron-down"></i>
-        </button>
-        <div id="websites-list" class="websites-list collapsed"></div>
-      </div> -->
 
       <div class="actions">
         <button id="refetch-css" class="action-button primary">
@@ -91,7 +85,8 @@
 
       <div class="actions">
         <button id="view-data" class="action-button secondary">
-          <i class="fas fa-database"></i> View All Stored Data
+          <i class="fa-solid fa-gear"></i>
+          Advanced Settings
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zen Internet",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "description": "Inject custom css from my repository in real time",
   "browser_specific_settings": {
     "gecko": {

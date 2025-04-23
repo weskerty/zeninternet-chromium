@@ -593,7 +593,7 @@ new (class ExtensionPopup {
     const version = manifest.version;
     document.getElementById(
       "addon-version"
-    ).textContent = `Version: ${version}`;
+    ).textContent = `v${version}`;
   }
 
   setupAutoUpdate() {

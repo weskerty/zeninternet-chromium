@@ -1,6 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import url("../theme.css");
 
+@font-face {
+  font-family: "sugar-magic";
+  src: url("../assets/fonts/sugarmagicpersonaluseonly-jemyo.otf")
+    format("opentype");
+}
+
 body {
   width: 360px;
   margin: 0;
@@ -30,12 +36,15 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow);
   position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .logo-img {
@@ -46,16 +55,24 @@ body {
 }
 
 .app-title {
+  font-family: "sugar-magic", sans-serif;
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+  font-size: 30px;
 }
 
-.author {
-  font-size: 12px;
-  margin-top: 4px;
-  opacity: 0.9;
+#header-container{
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  width: 100%;
+}
+
+.miniheader{
+  margin-top: 2px;
+  font-size: 11px;
+  display: flex;
+  gap: 4px;
+  flex-direction: row;
 }
 
 .author a {
@@ -70,9 +87,9 @@ body {
 
 /* What's New Button */
 .whats-new-button {
-  position: absolute;
+  /* position: absolute;
   top: 16px;
-  right: 16px;
+  right: 16px; */
   background: none;
   border: none;
   color: white;
@@ -474,7 +491,6 @@ input:checked + .slider:before {
   margin-right: 4px;
 }
 
-#addon-version,
 #last-fetched-time {
   font-size: 0.75em;
 }

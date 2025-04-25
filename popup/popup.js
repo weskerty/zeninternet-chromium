@@ -1,6 +1,11 @@
 let logging = false;
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 
+// Helper function to normalize hostnames by removing www. prefix
+function normalizeHostname(hostname) {
+  return hostname.startsWith("www.") ? hostname.substring(4) : hostname;
+}
+
 new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";
   globalSettings = {};
@@ -10,6 +15,7 @@ new (class ExtensionPopup {
   websitesList = document.getElementById("websites-list");
   currentSiteFeatures = document.getElementById("current-site-toggles");
   currentSiteHostname = "";
+  normalizedCurrentSiteHostname = "";
   autoUpdateSwitch = document.getElementById("auto-update");
   lastFetchedTime = document.getElementById("last-fetched-time");
   forceStylingSwitch = document.getElementById("force-styling");
@@ -86,7 +92,17 @@ new (class ExtensionPopup {
       if (tabs.length > 0) {
         const url = new URL(tabs[0].url);
         this.currentSiteHostname = url.hostname;
-        console.info("Current site hostname:", this.currentSiteHostname);
+        // Store normalized hostname
+        this.normalizedCurrentSiteHostname = normalizeHostname(
+          this.currentSiteHostname
+        );
+        console.info(
+          "Current site hostname:",
+          this.currentSiteHostname,
+          "(normalized:",
+          this.normalizedCurrentSiteHostname,
+          ")"
+        );
       }
     } catch (error) {
       console.error("Error getting current tab info:", error);
@@ -152,9 +168,16 @@ new (class ExtensionPopup {
 
     // Load site-specific settings if on a specific site
     if (this.currentSiteHostname) {
-      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
-      const siteData = await browser.storage.local.get(siteKey);
-      this.siteSettings = siteData[siteKey] || {};
+      const normalizedSiteKey = `${this.BROWSER_STORAGE_KEY}.${this.normalizedCurrentSiteHostname}`;
+      const originalSiteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+
+      const normalizedData = await browser.storage.local.get(normalizedSiteKey);
+      const originalData = await browser.storage.local.get(originalSiteKey);
+
+      this.siteSettings =
+        normalizedData[normalizedSiteKey] ||
+        originalData[originalSiteKey] ||
+        {};
       await this.loadCurrentSiteFeatures();
     }
   }
@@ -402,19 +425,48 @@ new (class ExtensionPopup {
 
   isCurrentSite(siteName) {
     if (logging) console.log("isCurrentSite called with", siteName);
-    if (!this.currentSiteHostname) return false;
+    if (!this.normalizedCurrentSiteHostname) return false;
+
+    // Normalize the site name too
+    const normalizedSiteName = normalizeHostname(siteName);
 
     // Exact match has priority
-    if (this.currentSiteHostname === siteName) return true;
-    if (this.currentSiteHostname === `www.${siteName}`) return true;
+    if (this.normalizedCurrentSiteHostname === normalizedSiteName) return true;
 
-    // Wildcard match (with proper domain boundary)
+    // TLD prefix match (match subdomain regardless of TLD)
     if (siteName.startsWith("+")) {
       const baseSiteName = siteName.slice(1);
+      const normalizedBaseSiteName = normalizeHostname(baseSiteName);
       return (
-        this.currentSiteHostname === baseSiteName ||
-        this.currentSiteHostname.endsWith(`.${baseSiteName}`)
+        this.normalizedCurrentSiteHostname === normalizedBaseSiteName ||
+        this.normalizedCurrentSiteHostname.endsWith(
+          `.${normalizedBaseSiteName}`
+        )
       );
+    }
+
+    // TLD suffix match (match domain regardless of TLD)
+    if (siteName.startsWith("-")) {
+      const baseSiteName = siteName.slice(1);
+
+      // Extract domain name without the TLD
+      // For site name: Use everything before the last dot(s)
+      const cachedDomain = baseSiteName.split(".").slice(0, -1).join(".");
+
+      // For current hostname: Similarly extract the domain without the TLD
+      const hostParts = this.currentSiteHostname.split(".");
+      const hostDomain =
+        hostParts.length > 1
+          ? hostParts.slice(0, -1).join(".")
+          : this.currentSiteHostname;
+
+      if (logging)
+        console.log(
+          `isCurrentSite comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
+        );
+
+      // Match if the domain part (without TLD) matches
+      return cachedDomain && hostDomain && hostDomain === cachedDomain;
     }
 
     // Don't match partial domain names
@@ -472,6 +524,7 @@ new (class ExtensionPopup {
     if (logging) console.log("applyCSSToTab called with", tab);
     const url = new URL(tab.url);
     const hostname = url.hostname;
+    const normalizedHostname = normalizeHostname(hostname);
 
     try {
       // Try to remove any existing CSS first
@@ -494,9 +547,10 @@ new (class ExtensionPopup {
 
       for (const site of Object.keys(styles)) {
         const siteName = site.replace(/\.css$/, "");
+        const normalizedSiteName = normalizeHostname(siteName);
 
         // Exact match has highest priority
-        if (hostname === siteName || hostname === `www.${siteName}`) {
+        if (normalizedHostname === normalizedSiteName) {
           bestMatch = site;
           if (logging) console.log("Popup: Found exact match:", site);
           break;
@@ -505,26 +559,54 @@ new (class ExtensionPopup {
         // Then check wildcard matches
         if (siteName.startsWith("+")) {
           const baseSiteName = siteName.slice(1);
+          const normalizedBaseSiteName = normalizeHostname(baseSiteName);
           // Ensure we're matching with proper domain boundary
           if (
-            (hostname === baseSiteName ||
-              hostname.endsWith(`.${baseSiteName}`)) &&
-            baseSiteName.length > bestMatchLength
+            (normalizedHostname === normalizedBaseSiteName ||
+              normalizedHostname.endsWith(`.${normalizedBaseSiteName}`)) &&
+            normalizedBaseSiteName.length > bestMatchLength
           ) {
             bestMatch = site;
-            bestMatchLength = baseSiteName.length;
+            bestMatchLength = normalizedBaseSiteName.length;
             if (logging) console.log("Popup: Found wildcard match:", site);
+          }
+        }
+        // Check TLD suffix matches (-domain.com)
+        else if (siteName.startsWith("-")) {
+          const baseSiteName = siteName.slice(1);
+
+          // Extract domain name without the TLD
+          // For site name: Use everything before the last dot(s)
+          const cachedDomain = baseSiteName.split(".").slice(0, -1).join(".");
+
+          // For hostname: Similarly extract the domain without the TLD
+          const hostParts = hostname.split(".");
+          const hostDomain =
+            hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
+
+          if (logging)
+            console.log(
+              `Popup comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
+            );
+
+          // Match if the domain part (without TLD) matches
+          if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
+            // Use this match if it's better than what we have
+            if (cachedDomain.length > bestMatchLength) {
+              bestMatch = site;
+              bestMatchLength = cachedDomain.length;
+              if (logging) console.log("Popup: Found TLD suffix match:", site);
+            }
           }
         }
         // Last, check subdomain matches with proper domain boundary
         else if (
-          hostname !== siteName &&
-          hostname !== `www.${siteName}` &&
-          hostname.endsWith(`.${siteName}`) &&
-          siteName.length > bestMatchLength
+          normalizedHostname !== normalizedSiteName &&
+          normalizedHostname.endsWith(`.${normalizedSiteName}`) &&
+          normalizedSiteName.length > bestMatchLength
         ) {
           bestMatch = site;
-          bestMatchLength = siteName.length;
+          bestMatchLength = normalizedSiteName.length;
           if (logging) console.log("Popup: Found subdomain match:", site);
         }
       }
@@ -532,9 +614,11 @@ new (class ExtensionPopup {
       // If we found a direct match, use it
       if (bestMatch) {
         const features = styles[bestMatch];
-        const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
-        const siteData = await browser.storage.local.get(siteStorageKey);
-        const featureSettings = siteData[siteStorageKey] || {};
+        const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
+        const siteData = await browser.storage.local.get(
+          normalizedSiteStorageKey
+        );
+        const featureSettings = siteData[normalizedSiteStorageKey] || {};
 
         let combinedCSS = "";
         for (const [feature, css] of Object.entries(features)) {
@@ -591,9 +675,7 @@ new (class ExtensionPopup {
     if (logging) console.log("displayAddonVersion called");
     const manifest = browser.runtime.getManifest();
     const version = manifest.version;
-    document.getElementById(
-      "addon-version"
-    ).textContent = `v${version}`;
+    document.getElementById("addon-version").textContent = `v${version}`;
   }
 
   setupAutoUpdate() {

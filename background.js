@@ -5,6 +5,11 @@ let logging = true; // Enable logging for debugging
 const cssCache = new Map();
 const activeTabs = new Map();
 
+// Helper function to normalize hostnames by removing www. prefix
+function normalizeHostname(hostname) {
+  return hostname.startsWith("www.") ? hostname.substring(4) : hostname;
+}
+
 // Preload styles for faster injection
 async function preloadStyles() {
   try {
@@ -44,7 +49,9 @@ browser.webNavigation.onBeforeNavigate.addListener((details) => {
     activeTabs.set(details.tabId, details.url);
 
     // Pre-fetch any styling needed for this URL
-    prepareStylesForUrl(new URL(details.url).hostname, details.tabId);
+    const url = new URL(details.url);
+    const normalizedHostname = normalizeHostname(url.hostname);
+    prepareStylesForUrl(normalizedHostname, details.tabId);
   }
 });
 
@@ -53,7 +60,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   if (message.action === "contentScriptReady" && message.hostname) {
     try {
       // Look for cached styles for this hostname or its domain match
-      const hostname = message.hostname;
+      const normalizedHostname = normalizeHostname(message.hostname);
 
       // Get settings to check if styling is enabled
       const settingsData = await browser.storage.local.get(
@@ -63,7 +70,7 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
 
       if (settings.enableStyling === false) return;
 
-      const css = await getStylesForHostname(hostname, settings);
+      const css = await getStylesForHostname(normalizedHostname, settings);
 
       // If we found matching CSS, send it immediately to the content script
       if (css) {
@@ -102,8 +109,9 @@ async function getStylesForHostname(hostname, settings) {
     console.log("DEBUG: Found www prefix match in cache");
     return cssCache.get(`www.${hostname}`);
   } else {
-    // Check for wildcard matches (+domain.com)
+    // Check for wildcard matches (+domain.com) and suffix matches (-domain.com)
     for (const [cachedSite, cachedCSS] of cssCache.entries()) {
+      // Handle wildcard domain prefix matches (+example.com)
       if (cachedSite.startsWith("+")) {
         const baseSite = cachedSite.slice(1);
         // Ensure we're matching with proper domain boundary (dot or exact match)
@@ -113,10 +121,37 @@ async function getStylesForHostname(hostname, settings) {
           );
           return cachedCSS;
         }
-      } else if (
+      }
+      // Handle TLD suffix matches (-domain.com)
+      else if (cachedSite.startsWith("-")) {
+        const baseSite = cachedSite.slice(1);
+
+        // Extract domain name without the TLD
+        // For cached site: Use everything before the last dot(s)
+        const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
+
+        // For hostname: Similarly extract the domain without the TLD
+        const hostParts = hostname.split(".");
+        const hostDomain =
+          hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
+
+        console.log(
+          `DEBUG: Comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
+        );
+
+        if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
+          console.log(
+            `DEBUG: Found TLD suffix match: ${cachedSite} for ${hostname}`
+          );
+          return cachedCSS;
+        }
+      }
+      // Regular subdomain handling (exact match already checked above)
+      else if (
         cachedSite !== hostname &&
         cachedSite !== `www.${hostname}` &&
-        hostname.endsWith(`.${cachedSite}`)
+        hostname.endsWith(`.${cachedSite}`) &&
+        !cachedSite.startsWith("-")
       ) {
         // Only match subdomains, not partial domain names
         console.log(
@@ -182,8 +217,15 @@ async function applyCSSToTab(tab) {
 
   try {
     const url = new URL(tab.url);
-    const hostname = url.hostname;
-    console.log("DEBUG: Processing hostname:", hostname);
+    const originalHostname = url.hostname;
+    const hostname = normalizeHostname(originalHostname);
+    console.log(
+      "DEBUG: Processing hostname:",
+      hostname,
+      "(original:",
+      originalHostname,
+      ")"
+    );
 
     const settings = await browser.storage.local.get("transparentZenSettings");
     const globalSettings = settings.transparentZenSettings || {};
@@ -218,8 +260,11 @@ async function applyCSSToTab(tab) {
     for (const key of Object.keys(data.styles?.website || {})) {
       const siteName = key.replace(".css", "");
 
-      // Exact match has highest priority
-      if (hostname === siteName || hostname === `www.${siteName}`) {
+      // For site names in the styles list, also normalize by removing www. if present
+      const normalizedSiteName = normalizeHostname(siteName);
+
+      // Exact match has highest priority - compare normalized hostnames
+      if (hostname === normalizedSiteName) {
         bestMatch = key;
         matchType = "exact";
         console.log("DEBUG: Found exact match:", key);
@@ -245,21 +290,56 @@ async function applyCSSToTab(tab) {
           );
         }
       }
+      // Check TLD suffix matches (-domain.com) - fixed implementation
+      else if (siteName.startsWith("-")) {
+        const baseSite = siteName.slice(1);
+
+        // Extract domain name without the TLD
+        // For cached site: Use everything before the last dot(s)
+        const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
+
+        // For hostname: Similarly extract the domain without the TLD
+        const hostParts = hostname.split(".");
+        const hostDomain =
+          hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
+
+        console.log(
+          `DEBUG: Comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
+        );
+
+        // Match if the domain part (without TLD) matches
+        if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
+          // Only update if it's a better match (longer domain name part)
+          if (cachedDomain.length > bestMatchLength) {
+            bestMatch = key;
+            bestMatchLength = cachedDomain.length;
+            matchType = "suffix";
+            console.log(
+              "DEBUG: Found TLD suffix match:",
+              key,
+              "for",
+              hostname,
+              "with domain part:",
+              cachedDomain
+            );
+          }
+        }
+      }
       // Last, check subdomain matches with proper domain boundary
       else if (
-        hostname !== siteName &&
-        hostname !== `www.${siteName}` &&
-        hostname.endsWith(`.${siteName}`) &&
-        siteName.length > bestMatchLength
+        hostname !== normalizedSiteName &&
+        hostname.endsWith(`.${normalizedSiteName}`) &&
+        !siteName.startsWith("-") &&
+        normalizedSiteName.length > bestMatchLength
       ) {
         bestMatch = key;
-        bestMatchLength = siteName.length;
+        bestMatchLength = normalizedSiteName.length;
         matchType = "subdomain";
         console.log(
           "DEBUG: Found domain suffix match:",
           key,
           "with length",
-          siteName.length
+          normalizedSiteName.length
         );
       }
     }

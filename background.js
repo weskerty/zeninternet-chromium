@@ -414,11 +414,15 @@ async function applyCSS(tabId, hostname, features) {
     JSON.stringify(globalSettings)
   );
 
-  const siteKey = `transparentZenSettings.${hostname}`;
+  // UPDATED: Use normalized hostname for consistent settings retrieval
+  const normalizedHostname = normalizeHostname(hostname);
+  const siteKey = `transparentZenSettings.${normalizedHostname}`;
   const siteData = await browser.storage.local.get(siteKey);
   const featureSettings = siteData[siteKey] || {};
+
   console.log(
-    "DEBUG: Site-specific settings:",
+    "DEBUG: Site-specific settings from normalized key:",
+    siteKey,
     JSON.stringify(featureSettings)
   );
 

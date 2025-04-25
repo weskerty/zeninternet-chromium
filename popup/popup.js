@@ -168,6 +168,7 @@ new (class ExtensionPopup {
 
     // Load site-specific settings if on a specific site
     if (this.currentSiteHostname) {
+      // Try both normalized and original hostnames for backwards compatibility
       const normalizedSiteKey = `${this.BROWSER_STORAGE_KEY}.${this.normalizedCurrentSiteHostname}`;
       const originalSiteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
 
@@ -178,6 +179,20 @@ new (class ExtensionPopup {
         normalizedData[normalizedSiteKey] ||
         originalData[originalSiteKey] ||
         {};
+
+      // Make sure we always save to the normalized key going forward
+      if (!normalizedData[normalizedSiteKey] && originalData[originalSiteKey]) {
+        // Migrate settings from original to normalized key
+        await browser.storage.local.set({
+          [normalizedSiteKey]: this.siteSettings,
+        });
+        if (logging)
+          console.log(
+            "Migrated settings to normalized key:",
+            normalizedSiteKey
+          );
+      }
+
       await this.loadCurrentSiteFeatures();
     }
   }
@@ -201,7 +216,8 @@ new (class ExtensionPopup {
 
     // Save site-specific settings
     if (this.currentSiteHostname) {
-      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+      // UPDATED: Always save site settings using the normalized hostname
+      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.normalizedCurrentSiteHostname}`;
       const featureSettings = {};
 
       this.currentSiteFeatures
@@ -217,7 +233,8 @@ new (class ExtensionPopup {
           [siteKey]: featureSettings,
         })
         .then(() => {
-          if (logging) console.log("Site settings saved");
+          if (logging)
+            console.log("Site settings saved to normalized key:", siteKey);
           this.updateActiveTabStyling();
         });
     }
@@ -262,9 +279,25 @@ new (class ExtensionPopup {
 
       this.currentSiteFeatures.innerHTML = "";
 
+      // Debug which hostname we're searching for
+      console.log(
+        "Looking for styles for:",
+        this.normalizedCurrentSiteHostname,
+        "(original:",
+        this.currentSiteHostname,
+        ")"
+      );
+
+      // Find any matching style for this site
       let currentSiteKey = Object.keys(styles).find((site) =>
         this.isCurrentSite(site.replace(".css", ""))
       );
+
+      if (logging && currentSiteKey) {
+        console.log("Found matching site key:", currentSiteKey);
+      } else if (logging) {
+        console.log("No matching site key found");
+      }
 
       // Check if we have any styles at all, including example.com
       const hasExampleSite = "example.com.css" in styles;
@@ -356,9 +389,11 @@ new (class ExtensionPopup {
       }
 
       // Load site-specific settings before creating toggles
-      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.currentSiteHostname}`;
+      // UPDATED: Use normalized hostname for consistent settings retrieval
+      const siteKey = `${this.BROWSER_STORAGE_KEY}.${this.normalizedCurrentSiteHostname}`;
       const siteData = await browser.storage.local.get(siteKey);
       this.siteSettings = siteData[siteKey] || {};
+      console.log("Loaded site settings from:", siteKey, this.siteSettings);
 
       const features = styles[currentSiteKey];
 
@@ -430,19 +465,30 @@ new (class ExtensionPopup {
     // Normalize the site name too
     const normalizedSiteName = normalizeHostname(siteName);
 
-    // Exact match has priority
-    if (this.normalizedCurrentSiteHostname === normalizedSiteName) return true;
+    if (logging)
+      console.log(
+        `Comparing: current=${this.normalizedCurrentSiteHostname}, style=${normalizedSiteName}`
+      );
 
-    // TLD prefix match (match subdomain regardless of TLD)
+    // Exact match has priority
+    if (this.normalizedCurrentSiteHostname === normalizedSiteName) {
+      if (logging) console.log("✓ Exact match!");
+      return true;
+    }
+
+    // Wildcard match (with proper domain boundary)
     if (siteName.startsWith("+")) {
       const baseSiteName = siteName.slice(1);
       const normalizedBaseSiteName = normalizeHostname(baseSiteName);
-      return (
+
+      const isMatch =
         this.normalizedCurrentSiteHostname === normalizedBaseSiteName ||
         this.normalizedCurrentSiteHostname.endsWith(
           `.${normalizedBaseSiteName}`
-        )
-      );
+        );
+
+      if (isMatch && logging) console.log("✓ Wildcard match!");
+      return isMatch;
     }
 
     // TLD suffix match (match domain regardless of TLD)
@@ -454,11 +500,11 @@ new (class ExtensionPopup {
       const cachedDomain = baseSiteName.split(".").slice(0, -1).join(".");
 
       // For current hostname: Similarly extract the domain without the TLD
-      const hostParts = this.currentSiteHostname.split(".");
+      const hostParts = this.normalizedCurrentSiteHostname.split(".");
       const hostDomain =
         hostParts.length > 1
           ? hostParts.slice(0, -1).join(".")
-          : this.currentSiteHostname;
+          : this.normalizedCurrentSiteHostname;
 
       if (logging)
         console.log(
@@ -466,7 +512,9 @@ new (class ExtensionPopup {
         );
 
       // Match if the domain part (without TLD) matches
-      return cachedDomain && hostDomain && hostDomain === cachedDomain;
+      const isMatch = cachedDomain && hostDomain && hostDomain === cachedDomain;
+      if (isMatch && logging) console.log("✓ TLD suffix match!");
+      return isMatch;
     }
 
     // Don't match partial domain names
@@ -525,6 +573,15 @@ new (class ExtensionPopup {
     const url = new URL(tab.url);
     const hostname = url.hostname;
     const normalizedHostname = normalizeHostname(hostname);
+
+    if (logging)
+      console.log(
+        "Applying CSS to tab with hostname:",
+        normalizedHostname,
+        "(original:",
+        hostname,
+        ")"
+      );
 
     try {
       // Try to remove any existing CSS first
@@ -614,11 +671,20 @@ new (class ExtensionPopup {
       // If we found a direct match, use it
       if (bestMatch) {
         const features = styles[bestMatch];
+        // UPDATED: Use normalized hostname for settings storage/retrieval
         const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
         const siteData = await browser.storage.local.get(
           normalizedSiteStorageKey
         );
         const featureSettings = siteData[normalizedSiteStorageKey] || {};
+
+        if (logging)
+          console.log(
+            "Using settings from:",
+            normalizedSiteStorageKey,
+            "for match:",
+            bestMatch
+          );
 
         let combinedCSS = "";
         for (const [feature, css] of Object.entries(features)) {

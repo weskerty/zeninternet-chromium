@@ -627,10 +627,46 @@ new (class ExtensionPopup {
       if (!response.ok) throw new Error("Failed to fetch styles.json");
       const styles = await response.json();
       await browser.storage.local.set({ styles });
-      await browser.storage.local.set({ lastFetchedTime: Date.now() });
+
+      // Check if we need to initialize default settings
+      const settingsData = await browser.storage.local.get(
+        this.BROWSER_STORAGE_KEY
+      );
+      if (!settingsData[this.BROWSER_STORAGE_KEY]) {
+        // Initialize default settings if none exist
+        const defaultSettings = {
+          enableStyling: true,
+          autoUpdate: true,
+          forceStyling: false,
+          whitelistMode: false,
+          whitelistStyleMode: false,
+          lastFetchedTime: Date.now(),
+        };
+
+        // Save default settings
+        await browser.storage.local.set({
+          [this.BROWSER_STORAGE_KEY]: defaultSettings,
+        });
+        console.info("Initialized default settings during first fetch");
+
+        // Update our internal global settings
+        this.globalSettings = defaultSettings;
+
+        // Update UI to reflect these defaults
+        this.enableStylingSwitch.checked = true;
+        this.autoUpdateSwitch.checked = false;
+        this.forceStylingSwitch.checked = false;
+        this.whitelistModeSwitch.checked = false;
+        this.whitelistStylingModeSwitch.checked = false;
+
+        // Update labels
+        this.updateModeLabels();
+      } else {
+        // Just update the lastFetchedTime
+        await browser.storage.local.set({ lastFetchedTime: Date.now() });
+      }
 
       this.loadCurrentSiteFeatures();
-      // this.loadWebsitesList();
       this.updateActiveTabStyling();
 
       this.refetchCSSButton.textContent = "Done!";

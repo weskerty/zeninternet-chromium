@@ -232,15 +232,15 @@ async function applyCSSToTab(tab) {
     const globalSettings = settings.transparentZenSettings || {};
     console.log("DEBUG: Global settings:", JSON.stringify(globalSettings));
 
-    const skipStyleListData = await browser.storage.local.get(
-      SKIP_THEMING_KEY
-    );
+    const skipStyleListData = await browser.storage.local.get(SKIP_THEMING_KEY);
     const skipStyleList = skipStyleListData[SKIP_THEMING_KEY] || [];
     const styleMode = globalSettings.whitelistStyleMode ?? true;
 
-    if (globalSettings.enableStyling === false || 
-      !styleMode && skipStyleList.includes(hostname) ||
-      styleMode && !skipStyleList.includes(hostname)) {
+    if (
+      globalSettings.enableStyling === false ||
+      (!styleMode && skipStyleList.includes(hostname)) ||
+      (styleMode && !skipStyleList.includes(hostname))
+    ) {
       console.log("DEBUG: Styling is disabled, exiting early");
       return;
     }
@@ -513,8 +513,34 @@ async function refetchCSS() {
       { headers: { "Cache-Control": "no-cache" } }
     );
     if (!response.ok) throw new Error("Failed to fetch styles.json");
-    const styles = await browser.storage.local.set({ styles });
-    await browser.storage.local.set({ lastFetchedTime: Date.now() });
+    const styles = await response.json();
+    await browser.storage.local.set({ styles });
+
+    // Check if we need to initialize default settings
+    const settingsData = await browser.storage.local.get(
+      "transparentZenSettings"
+    );
+    if (!settingsData.transparentZenSettings) {
+      // Initialize default settings if none exist
+      const defaultSettings = {
+        enableStyling: true,
+        autoUpdate: true,
+        forceStyling: false,
+        whitelistMode: false,
+        whitelistStyleMode: false,
+        lastFetchedTime: Date.now(),
+      };
+
+      // Save default settings
+      await browser.storage.local.set({
+        transparentZenSettings: defaultSettings,
+      });
+      console.info("Initialized default settings during first fetch");
+    } else {
+      // Just update the lastFetchedTime
+      await browser.storage.local.set({ lastFetchedTime: Date.now() });
+    }
+
     console.info("All styles refetched and updated from GitHub.");
 
     // Preload the new styles

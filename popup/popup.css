@@ -571,3 +571,9 @@ input:checked + .slider:before {
   vertical-align: bottom;
   margin-right: 4px;
 }
+
+/* Update the reload button styles to fit in the features container */
+.features-container #reload {
+  margin-top: 12px;
+  width: 100%;
+}

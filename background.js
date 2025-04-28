@@ -1,4 +1,5 @@
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
+let SKIP_THEMING_KEY = "skipThemingList";
 let logging = true; // Enable logging for debugging
 
 // Create a cache for pre-processed CSS to speed up repeated visits
@@ -231,8 +232,16 @@ async function applyCSSToTab(tab) {
     const globalSettings = settings.transparentZenSettings || {};
     console.log("DEBUG: Global settings:", JSON.stringify(globalSettings));
 
-    if (globalSettings.enableStyling === false) {
-      console.log("DEBUG: Styling is globally disabled, exiting early");
+    const skipStyleListData = await browser.storage.local.get(
+      SKIP_THEMING_KEY
+    );
+    const skipStyleList = skipStyleListData[SKIP_THEMING_KEY] || [];
+    const styleMode = globalSettings.whitelistStyleMode ?? true;
+
+    if (globalSettings.enableStyling === false || 
+      !styleMode && skipStyleList.includes(hostname) ||
+      styleMode && !skipStyleList.includes(hostname)) {
+      console.log("DEBUG: Styling is disabled, exiting early");
       return;
     }
 

@@ -26,12 +26,28 @@
     </header>
 
     <main class="app-content">
-      <div class="toggle-container features-container">
+      <div class="features-container">
+      <div class="toggle-container">
         <label class="toggle-switch">
           <input type="checkbox" id="enable-styling">
           <span class="slider round"></span>
         </label>
         <span class="toggle-label">Enable Styling</span>
+      </div>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="whitelist-style-mode">
+            <span class="slider round"></span>
+          </label>
+          <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
+        </div>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="skip-theming">
+            <span class="slider round"></span>
+          </label>
+          <span id="site-style-toggle-label" class="toggle-label">Skip Styling for this Site</span>
+        </div>
       </div>
 
       <!-- Current Site Features Section -->

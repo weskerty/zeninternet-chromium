@@ -1,5 +1,6 @@
 let logging = false;
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
+let SKIP_THEMING_KEY = "skipThemingList";
 
 // Helper function to normalize hostnames by removing www. prefix
 function normalizeHostname(hostname) {
@@ -11,6 +12,11 @@ new (class ExtensionPopup {
   globalSettings = {};
   siteSettings = {};
   enableStylingSwitch = document.getElementById("enable-styling");
+  whitelistStylingModeSwitch = document.getElementById("whitelist-style-mode");
+  whitelistStylingModeLabel = document.getElementById("whitelist-style-mode-label");
+  skipThemingSwitch = document.getElementById("skip-theming");
+  siteStyleToggleLabel = document.getElementById("site-style-toggle-label");
+  skipThemingList = [];
   refetchCSSButton = document.getElementById("refetch-css");
   websitesList = document.getElementById("websites-list");
   currentSiteFeatures = document.getElementById("current-site-toggles");
@@ -33,9 +39,11 @@ new (class ExtensionPopup {
     // Load settings and initialize the popup
     this.loadSettings().then(() => {
       this.loadSkipForceThemingList().then(() => {
-        this.getCurrentTabInfo().then(() => {
-          this.restoreSettings();
-          this.bindEvents();
+        this.loadSkipThemingList().then(() => {
+          this.getCurrentTabInfo().then(() => {
+            this.restoreSettings();
+            this.bindEvents();
+          });
         });
       });
     });
@@ -64,6 +72,11 @@ new (class ExtensionPopup {
     this.whitelistModeSwitch.addEventListener(
       "change",
       this.handleWhitelistModeChange.bind(this)
+    );
+
+    this.whitelistStylingModeSwitch.addEventListener(
+      "change",
+      this.handleWhitelistStyleModeChange.bind(this)
     );
 
     // Add event listener for the "What's New" button
@@ -128,6 +141,10 @@ new (class ExtensionPopup {
       this.saveSkipForceThemingList();
     });
 
+    this.skipThemingSwitch.addEventListener("change", () => {
+      this.saveSkipThemingList();
+    });
+
     this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
   }
 
@@ -140,15 +157,20 @@ new (class ExtensionPopup {
     this.forceStylingSwitch.checked = this.globalSettings.forceStyling ?? false;
     this.whitelistModeSwitch.checked =
       this.globalSettings.whitelistMode ?? false;
+    this.whitelistStylingModeSwitch.checked =
+      this.globalSettings.whitelistStyleMode ?? false;
 
     this.updateModeLabels();
 
     // In whitelist mode, checked means "include this site"
-    // In blacklist mode, checked means "skip this site"
-    const isInList = this.skipForceThemingList.includes(
-      this.currentSiteHostname
+    // In blacklist mode, checked means "skip this site" 
+    this.skipForceThemingSwitch.checked = this.skipForceThemingList.includes(
+      normalizeHostname(this.currentSiteHostname)
     );
-    this.skipForceThemingSwitch.checked = isInList;
+
+    this.skipThemingSwitch.checked = this.skipThemingList.includes(
+      normalizeHostname(this.currentSiteHostname)
+    );
 
     this.loadCurrentSiteFeatures();
   }
@@ -204,6 +226,7 @@ new (class ExtensionPopup {
     this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
     this.globalSettings.forceStyling = this.forceStylingSwitch.checked;
     this.globalSettings.whitelistMode = this.whitelistModeSwitch.checked;
+    this.globalSettings.whitelistStyleMode = this.whitelistStylingModeSwitch.checked;
 
     browser.storage.local
       .set({
@@ -250,13 +273,18 @@ new (class ExtensionPopup {
     this.skipForceThemingList = data[SKIP_FORCE_THEMING_KEY] || [];
   }
 
+  async loadSkipThemingList() {
+    const data = await browser.storage.local.get(SKIP_THEMING_KEY);
+    this.skipThemingList = data[SKIP_THEMING_KEY] || [];
+  }
+
   saveSkipForceThemingList() {
     const isChecked = this.skipForceThemingSwitch.checked;
-    const index = this.skipForceThemingList.indexOf(this.currentSiteHostname);
+    const index = this.skipForceThemingList.indexOf(normalizeHostname(this.currentSiteHostname));
 
     if (isChecked && index === -1) {
       // Add to the list (whitelist: include, blacklist: skip)
-      this.skipForceThemingList.push(this.currentSiteHostname);
+      this.skipForceThemingList.push(normalizeHostname(this.currentSiteHostname));
     } else if (!isChecked && index !== -1) {
       // Remove from the list (whitelist: exclude, blacklist: include)
       this.skipForceThemingList.splice(index, 1);
@@ -265,6 +293,27 @@ new (class ExtensionPopup {
     browser.storage.local
       .set({
         [SKIP_FORCE_THEMING_KEY]: this.skipForceThemingList,
+      })
+      .then(() => {
+        this.updateActiveTabStyling();
+      });
+  }
+
+  saveSkipThemingList() {
+    const isChecked = this.skipThemingSwitch.checked;
+    const index = this.skipThemingList.indexOf(normalizeHostname(this.currentSiteHostname));
+
+    if (isChecked && index === -1) {
+      // Add to the list (whitelist: include, blacklist: skip)
+      this.skipThemingList.push(normalizeHostname(this.currentSiteHostname));
+    } else if (!isChecked && index !== -1) {
+      // Remove from the list (whitelist: exclude, blacklist: include)
+      this.skipThemingList.splice(index, 1);
+    }
+
+    browser.storage.local
+      .set({
+        [SKIP_THEMING_KEY]: this.skipThemingList,
       })
       .then(() => {
         this.updateActiveTabStyling();
@@ -786,6 +835,11 @@ new (class ExtensionPopup {
     this.saveSettings();
   }
 
+  handleWhitelistStyleModeChange() {
+    this.updateModeLabels();
+    this.saveSettings();
+  }
+
   updateModeIndicator() {
     if (this.whitelistModeSwitch.checked) {
       this.modeIndicator.textContent =
@@ -812,6 +866,14 @@ new (class ExtensionPopup {
     } else {
       this.whitelistModeLabel.textContent = "Blacklist Mode";
       this.siteToggleLabel.textContent = "Skip Forcing for this Site";
+    }
+
+    if (this.whitelistStylingModeSwitch.checked) {
+      this.whitelistStylingModeLabel.textContent = "Whitelist Mode";
+      this.siteStyleToggleLabel.textContent = "Enable for this Site";
+    } else {
+      this.whitelistStylingModeLabel.textContent = "Blacklist Mode";
+      this.siteStyleToggleLabel.textContent = "Skip Styling for this Site";
     }
   }
 

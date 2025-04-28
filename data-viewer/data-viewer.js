@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   const BROWSER_STORAGE_KEY = "transparentZenSettings";
   const SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
+  const SKIP_THEMING_KEY = "skipThemingList";
 
   const globalSettingsElement = document.getElementById("global-settings-data");
   const skipListElement = document.getElementById("skip-list-data");
@@ -100,9 +101,15 @@ document.addEventListener("DOMContentLoaded", function () {
       disableTransparencyToggle.checked =
         globalSettings.disableTransparency || false;
 
-      // Display skip/enable list
-      const skipList = data[SKIP_FORCE_THEMING_KEY] || [];
-      displaySkipList(skipList, globalSettings.whitelistMode);
+      // Display skip/enable lists for both forced and non-forced websites
+      const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];
+      const skipThemingList = data[SKIP_THEMING_KEY] || [];
+      displayCombinedSkipLists(
+        skipForceList,
+        skipThemingList,
+        globalSettings.whitelistMode,
+        globalSettings.whitelistStyleMode
+      );
 
       // Display combined websites and settings
       displayCombinedWebsiteData(data);
@@ -155,46 +162,117 @@ document.addEventListener("DOMContentLoaded", function () {
     globalSettingsElement.appendChild(table);
   }
 
-  function displaySkipList(skipList, isWhitelistMode) {
+  function displayCombinedSkipLists(
+    skipForceList,
+    skipThemingList,
+    isWhitelistMode,
+    isWhitelistStyleMode
+  ) {
     skipListElement.innerHTML = "";
 
-    const modeType = isWhitelistMode ? "Whitelist" : "Blacklist";
-    const actionType = isWhitelistMode ? "Enabled" : "Skipped";
+    // Create title and description section
+    const titleSection = document.createElement("div");
+    titleSection.className = "list-title-section";
 
-    const modeInfo = document.createElement("div");
-    modeInfo.classList.add("mode-info");
-    modeInfo.innerHTML = `<strong>Current Mode:</strong> ${modeType} Mode - ${
+    const forceModeName = isWhitelistMode ? "Whitelist" : "Blacklist";
+    const styleModeName = isWhitelistStyleMode ? "Whitelist" : "Blacklist";
+
+    titleSection.innerHTML = `
+      <h3>Website Lists Overview</h3>
+      <div class="mode-info">
+        <div><strong>Force Styling Mode:</strong> ${forceModeName} Mode (${
       isWhitelistMode
-        ? "Only apply forced styling to sites in the list"
-        : "Apply forced styling to all sites except those in the list"
-    }`;
-    skipListElement.appendChild(modeInfo);
+        ? "only apply to sites in the list"
+        : "apply to all except sites in the list"
+    })</div>
+        <div><strong>General Styling Mode:</strong> ${styleModeName} Mode (${
+      isWhitelistStyleMode
+        ? "only apply to sites in the list"
+        : "apply to all except sites in the list"
+    })</div>
+      </div>
+    `;
 
-    // Add Clear List button
-    if (skipList.length > 0) {
+    skipListElement.appendChild(titleSection);
+
+    // Add Clear Both Lists button
+    if (skipForceList.length > 0 || skipThemingList.length > 0) {
       const clearListButton = document.createElement("button");
       clearListButton.classList.add(
         "action-button",
         "secondary",
         "clear-list-button"
       );
-      clearListButton.innerHTML = '<i class="fas fa-trash"></i> Clear List';
+      clearListButton.innerHTML =
+        '<i class="fas fa-trash"></i> Clear All Website Lists';
       clearListButton.addEventListener("click", function () {
         if (
           confirm(
-            `Are you sure you want to clear the entire ${modeType} list? This will affect how styling is applied to websites.`
+            `Are you sure you want to clear ALL website lists? This will reset both Forced and Regular styling lists and may affect how styling is applied to websites.`
           )
         ) {
-          clearSkipList();
+          clearAllSkipLists();
         }
       });
       skipListElement.appendChild(clearListButton);
     }
 
-    if (skipList.length === 0) {
-      skipListElement.innerHTML +=
-        '<div class="no-data">No websites in the list.</div>';
-      return;
+    // Create container for the two tables
+    const tablesContainer = document.createElement("div");
+    tablesContainer.className = "tables-container";
+
+    // Create force styling list
+    const forceListSection = createSingleListSection(
+      skipForceList,
+      isWhitelistMode,
+      "Force Styling List",
+      isWhitelistMode
+        ? "Sites where forced styling IS applied"
+        : "Sites where forced styling is NOT applied",
+      SKIP_FORCE_THEMING_KEY
+    );
+
+    // Create regular styling list
+    const regularListSection = createSingleListSection(
+      skipThemingList,
+      isWhitelistStyleMode,
+      "Regular Styling List",
+      isWhitelistStyleMode
+        ? "Sites where regular styling IS applied"
+        : "Sites where regular styling is NOT applied",
+      SKIP_THEMING_KEY
+    );
+
+    tablesContainer.appendChild(forceListSection);
+    tablesContainer.appendChild(regularListSection);
+    skipListElement.appendChild(tablesContainer);
+  }
+
+  function createSingleListSection(
+    list,
+    isWhitelistMode,
+    title,
+    description,
+    storageKey
+  ) {
+    const section = document.createElement("div");
+    section.className = "list-section";
+
+    const sectionTitle = document.createElement("h4");
+    sectionTitle.textContent = title;
+    section.appendChild(sectionTitle);
+
+    const sectionDescription = document.createElement("p");
+    sectionDescription.className = "list-description";
+    sectionDescription.textContent = description;
+    section.appendChild(sectionDescription);
+
+    if (list.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "no-data";
+      emptyMessage.textContent = "No websites in this list";
+      section.appendChild(emptyMessage);
+      return section;
     }
 
     const table = document.createElement("table");
@@ -203,32 +281,76 @@ document.addEventListener("DOMContentLoaded", function () {
     // Table header
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
-    headerRow.innerHTML = `<th>${actionType} Websites</th>`;
+    headerRow.innerHTML = `<th>Website</th><th>Action</th>`;
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
     // Table body
     const tbody = document.createElement("tbody");
 
-    for (const site of skipList) {
+    for (const site of list) {
       const row = document.createElement("tr");
-      row.innerHTML = `<td>${site}</td>`;
+
+      // Website column
+      const siteCell = document.createElement("td");
+      siteCell.textContent = site;
+      row.appendChild(siteCell);
+
+      // Action column
+      const actionCell = document.createElement("td");
+      const removeButton = document.createElement("button");
+      removeButton.className = "remove-site-button";
+      removeButton.innerHTML = '<i class="fas fa-times"></i>';
+      removeButton.title = "Remove from list";
+      removeButton.addEventListener("click", function () {
+        removeSiteFromList(site, storageKey);
+      });
+      actionCell.appendChild(removeButton);
+      row.appendChild(actionCell);
+
       tbody.appendChild(row);
     }
 
     table.appendChild(tbody);
-    skipListElement.appendChild(table);
+    section.appendChild(table);
+    return section;
   }
 
-  async function clearSkipList() {
+  async function removeSiteFromList(site, listKey) {
     try {
-      await browser.storage.local.remove(SKIP_FORCE_THEMING_KEY);
-      alert(`${SKIP_FORCE_THEMING_KEY} has been cleared successfully.`);
+      // Get current list
+      const data = await browser.storage.local.get(listKey);
+      const list = data[listKey] || [];
+
+      // Remove the site
+      const newList = list.filter((item) => item !== site);
+
+      // Save updated list
+      await browser.storage.local.set({ [listKey]: newList });
+
+      // Refresh the display
+      loadAllData();
+
+      console.log(`Removed ${site} from ${listKey}`);
+    } catch (error) {
+      console.error(`Error removing site from list: ${error}`);
+      alert(`An error occurred: ${error.message}`);
+    }
+  }
+
+  async function clearAllSkipLists() {
+    try {
+      // Clear both lists at once
+      await browser.storage.local.remove([
+        SKIP_FORCE_THEMING_KEY,
+        SKIP_THEMING_KEY,
+      ]);
+      alert("All website lists have been cleared successfully.");
       loadAllData(); // Reload data to reflect changes
     } catch (error) {
-      console.error("Error clearing skip list:", error);
+      console.error("Error clearing lists:", error);
       alert(
-        "An error occurred while trying to clear the list: " + error.message
+        "An error occurred while trying to clear the lists: " + error.message
       );
     }
   }

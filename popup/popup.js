@@ -13,7 +13,9 @@ new (class ExtensionPopup {
   siteSettings = {};
   enableStylingSwitch = document.getElementById("enable-styling");
   whitelistStylingModeSwitch = document.getElementById("whitelist-style-mode");
-  whitelistStylingModeLabel = document.getElementById("whitelist-style-mode-label");
+  whitelistStylingModeLabel = document.getElementById(
+    "whitelist-style-mode-label"
+  );
   skipThemingSwitch = document.getElementById("skip-theming");
   siteStyleToggleLabel = document.getElementById("site-style-toggle-label");
   skipThemingList = [];
@@ -69,6 +71,11 @@ new (class ExtensionPopup {
       .getElementById("toggle-features")
       ?.addEventListener("click", this.toggleFeatures.bind(this));
 
+    // Add toggle forcing button event listener
+    document
+      .getElementById("toggle-forcing")
+      ?.addEventListener("click", this.toggleForcing.bind(this));
+
     this.whitelistModeSwitch.addEventListener(
       "change",
       this.handleWhitelistModeChange.bind(this)
@@ -116,6 +123,14 @@ new (class ExtensionPopup {
           this.normalizedCurrentSiteHostname,
           ")"
         );
+
+        // Update the site label with current hostname (without www.)
+        const siteDomainElement = document.getElementById("site-domain");
+        if (siteDomainElement) {
+          const displayDomain = normalizeHostname(this.currentSiteHostname);
+          siteDomainElement.textContent = displayDomain;
+          siteDomainElement.title = displayDomain; // Add full domain as tooltip for long domains
+        }
       }
     } catch (error) {
       console.error("Error getting current tab info:", error);
@@ -163,7 +178,7 @@ new (class ExtensionPopup {
     this.updateModeLabels();
 
     // In whitelist mode, checked means "include this site"
-    // In blacklist mode, checked means "skip this site" 
+    // In blacklist mode, checked means "skip this site"
     this.skipForceThemingSwitch.checked = this.skipForceThemingList.includes(
       normalizeHostname(this.currentSiteHostname)
     );
@@ -226,7 +241,8 @@ new (class ExtensionPopup {
     this.globalSettings.autoUpdate = this.autoUpdateSwitch.checked;
     this.globalSettings.forceStyling = this.forceStylingSwitch.checked;
     this.globalSettings.whitelistMode = this.whitelistModeSwitch.checked;
-    this.globalSettings.whitelistStyleMode = this.whitelistStylingModeSwitch.checked;
+    this.globalSettings.whitelistStyleMode =
+      this.whitelistStylingModeSwitch.checked;
 
     browser.storage.local
       .set({
@@ -280,11 +296,15 @@ new (class ExtensionPopup {
 
   saveSkipForceThemingList() {
     const isChecked = this.skipForceThemingSwitch.checked;
-    const index = this.skipForceThemingList.indexOf(normalizeHostname(this.currentSiteHostname));
+    const index = this.skipForceThemingList.indexOf(
+      normalizeHostname(this.currentSiteHostname)
+    );
 
     if (isChecked && index === -1) {
       // Add to the list (whitelist: include, blacklist: skip)
-      this.skipForceThemingList.push(normalizeHostname(this.currentSiteHostname));
+      this.skipForceThemingList.push(
+        normalizeHostname(this.currentSiteHostname)
+      );
     } else if (!isChecked && index !== -1) {
       // Remove from the list (whitelist: exclude, blacklist: include)
       this.skipForceThemingList.splice(index, 1);
@@ -301,7 +321,9 @@ new (class ExtensionPopup {
 
   saveSkipThemingList() {
     const isChecked = this.skipThemingSwitch.checked;
-    const index = this.skipThemingList.indexOf(normalizeHostname(this.currentSiteHostname));
+    const index = this.skipThemingList.indexOf(
+      normalizeHostname(this.currentSiteHostname)
+    );
 
     if (isChecked && index === -1) {
       // Add to the list (whitelist: include, blacklist: skip)
@@ -380,6 +402,26 @@ new (class ExtensionPopup {
         const toggleButton = document.getElementById("toggle-features");
         if (toggleButton) {
           const icon = toggleButton.querySelector("i");
+          if (icon) icon.className = "fas fa-chevron-up";
+        }
+      }
+
+      // Set the forcing section's initial collapsed state
+      const forcingContent = document.getElementById("forcing-content");
+      const toggleForcingButton = document.getElementById("toggle-forcing");
+
+      if (hasSpecificTheme) {
+        // We have a specific theme, collapse the forcing section
+        forcingContent.classList.add("collapsed");
+        if (toggleForcingButton) {
+          const icon = toggleForcingButton.querySelector("i");
+          if (icon) icon.className = "fas fa-chevron-down";
+        }
+      } else {
+        // No specific theme found, expand the forcing section
+        forcingContent.classList.remove("collapsed");
+        if (toggleForcingButton) {
+          const icon = toggleForcingButton.querySelector("i");
           if (icon) icon.className = "fas fa-chevron-up";
         }
       }
@@ -901,6 +943,22 @@ new (class ExtensionPopup {
     // Update the icon
     const icon = toggleButton.querySelector("i");
     if (featuresList.classList.contains("collapsed")) {
+      icon.className = "fas fa-chevron-down";
+    } else {
+      icon.className = "fas fa-chevron-up";
+    }
+  }
+
+  // Toggle forcing section visibility
+  toggleForcing() {
+    const forcingContent = document.getElementById("forcing-content");
+    const toggleButton = document.getElementById("toggle-forcing");
+
+    forcingContent.classList.toggle("collapsed");
+
+    // Update the icon
+    const icon = toggleButton.querySelector("i");
+    if (forcingContent.classList.contains("collapsed")) {
       icon.className = "fas fa-chevron-down";
     } else {
       icon.className = "fas fa-chevron-up";

@@ -6,6 +6,18 @@ let logging = true; // Enable logging for debugging
 // Create a cache for pre-processed CSS to speed up repeated visits
 const cssCache = new Map();
 const activeTabs = new Map();
+// Cache for styling state to avoid repeated storage lookups
+const stylingStateCache = new Map();
+
+// Icon states for the browser action
+const ICON_ON = {
+  48: "assets/images/logo_48.png",
+  96: "assets/images/logo_96.png",
+};
+const ICON_OFF = {
+  48: "assets/images/logo-off_48.png",
+  96: "assets/images/logo-off_96.png",
+};
 
 // Default settings to use when values are missing
 const DEFAULT_SETTINGS = {
@@ -34,6 +46,181 @@ function ensureDefaultSettings(settings = {}) {
   }
 
   return result;
+}
+
+// Determine if styling should be applied to a hostname
+// This is the centralized logic for both CSS application and icon updates
+async function shouldApplyStyling(hostname) {
+  try {
+    // Check if we already have the answer cached
+    const cacheKey = `styling:${hostname}`;
+    if (stylingStateCache.has(cacheKey)) {
+      return stylingStateCache.get(cacheKey);
+    }
+
+    const normalizedHostname = normalizeHostname(hostname);
+
+    // Get global settings - this is an unavoidable storage lookup
+    const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+    const settings = ensureDefaultSettings(
+      settingsData[BROWSER_STORAGE_KEY] || {}
+    );
+
+    // If styling is globally disabled, styling is disabled
+    if (!settings.enableStyling) {
+      stylingStateCache.set(cacheKey, false);
+      return false;
+    }
+
+    // Check if we have a specific style for this site
+    let hasSpecificStyle = false;
+
+    // Check for exact match first
+    if (
+      cssCache.has(normalizedHostname) ||
+      cssCache.has(`www.${normalizedHostname}`)
+    ) {
+      hasSpecificStyle = true;
+    } else {
+      // Check for wildcard and TLD matches
+      for (const cachedSite of cssCache.keys()) {
+        // Wildcard match
+        if (cachedSite.startsWith("+")) {
+          const baseSite = cachedSite.slice(1);
+          if (
+            normalizedHostname === baseSite ||
+            normalizedHostname.endsWith(`.${baseSite}`)
+          ) {
+            hasSpecificStyle = true;
+            break;
+          }
+        }
+        // TLD suffix match
+        else if (cachedSite.startsWith("-")) {
+          const baseSite = cachedSite.slice(1);
+          const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
+          const hostParts = normalizedHostname.split(".");
+          const hostDomain =
+            hostParts.length > 1
+              ? hostParts.slice(0, -1).join(".")
+              : normalizedHostname;
+
+          if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
+            hasSpecificStyle = true;
+            break;
+          }
+        }
+        // Subdomain match
+        else if (
+          normalizedHostname !== cachedSite &&
+          normalizedHostname.endsWith(`.${cachedSite}`) &&
+          !cachedSite.startsWith("-")
+        ) {
+          hasSpecificStyle = true;
+          break;
+        }
+      }
+    }
+
+    // If we have a specific style, check blacklist/whitelist for regular styling
+    if (hasSpecificStyle) {
+      // Get skip styling list - only do this lookup if we have a specific style
+      const skipStyleListData = await browser.storage.local.get(
+        SKIP_THEMING_KEY
+      );
+      const skipStyleList = skipStyleListData[SKIP_THEMING_KEY] || [];
+
+      // In whitelist mode: only apply if site is in the list
+      // In blacklist mode: apply unless site is in the list
+      const styleMode = settings.whitelistStyleMode || false;
+
+      if (styleMode) {
+        // Whitelist mode
+        const shouldApply = skipStyleList.includes(normalizedHostname);
+        stylingStateCache.set(cacheKey, shouldApply);
+        return shouldApply;
+      } else {
+        // Blacklist mode
+        const shouldApply = !skipStyleList.includes(normalizedHostname);
+        stylingStateCache.set(cacheKey, shouldApply);
+        return shouldApply;
+      }
+    }
+
+    // If no specific style, check if we should apply forced styling
+    if (settings.forceStyling) {
+      // Get skip force list - only do this lookup if force styling is enabled
+      const skipForceListData = await browser.storage.local.get(
+        SKIP_FORCE_THEMING_KEY
+      );
+      const skipForceList = skipForceListData[SKIP_FORCE_THEMING_KEY] || [];
+      const isWhitelistMode = settings.whitelistMode || false;
+
+      // In whitelist mode: only apply if site is in the list
+      // In blacklist mode: apply unless site is in the list
+      if (isWhitelistMode) {
+        const shouldApply = skipForceList.includes(normalizedHostname);
+        stylingStateCache.set(cacheKey, shouldApply);
+        return shouldApply;
+      } else {
+        const shouldApply = !skipForceList.includes(normalizedHostname);
+        stylingStateCache.set(cacheKey, shouldApply);
+        return shouldApply;
+      }
+    }
+
+    // No styling applies
+    stylingStateCache.set(cacheKey, false);
+    return false;
+  } catch (error) {
+    console.error("Error determining styling state:", error);
+    return false;
+  }
+}
+
+// Update the icon based on whether styling is active for the current tab
+async function updateIconForTab(tabId, url) {
+  try {
+    if (!url) {
+      const tab = await browser.tabs.get(tabId);
+      url = tab.url;
+    }
+
+    // Non-HTTP URLs don't get styling
+    if (!url || !url.startsWith("http")) {
+      setIcon(tabId, false);
+      return;
+    }
+
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+
+    // Determine if we should apply styling using the centralized logic
+    const isStylingEnabled = await shouldApplyStyling(hostname);
+
+    // Update the icon based on whether styling is enabled for this site
+    setIcon(tabId, isStylingEnabled);
+
+    if (logging)
+      console.log(
+        `Icon updated for ${hostname}: styling ${
+          isStylingEnabled ? "ON" : "OFF"
+        }`
+      );
+  } catch (error) {
+    console.error("Error updating icon:", error);
+    // Default to off icon in case of error
+    setIcon(tabId, false);
+  }
+}
+
+// Set the icon to either on or off state
+function setIcon(tabId, isEnabled) {
+  const iconSet = isEnabled ? ICON_ON : ICON_OFF;
+  browser.browserAction.setIcon({
+    path: iconSet,
+    tabId: tabId,
+  });
 }
 
 // Preload styles for faster injection
@@ -89,6 +276,9 @@ browser.webNavigation.onBeforeNavigate.addListener((details) => {
     const url = new URL(details.url);
     const normalizedHostname = normalizeHostname(url.hostname);
     prepareStylesForUrl(normalizedHostname, details.tabId);
+
+    // Update icon for this tab
+    updateIconForTab(details.tabId, details.url);
   }
 });
 
@@ -129,6 +319,11 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   } else if (message.action === "disableAutoUpdate") {
     stopAutoUpdate();
     return true;
+  }
+
+  // Update the icon when the content script reports ready
+  if (message.action === "contentScriptReady" && sender.tab) {
+    updateIconForTab(sender.tab.id, sender.tab.url);
   }
 
   return false;
@@ -303,6 +498,12 @@ async function applyCSSToTab(tab) {
       (styleMode && !skipStyleList.includes(hostname))
     ) {
       console.log("DEBUG: Styling is disabled, exiting early");
+      // Make sure the icon is updated to reflect the disabled state
+      setIcon(tab.id, false);
+
+      // Clear the cache entry to ensure we don't have stale data
+      const cacheKey = `styling:${hostname}`;
+      stylingStateCache.set(cacheKey, false);
       return;
     }
 
@@ -465,8 +666,16 @@ async function applyCSSToTab(tab) {
     } else {
       console.log("DEBUG: Force styling is disabled, no styles applied");
     }
+
+    // After successfully applying CSS, update the icon to ON state
+    // and update the styling state cache
+    const cacheKey = `styling:${hostname}`;
+    stylingStateCache.set(cacheKey, true);
+    setIcon(tab.id, true);
   } catch (error) {
     console.error(`DEBUG ERROR: Error applying CSS:`, error);
+    // If there's an error, make sure the icon is OFF
+    setIcon(tab.id, false);
   }
 }
 
@@ -559,7 +768,39 @@ async function applyCSS(tabId, hostname, features) {
   } else {
     console.log(`DEBUG: No CSS to inject after filtering features`);
   }
+
+  // Update the icon based on our current state
+  setIcon(tabId, stylingStateCache.get(`styling:${hostname}`) || false);
 }
+
+// Also update icons when tabs are updated
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    updateIconForTab(tabId, tab.url);
+  }
+});
+
+// Update the icon when a tab becomes active
+browser.tabs.onActivated.addListener((activeInfo) => {
+  updateIconForTab(activeInfo.tabId);
+});
+
+// Clear cache on settings changes
+browser.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local") {
+    if (
+      changes[BROWSER_STORAGE_KEY] ||
+      changes[SKIP_THEMING_KEY] ||
+      changes[SKIP_FORCE_THEMING_KEY]
+    ) {
+      // Clear the styling state cache when relevant settings change
+      stylingStateCache.clear();
+
+      if (logging)
+        console.log("Cleared styling state cache due to settings change");
+    }
+  }
+});
 
 let autoUpdateInterval;
 
@@ -652,6 +893,12 @@ async function initializeExtension() {
   // Initialize auto-update based on stored settings
   if (validatedSettings.autoUpdate) {
     startAutoUpdate();
+  }
+
+  // Update icons for all tabs on extension startup
+  const tabs = await browser.tabs.query({});
+  for (const tab of tabs) {
+    updateIconForTab(tab.id, tab.url);
   }
 }
 

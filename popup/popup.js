@@ -59,6 +59,7 @@ new (class ExtensionPopup {
   reloadButton = document.getElementById("reload");
   modeIndicator = document.getElementById("mode-indicator");
   whatsNewButton = document.getElementById("whats-new");
+  howToUseButton = document.getElementById("how-to-use");
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
@@ -112,6 +113,9 @@ new (class ExtensionPopup {
 
     // Add event listener for the "What's New" button
     this.whatsNewButton.addEventListener("click", this.openWhatsNew.bind(this));
+
+    // Add event listener for the "How to use?" button
+    this.howToUseButton.addEventListener("click", this.openHowToUse.bind(this));
 
     // Add event listener for the data viewer button
     document.getElementById("view-data")?.addEventListener("click", () => {
@@ -1006,6 +1010,13 @@ new (class ExtensionPopup {
   openWhatsNew() {
     browser.tabs.create({
       url: "https://addons.mozilla.org/en-US/firefox/addon/zen-internet/versions/",
+    });
+  }
+
+  // Open the How to Use guide
+  openHowToUse() {
+    browser.tabs.create({
+      url: "https://www.sameerasw.com/zen",
     });
   }
 

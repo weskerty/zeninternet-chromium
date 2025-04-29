@@ -2,6 +2,30 @@ let logging = false;
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
 
+// Default settings to use when values are missing
+const DEFAULT_SETTINGS = {
+  enableStyling: true, // Enable styling globally
+  autoUpdate: true, // Auto-update styles
+  forceStyling: false, // Force styling on sites without themes
+  whitelistMode: false, // Use blacklist mode by default for force styling
+  whitelistStyleMode: false, // Use blacklist mode by default for regular styling
+  disableTransparency: false, // Don't disable transparency by default
+};
+
+// Helper function to ensure all required settings exist
+function ensureDefaultSettings(settings = {}) {
+  const result = { ...settings };
+
+  // Apply default values for any missing settings
+  for (const [key, defaultValue] of Object.entries(DEFAULT_SETTINGS)) {
+    if (result[key] === undefined) {
+      result[key] = defaultValue;
+    }
+  }
+
+  return result;
+}
+
 // Helper function to normalize hostnames by removing www. prefix
 function normalizeHostname(hostname) {
   return hostname.startsWith("www.") ? hostname.substring(4) : hostname;
@@ -196,12 +220,22 @@ new (class ExtensionPopup {
     const globalData = await browser.storage.local.get(
       this.BROWSER_STORAGE_KEY
     );
-    this.globalSettings = globalData[this.BROWSER_STORAGE_KEY] || {
-      enableStyling: true,
-      autoUpdate: false,
-      lastFetchedTime: null,
-      forceStyling: false,
-    };
+
+    // Apply defaults for any missing settings
+    this.globalSettings = ensureDefaultSettings(
+      globalData[this.BROWSER_STORAGE_KEY] || {}
+    );
+
+    // Save back any applied defaults
+    if (
+      JSON.stringify(this.globalSettings) !==
+      JSON.stringify(globalData[this.BROWSER_STORAGE_KEY])
+    ) {
+      await browser.storage.local.set({
+        [this.BROWSER_STORAGE_KEY]: this.globalSettings,
+      });
+      if (logging) console.log("Applied missing default settings");
+    }
 
     // Load site-specific settings if on a specific site
     if (this.currentSiteHostname) {
@@ -287,11 +321,23 @@ new (class ExtensionPopup {
   async loadSkipForceThemingList() {
     const data = await browser.storage.local.get(SKIP_FORCE_THEMING_KEY);
     this.skipForceThemingList = data[SKIP_FORCE_THEMING_KEY] || [];
+
+    // Initialize with empty array if missing
+    if (!data[SKIP_FORCE_THEMING_KEY]) {
+      await browser.storage.local.set({ [SKIP_FORCE_THEMING_KEY]: [] });
+      if (logging) console.log("Initialized empty skip force theming list");
+    }
   }
 
   async loadSkipThemingList() {
     const data = await browser.storage.local.get(SKIP_THEMING_KEY);
     this.skipThemingList = data[SKIP_THEMING_KEY] || [];
+
+    // Initialize with empty array if missing
+    if (!data[SKIP_THEMING_KEY]) {
+      await browser.storage.local.set({ [SKIP_THEMING_KEY]: [] });
+      if (logging) console.log("Initialized empty skip theming list");
+    }
   }
 
   saveSkipForceThemingList() {
@@ -861,6 +907,7 @@ new (class ExtensionPopup {
 
   shouldApplyCSS(hostname) {
     if (logging) console.log("shouldApplyCSS called with", hostname);
+    // Use default if not explicitly set
     return this.globalSettings.enableStyling !== false;
   }
 

@@ -1,14 +1,39 @@
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
+let BROWSER_STORAGE_KEY = "transparentZenSettings";
 let logging = true; // Enable logging for debugging
 
 // Create a cache for pre-processed CSS to speed up repeated visits
 const cssCache = new Map();
 const activeTabs = new Map();
 
+// Default settings to use when values are missing
+const DEFAULT_SETTINGS = {
+  enableStyling: true, // Enable styling globally
+  autoUpdate: true, // Auto-update styles
+  forceStyling: false, // Force styling on sites without themes
+  whitelistMode: false, // Use blacklist mode by default for force styling
+  whitelistStyleMode: false, // Use blacklist mode by default for regular styling
+  disableTransparency: false, // Don't disable transparency by default
+};
+
 // Helper function to normalize hostnames by removing www. prefix
 function normalizeHostname(hostname) {
   return hostname.startsWith("www.") ? hostname.substring(4) : hostname;
+}
+
+// Ensure all required settings exist
+function ensureDefaultSettings(settings = {}) {
+  const result = { ...settings };
+
+  // Apply default values for any missing settings
+  for (const [key, defaultValue] of Object.entries(DEFAULT_SETTINGS)) {
+    if (result[key] === undefined) {
+      result[key] = defaultValue;
+    }
+  }
+
+  return result;
 }
 
 // Preload styles for faster injection
@@ -16,9 +41,20 @@ async function preloadStyles() {
   try {
     const data = await browser.storage.local.get([
       "styles",
-      "transparentZenSettings",
+      BROWSER_STORAGE_KEY,
     ]);
-    const settings = data.transparentZenSettings || {};
+
+    // Ensure we have all required settings with defaults
+    const settings = ensureDefaultSettings(data[BROWSER_STORAGE_KEY] || {});
+
+    // Save the validated settings back to storage if any defaults were applied
+    if (
+      JSON.stringify(settings) !== JSON.stringify(data[BROWSER_STORAGE_KEY])
+    ) {
+      if (logging)
+        console.log("Missing settings detected, applying defaults:", settings);
+      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    }
 
     // No point in preloading if styling is disabled
     if (settings.enableStyling === false) return;
@@ -64,10 +100,10 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
       const normalizedHostname = normalizeHostname(message.hostname);
 
       // Get settings to check if styling is enabled
-      const settingsData = await browser.storage.local.get(
-        "transparentZenSettings"
+      const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+      const settings = ensureDefaultSettings(
+        settingsData[BROWSER_STORAGE_KEY] || {}
       );
-      const settings = settingsData.transparentZenSettings || {};
 
       if (settings.enableStyling === false) return;
 
@@ -100,6 +136,9 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
 
 // Get appropriate styles for a hostname based on all rules
 async function getStylesForHostname(hostname, settings) {
+  // Ensure all required settings have defaults before proceeding
+  settings = ensureDefaultSettings(settings);
+
   console.log("DEBUG: Finding styles for hostname:", hostname);
 
   // Check for exact matches first (highest priority)
@@ -192,10 +231,12 @@ async function getStylesForHostname(hostname, settings) {
 // Prepare styles for a URL that's about to load
 async function prepareStylesForUrl(hostname, tabId) {
   try {
-    const settingsData = await browser.storage.local.get(
-      "transparentZenSettings"
+    const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+
+    // Ensure all required settings have defaults
+    const settings = ensureDefaultSettings(
+      settingsData[BROWSER_STORAGE_KEY] || {}
     );
-    const settings = settingsData.transparentZenSettings || {};
 
     if (settings.enableStyling === false) return;
 
@@ -228,13 +269,33 @@ async function applyCSSToTab(tab) {
       ")"
     );
 
-    const settings = await browser.storage.local.get("transparentZenSettings");
-    const globalSettings = settings.transparentZenSettings || {};
+    const settings = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+
+    // Ensure defaults for any missing settings
+    const globalSettings = ensureDefaultSettings(
+      settings[BROWSER_STORAGE_KEY] || {}
+    );
+
+    // Save back any missing defaults
+    if (
+      JSON.stringify(globalSettings) !==
+      JSON.stringify(settings[BROWSER_STORAGE_KEY])
+    ) {
+      await browser.storage.local.set({
+        [BROWSER_STORAGE_KEY]: globalSettings,
+      });
+      if (logging)
+        console.log("Applied missing default settings during CSS application");
+    }
+
     console.log("DEBUG: Global settings:", JSON.stringify(globalSettings));
 
     const skipStyleListData = await browser.storage.local.get(SKIP_THEMING_KEY);
     const skipStyleList = skipStyleListData[SKIP_THEMING_KEY] || [];
-    const styleMode = globalSettings.whitelistStyleMode ?? true;
+
+    // Use default from settings if not explicitly set
+    const styleMode =
+      globalSettings.whitelistStyleMode ?? DEFAULT_SETTINGS.whitelistStyleMode;
 
     if (
       globalSettings.enableStyling === false ||
@@ -368,6 +429,11 @@ async function applyCSSToTab(tab) {
       const siteInList = siteList.includes(hostname);
       console.log("DEBUG: Site in list:", siteInList);
 
+      // Use default from settings if not explicitly set
+      const isWhitelistMode =
+        globalSettings.whitelistMode ?? DEFAULT_SETTINGS.whitelistMode;
+      console.log("DEBUG: Using whitelist mode:", isWhitelistMode);
+
       // In whitelist mode: apply only if site is in the list
       // In blacklist mode: apply only if site is NOT in the list
       const shouldApplyForcedStyling =
@@ -414,10 +480,13 @@ async function applyCSS(tabId, hostname, features) {
 
   console.log("DEBUG: Features count:", Object.keys(features).length);
 
-  const settingsData = await browser.storage.local.get(
-    "transparentZenSettings"
+  const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+
+  // Ensure defaults for any missing settings
+  const globalSettings = ensureDefaultSettings(
+    settingsData[BROWSER_STORAGE_KEY] || {}
   );
-  const globalSettings = settingsData.transparentZenSettings || {};
+
   console.log(
     "DEBUG: Global settings in applyCSS:",
     JSON.stringify(globalSettings)
@@ -517,10 +586,8 @@ async function refetchCSS() {
     await browser.storage.local.set({ styles });
 
     // Check if we need to initialize default settings
-    const settingsData = await browser.storage.local.get(
-      "transparentZenSettings"
-    );
-    if (!settingsData.transparentZenSettings) {
+    const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+    if (!settingsData[BROWSER_STORAGE_KEY]) {
       // Initialize default settings if none exist
       const defaultSettings = {
         enableStyling: true,
@@ -533,7 +600,7 @@ async function refetchCSS() {
 
       // Save default settings
       await browser.storage.local.set({
-        transparentZenSettings: defaultSettings,
+        [BROWSER_STORAGE_KEY]: defaultSettings,
       });
       console.info("Initialized default settings during first fetch");
     } else {
@@ -552,12 +619,38 @@ async function refetchCSS() {
 
 // Create a directory to store CSS files
 async function initializeExtension() {
+  // Check and initialize default settings
+  const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  const currentSettings = data[BROWSER_STORAGE_KEY] || {};
+  const validatedSettings = ensureDefaultSettings(currentSettings);
+
+  // If we had to apply any defaults, save them
+  if (JSON.stringify(validatedSettings) !== JSON.stringify(currentSettings)) {
+    console.info(
+      "Initializing missing settings with defaults:",
+      validatedSettings
+    );
+    await browser.storage.local.set({
+      [BROWSER_STORAGE_KEY]: validatedSettings,
+    });
+  }
+
+  // Ensure empty lists exist
+  const skipForceData = await browser.storage.local.get(SKIP_FORCE_THEMING_KEY);
+  if (!skipForceData[SKIP_FORCE_THEMING_KEY]) {
+    await browser.storage.local.set({ [SKIP_FORCE_THEMING_KEY]: [] });
+  }
+
+  const skipThemingData = await browser.storage.local.get(SKIP_THEMING_KEY);
+  if (!skipThemingData[SKIP_THEMING_KEY]) {
+    await browser.storage.local.set({ [SKIP_THEMING_KEY]: [] });
+  }
+
   // Preload styles immediately
   await preloadStyles();
 
   // Initialize auto-update based on stored settings
-  const settings = await browser.storage.local.get("transparentZenSettings");
-  if (settings.transparentZenSettings?.autoUpdate) {
+  if (validatedSettings.autoUpdate) {
     startAutoUpdate();
   }
 }

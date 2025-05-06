@@ -15,6 +15,11 @@ document.addEventListener("DOMContentLoaded", function () {
     "disable-transparency"
   );
 
+  // Backup & Restore Elements
+  const exportButton = document.getElementById("export-settings");
+  const importFileInput = document.getElementById("import-file");
+  const importStatusElement = document.getElementById("import-status");
+
   // Load and display the data
   loadAllData();
 
@@ -41,6 +46,10 @@ document.addEventListener("DOMContentLoaded", function () {
       deleteAllData();
     }
   });
+
+  // New event listeners for export and import functionality
+  exportButton.addEventListener("click", exportSettings);
+  importFileInput.addEventListener("change", importSettings);
 
   async function deleteAllData() {
     try {
@@ -81,6 +90,151 @@ document.addEventListener("DOMContentLoaded", function () {
           error.message
       );
     }
+  }
+
+  // Export settings functionality
+  async function exportSettings() {
+    try {
+      // Retrieve all storage data to find site-specific settings
+      const allData = await browser.storage.local.get(null);
+
+      // Extract only the settings we want to backup
+      const settingsToBackup = {
+        [BROWSER_STORAGE_KEY]: allData[BROWSER_STORAGE_KEY] || {},
+        [SKIP_FORCE_THEMING_KEY]: allData[SKIP_FORCE_THEMING_KEY] || [],
+        [SKIP_THEMING_KEY]: allData[SKIP_THEMING_KEY] || [],
+      };
+
+      // Also extract site-specific settings (keys that start with BROWSER_STORAGE_KEY.)
+      const siteSpecificSettings = {};
+      for (const [key, value] of Object.entries(allData)) {
+        if (key.startsWith(BROWSER_STORAGE_KEY + ".")) {
+          siteSpecificSettings[key] = value;
+        }
+      }
+
+      // Add export timestamp and version
+      const manifest = browser.runtime.getManifest();
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        addonVersion: manifest.version,
+        settings: settingsToBackup,
+        siteSettings: siteSpecificSettings,
+      };
+
+      // Convert to JSON
+      const jsonData = JSON.stringify(exportData, null, 2);
+
+      // Create a blob and download link
+      const blob = new Blob([jsonData], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Create a temporary anchor and trigger download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `zen-internet-settings-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+
+      // Show success message
+      showImportStatus("Settings exported successfully!", "success");
+    } catch (error) {
+      console.error("Error exporting settings:", error);
+      showImportStatus(`Export failed: ${error.message}`, "error");
+    }
+  }
+
+  // Import settings functionality
+  async function importSettings(event) {
+    try {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const importData = JSON.parse(e.target.result);
+
+          // Validate the imported data structure
+          if (
+            !importData.settings ||
+            !importData.settings[BROWSER_STORAGE_KEY]
+          ) {
+            throw new Error("Invalid settings file format");
+          }
+
+          // Confirm the import
+          if (
+            confirm(
+              `Are you sure you want to import settings from ${importData.exportDate}? This will overwrite your current settings.`
+            )
+          ) {
+            // First store the global settings and lists
+            const importOperations = {
+              [BROWSER_STORAGE_KEY]: importData.settings[BROWSER_STORAGE_KEY],
+              [SKIP_FORCE_THEMING_KEY]:
+                importData.settings[SKIP_FORCE_THEMING_KEY] || [],
+              [SKIP_THEMING_KEY]: importData.settings[SKIP_THEMING_KEY] || [],
+            };
+
+            // Then add any site-specific settings if they exist
+            if (importData.siteSettings) {
+              for (const [key, value] of Object.entries(
+                importData.siteSettings
+              )) {
+                importOperations[key] = value;
+              }
+            }
+
+            // Apply all settings at once
+            await browser.storage.local.set(importOperations);
+
+            showImportStatus(
+              "Settings imported successfully! Reloading...",
+              "success"
+            );
+
+            // Reload the page after a short delay
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          } else {
+            // User cancelled
+            importFileInput.value = "";
+            showImportStatus("Import cancelled", "error");
+          }
+        } catch (parseError) {
+          console.error("Error parsing import file:", parseError);
+          showImportStatus(`Import failed: ${parseError.message}`, "error");
+        }
+      };
+
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error handling import:", error);
+      showImportStatus(`Import failed: ${error.message}`, "error");
+    }
+  }
+
+  // Helper function to show import status messages
+  function showImportStatus(message, type) {
+    importStatusElement.textContent = message;
+    importStatusElement.className = `import-status status-${type}`;
+
+    // Clear the message after 5 seconds
+    setTimeout(() => {
+      importStatusElement.textContent = "";
+      importStatusElement.className = "import-status";
+    }, 5000);
   }
 
   async function displayAddonVersion() {

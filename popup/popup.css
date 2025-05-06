@@ -158,6 +158,25 @@ body {
   transform: scale(1.1);
 }
 
+/* Add glow pulse animation for the What's New button emoji */
+@keyframes glowPulse {
+  0% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8),
+      0 0 12px rgba(249, 135, 100, 0.6);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* Apply the animation to the What's New button */
+.whats-new-button {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
 .whats-new-button::after {
   content: "What's New";
   position: absolute;
@@ -193,7 +212,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 /* Current site toggle styling */

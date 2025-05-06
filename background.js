@@ -818,11 +818,20 @@ function stopAutoUpdate() {
 async function refetchCSS() {
   if (logging) console.log("refetchCSS called");
   try {
-    const response = await fetch(
-      "https://sameerasw.github.io/my-internet/styles.json",
-      { headers: { "Cache-Control": "no-cache" } }
-    );
-    if (!response.ok) throw new Error("Failed to fetch styles.json");
+    // Get the repository URL from storage or use the default one
+    const DEFAULT_REPOSITORY_URL =
+      "https://sameerasw.github.io/my-internet/styles.json";
+    const repoUrlData = await browser.storage.local.get("stylesRepositoryUrl");
+    const repositoryUrl =
+      repoUrlData.stylesRepositoryUrl || DEFAULT_REPOSITORY_URL;
+
+    console.log("Background: Fetching styles from:", repositoryUrl);
+
+    const response = await fetch(repositoryUrl, {
+      headers: { "Cache-Control": "no-cache" },
+    });
+    if (!response.ok)
+      throw new Error(`Failed to fetch styles (Status: ${response.status})`);
     const styles = await response.json();
     await browser.storage.local.set({ styles });
 
@@ -849,7 +858,7 @@ async function refetchCSS() {
       await browser.storage.local.set({ lastFetchedTime: Date.now() });
     }
 
-    console.info("All styles refetched and updated from GitHub.");
+    console.info(`All styles refetched and updated from ${repositoryUrl}`);
 
     // Preload the new styles
     preloadStyles();

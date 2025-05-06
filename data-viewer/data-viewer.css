@@ -6,7 +6,7 @@
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
   padding: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
   border-left: 3px solid var(--accent-color);
 }
 
@@ -14,7 +14,7 @@
   margin-top: 8px;
   color: var(--text-secondary);
   font-size: 13px;
-  padding-left: 58px;
+  /* padding-left: 58px; */
 }
 
 /* General layout adjustments */
@@ -36,7 +36,7 @@ body {
 
 /* Data section styling */
 .data-section {
-  margin-bottom: 24px;
+  margin-bottom: 4px;
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
   padding: 16px;
@@ -109,7 +109,7 @@ body {
 }
 
 .website-panel {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   background-color: var(--bg-color);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -362,7 +362,7 @@ body {
 
 /* Danger zone styling */
 .danger-zone {
-  margin-top: 24px;
+  margin-top: 8px;
   padding: 16px;
   background-color: var(--danger-bg-color);
   border: 1px solid var(--danger-border-color);
@@ -524,7 +524,8 @@ body {
   margin-bottom: 16px;
 }
 
-.import-container, #export-settings {
+.import-container,
+#export-settings {
   flex: 1;
 }
 
@@ -552,10 +553,56 @@ body {
   font-weight: 500;
 }
 
+/* Repository URL styling */
+.repository-url-container {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.repository-url-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.repository-url-input {
+  /* width: 100%; */
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.repository-url-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.repository-url-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.repository-url-status {
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px 0;
+  border-radius: var(--radius-sm);
+}
+
 /* Add responsive adjustments for mobile */
 @media (max-width: 768px) {
-  .backup-actions {
+  .repository-url-buttons {
     flex-direction: column;
     gap: 8px;
+  }
+
+  .repository-url-buttons button {
+    width: 100%;
   }
 }

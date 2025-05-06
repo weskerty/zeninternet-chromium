@@ -2,18 +2,28 @@ document.addEventListener("DOMContentLoaded", function () {
   const BROWSER_STORAGE_KEY = "transparentZenSettings";
   const SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
   const SKIP_THEMING_KEY = "skipThemingList";
+  const REPOSITORY_URL_KEY = "stylesRepositoryUrl";
+  const DEFAULT_REPOSITORY_URL =
+    "https://sameerasw.github.io/my-internet/styles.json";
 
   const globalSettingsElement = document.getElementById("global-settings-data");
   const skipListElement = document.getElementById("skip-list-data");
   const combinedWebsitesElement = document.getElementById(
     "combined-websites-data"
   );
-  const backButton = document.getElementById("back-button");
   const deleteAllButton = document.getElementById("delete-all-data");
   const versionElement = document.getElementById("addon-version");
   const disableTransparencyToggle = document.getElementById(
     "disable-transparency"
   );
+
+  // Repository URL Elements
+  const repositoryUrlInput = document.getElementById("repository-url");
+  const setRepositoryUrlButton = document.getElementById("set-repository-url");
+  const resetRepositoryUrlButton = document.getElementById(
+    "reset-repository-url"
+  );
+  const repositoryUrlStatus = document.getElementById("repository-url-status");
 
   // Backup & Restore Elements
   const exportButton = document.getElementById("export-settings");
@@ -25,11 +35,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Display addon version
   displayAddonVersion();
-
-  // Event listener for the back button
-  backButton.addEventListener("click", function () {
-    window.close();
-  });
 
   // Event listener for disable transparency toggle
   disableTransparencyToggle.addEventListener("change", function () {
@@ -47,9 +52,131 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Repository URL event listeners
+  setRepositoryUrlButton.addEventListener("click", setRepositoryUrl);
+  resetRepositoryUrlButton.addEventListener("click", resetRepositoryUrl);
+
   // New event listeners for export and import functionality
   exportButton.addEventListener("click", exportSettings);
   importFileInput.addEventListener("change", importSettings);
+
+  // Load the repository URL from storage
+  loadRepositoryUrl();
+
+  async function loadRepositoryUrl() {
+    try {
+      const data = await browser.storage.local.get(REPOSITORY_URL_KEY);
+      const repositoryUrl = data[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL;
+      repositoryUrlInput.value = repositoryUrl;
+    } catch (error) {
+      console.error("Error loading repository URL:", error);
+      repositoryUrlInput.value = DEFAULT_REPOSITORY_URL;
+    }
+  }
+
+  async function setRepositoryUrl() {
+    try {
+      const newUrl = repositoryUrlInput.value.trim();
+
+      if (!newUrl) {
+        showRepositoryUrlStatus("Repository URL cannot be empty", "error");
+        return;
+      }
+
+      // Simple URL validation
+      try {
+        new URL(newUrl);
+      } catch (e) {
+        showRepositoryUrlStatus("Invalid URL format", "error");
+        return;
+      }
+
+      // Save the new URL to storage
+      await browser.storage.local.set({ [REPOSITORY_URL_KEY]: newUrl });
+
+      showRepositoryUrlStatus("Repository URL saved successfully", "success");
+
+      // Prompt the user to clear styles data
+      if (
+        confirm(
+          "Would you like to clear existing styles data to avoid conflicts with the new repository?\n\nThis will clear saved styles and website-specific settings, but keep your global settings."
+        )
+      ) {
+        await clearStylesData();
+      }
+    } catch (error) {
+      console.error("Error setting repository URL:", error);
+      showRepositoryUrlStatus(`Error saving URL: ${error.message}`, "error");
+    }
+  }
+
+  async function resetRepositoryUrl() {
+    try {
+      repositoryUrlInput.value = DEFAULT_REPOSITORY_URL;
+      await browser.storage.local.set({
+        [REPOSITORY_URL_KEY]: DEFAULT_REPOSITORY_URL,
+      });
+
+      showRepositoryUrlStatus("Repository URL reset to default", "success");
+
+      // Prompt to clear styles data
+      if (
+        confirm(
+          "Would you like to clear existing styles data to avoid conflicts?\n\nThis will clear saved styles and website-specific settings, but keep your global settings."
+        )
+      ) {
+        await clearStylesData();
+      }
+    } catch (error) {
+      console.error("Error resetting repository URL:", error);
+      showRepositoryUrlStatus(`Error resetting URL: ${error.message}`, "error");
+    }
+  }
+
+  async function clearStylesData() {
+    try {
+      // Get all storage data to filter what to keep and what to remove
+      const allData = await browser.storage.local.get(null);
+
+      // Create a new object with just the data we want to keep
+      const dataToKeep = {};
+
+      // Keep global settings
+      if (allData[BROWSER_STORAGE_KEY]) {
+        dataToKeep[BROWSER_STORAGE_KEY] = allData[BROWSER_STORAGE_KEY];
+      }
+
+      // Keep repository URL
+      if (allData[REPOSITORY_URL_KEY]) {
+        dataToKeep[REPOSITORY_URL_KEY] = allData[REPOSITORY_URL_KEY];
+      }
+
+      // Clear all storage first
+      await browser.storage.local.clear();
+
+      // Then restore the data we want to keep
+      await browser.storage.local.set(dataToKeep);
+
+      // Refresh the data display
+      loadAllData();
+
+      showRepositoryUrlStatus("Styles data cleared successfully", "success");
+    } catch (error) {
+      console.error("Error clearing styles data:", error);
+      showRepositoryUrlStatus(`Error clearing data: ${error.message}`, "error");
+    }
+  }
+
+  function showRepositoryUrlStatus(message, type) {
+    repositoryUrlStatus.textContent = message;
+    repositoryUrlStatus.className = `repository-url-status status-${type}`;
+
+    // Clear the message after 5 seconds
+    setTimeout(() => {
+      repositoryUrlStatus.textContent = "";
+      repositoryUrlStatus.className = "repository-url-status";
+    }, 5000);
+  }
 
   async function deleteAllData() {
     try {
@@ -103,6 +230,8 @@ document.addEventListener("DOMContentLoaded", function () {
         [BROWSER_STORAGE_KEY]: allData[BROWSER_STORAGE_KEY] || {},
         [SKIP_FORCE_THEMING_KEY]: allData[SKIP_FORCE_THEMING_KEY] || [],
         [SKIP_THEMING_KEY]: allData[SKIP_THEMING_KEY] || [],
+        [REPOSITORY_URL_KEY]:
+          allData[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL,
       };
 
       // Also extract site-specific settings (keys that start with BROWSER_STORAGE_KEY.)
@@ -178,12 +307,15 @@ document.addEventListener("DOMContentLoaded", function () {
               `Are you sure you want to import settings from ${importData.exportDate}? This will overwrite your current settings.`
             )
           ) {
-            // First store the global settings and lists
+            // First store the global settings, lists, and repository URL
             const importOperations = {
               [BROWSER_STORAGE_KEY]: importData.settings[BROWSER_STORAGE_KEY],
               [SKIP_FORCE_THEMING_KEY]:
                 importData.settings[SKIP_FORCE_THEMING_KEY] || [],
               [SKIP_THEMING_KEY]: importData.settings[SKIP_THEMING_KEY] || [],
+              [REPOSITORY_URL_KEY]:
+                importData.settings[REPOSITORY_URL_KEY] ||
+                DEFAULT_REPOSITORY_URL,
             };
 
             // Then add any site-specific settings if they exist

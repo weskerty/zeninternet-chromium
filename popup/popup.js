@@ -666,15 +666,24 @@ new (class ExtensionPopup {
     if (logging) console.log("refetchCSS called");
     this.refetchCSSButton.textContent = "Fetching...";
     try {
-      const response = await fetch(
-        "https://sameerasw.github.io/my-internet/styles.json",
-        {
-          headers: {
-            "Cache-Control": "no-cache",
-          },
-        }
+      // Get the repository URL from storage or use the default one
+      const DEFAULT_REPOSITORY_URL =
+        "https://sameerasw.github.io/my-internet/styles.json";
+      const repoUrlData = await browser.storage.local.get(
+        "stylesRepositoryUrl"
       );
-      if (!response.ok) throw new Error("Failed to fetch styles.json");
+      const repositoryUrl =
+        repoUrlData.stylesRepositoryUrl || DEFAULT_REPOSITORY_URL;
+
+      console.log("Fetching styles from:", repositoryUrl);
+
+      const response = await fetch(repositoryUrl, {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      });
+      if (!response.ok)
+        throw new Error(`Failed to fetch styles (Status: ${response.status})`);
       const styles = await response.json();
       await browser.storage.local.set({ styles });
 
@@ -723,7 +732,7 @@ new (class ExtensionPopup {
       setTimeout(() => {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
-      console.info("All styles refetched and updated from GitHub." + styles);
+      console.info(`All styles refetched and updated from ${repositoryUrl}`);
       this.displayLastFetchedTime();
     } catch (error) {
       this.refetchCSSButton.textContent = "Error!";
@@ -731,6 +740,7 @@ new (class ExtensionPopup {
         this.refetchCSSButton.textContent = "Refetch latest styles";
       }, 2000);
       console.error("Error refetching styles:", error);
+      alert(`Error fetching styles: ${error.message}`);
     }
   }
 

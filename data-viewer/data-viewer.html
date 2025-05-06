@@ -46,6 +46,30 @@
                 </div>
             </div>
 
+            <!-- New section for backup/restore -->
+            <div class="data-section">
+                <h2 class="section-title">Backup & Restore</h2>
+                <div class="backup-restore-container">
+                    <p class="backup-description">
+                        Export your settings to a JSON file or import settings from a previously exported file.
+                        <br><strong>Note:</strong> This includes global settings, website lists, and website-specific
+                        feature toggles, but not the actual style data which will be re-fetched.
+                    </p>
+                    <div class="backup-actions">
+                        <button id="export-settings" class="action-button primary">
+                            <i class="fas fa-upload"></i> Export Settings
+                        </button>
+                        <div class="import-container">
+                            <label for="import-file" class="action-button secondary import-label">
+                                <i class="fas fa-download"></i> Import Settings
+                            </label>
+                            <input type="file" id="import-file" accept=".json" hidden>
+                        </div>
+                    </div>
+                    <div id="import-status" class="import-status"></div>
+                </div>
+            </div>
+
             <div class="data-section">
                 <h2 class="section-title">Global Settings</h2>
                 <div id="global-settings-data" class="data-container"></div>

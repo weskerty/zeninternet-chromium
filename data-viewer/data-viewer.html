@@ -27,11 +27,6 @@
         </header>
 
         <main class="app-content">
-            <div class="actions">
-                <button id="back-button" class="action-button secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Extension
-                </button>
-            </div>
 
             <div class="toggle-setting-container">
                 <div class="toggle-container">
@@ -43,6 +38,32 @@
                 </div>
                 <div class="setting-description">
                     This will disable all transparency features while keeping other styling effects active
+                </div>
+            </div>
+
+            <!-- New section for custom repository URL -->
+            <div class="data-section">
+                <h2 class="section-title">Custom Styles Repository</h2>
+                <div class="repository-url-container">
+                    <p class="setting-description">
+                        Change the URL where styles are fetched from. Use this if you want to use a different styles
+                        repository.
+                        <br><strong>Note:</strong> After changing the URL, you should clear existing styles data for
+                        best results.
+                    </p>
+                    <div class="repository-url-controls">
+                        <input type="text" id="repository-url" class="repository-url-input"
+                            placeholder="Enter repository URL...">
+                        <div class="repository-url-buttons">
+                            <button id="set-repository-url" class="action-button primary">
+                                <i class="fas fa-save"></i> Set URL
+                            </button>
+                            <button id="reset-repository-url" class="action-button secondary">
+                                <i class="fas fa-undo"></i> Reset to Default
+                            </button>
+                        </div>
+                    </div>
+                    <div id="repository-url-status" class="repository-url-status"></div>
                 </div>
             </div>
 

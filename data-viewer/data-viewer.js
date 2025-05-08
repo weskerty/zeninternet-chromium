@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const disableTransparencyToggle = document.getElementById(
     "disable-transparency"
   );
+  // New toggle elements
+  const disableHoverToggle = document.getElementById("disable-hover");
+  const disableFooterToggle = document.getElementById("disable-footer");
 
   // Repository URL Elements
   const repositoryUrlInput = document.getElementById("repository-url");
@@ -39,6 +42,15 @@ document.addEventListener("DOMContentLoaded", function () {
   // Event listener for disable transparency toggle
   disableTransparencyToggle.addEventListener("change", function () {
     saveTransparencySettings(this.checked);
+  });
+
+  // Event listeners for new toggles
+  disableHoverToggle.addEventListener("change", function () {
+    saveHoverSettings(this.checked);
+  });
+
+  disableFooterToggle.addEventListener("change", function () {
+    saveFooterSettings(this.checked);
   });
 
   // Event listener for delete all data button
@@ -219,6 +231,52 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // New functions to save hover and footer settings
+  async function saveHoverSettings(isDisabled) {
+    try {
+      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+      const settings = data[BROWSER_STORAGE_KEY] || {};
+
+      // Update the disableHover setting
+      settings.disableHover = isDisabled;
+
+      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+      alert(
+        `Hover effects have been ${
+          isDisabled ? "disabled" : "enabled"
+        } globally. This will affect all websites.`
+      );
+    } catch (error) {
+      console.error("Error saving hover settings:", error);
+      alert(
+        "An error occurred while saving the hover effects setting: " +
+          error.message
+      );
+    }
+  }
+
+  async function saveFooterSettings(isDisabled) {
+    try {
+      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+      const settings = data[BROWSER_STORAGE_KEY] || {};
+
+      // Update the disableFooter setting
+      settings.disableFooter = isDisabled;
+
+      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+      alert(
+        `Footers have been ${
+          isDisabled ? "hidden" : "shown"
+        } globally. This will affect all websites.`
+      );
+    } catch (error) {
+      console.error("Error saving footer settings:", error);
+      alert(
+        "An error occurred while saving the footer setting: " + error.message
+      );
+    }
+  }
+
   // Export settings functionality
   async function exportSettings() {
     try {
@@ -383,9 +441,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const globalSettings = data[BROWSER_STORAGE_KEY] || {};
       displayGlobalSettings(globalSettings);
 
-      // Set the disable transparency toggle state
+      // Set the toggle states
       disableTransparencyToggle.checked =
         globalSettings.disableTransparency || false;
+      // Set new toggle states
+      disableHoverToggle.checked = globalSettings.disableHover || false;
+      disableFooterToggle.checked = globalSettings.disableFooter || false;
 
       // Display skip/enable lists for both forced and non-forced websites
       const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];

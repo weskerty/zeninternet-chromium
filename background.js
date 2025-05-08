@@ -27,6 +27,8 @@ const DEFAULT_SETTINGS = {
   whitelistMode: false, // Use blacklist mode by default for force styling
   whitelistStyleMode: false, // Use blacklist mode by default for regular styling
   disableTransparency: false, // Don't disable transparency by default
+  disableHover: false, // Don't disable hover effects by default
+  disableFooter: false, // Don't disable footers by default
 };
 
 // Helper function to normalize hostnames by removing www. prefix
@@ -716,16 +718,35 @@ async function applyCSS(tabId, hostname, features) {
   let combinedCSS = "";
   let includedFeatures = 0;
   let skippedTransparencyFeatures = 0;
+  let skippedHoverFeatures = 0;
+  let skippedFooterFeatures = 0;
   let skippedDisabledFeatures = 0;
 
   for (const [feature, css] of Object.entries(features)) {
     const isTransparencyFeature = feature
       .toLowerCase()
       .includes("transparency");
+    const isHoverFeature = feature.toLowerCase().includes("hover");
+    const isFooterFeature = feature.toLowerCase().includes("footer");
+
     // Skip any transparency feature if disableTransparency is enabled globally
     if (globalSettings.disableTransparency && isTransparencyFeature) {
       console.log(`DEBUG: Skipping transparency feature: ${feature}`);
       skippedTransparencyFeatures++;
+      continue;
+    }
+
+    // Skip any hover feature if disableHover is enabled globally
+    if (globalSettings.disableHover && isHoverFeature) {
+      console.log(`DEBUG: Skipping hover feature: ${feature}`);
+      skippedHoverFeatures++;
+      continue;
+    }
+
+    // Skip any footer feature if disableFooter is enabled globally
+    if (globalSettings.disableFooter && isFooterFeature) {
+      console.log(`DEBUG: Skipping footer feature: ${feature}`);
+      skippedFooterFeatures++;
       continue;
     }
 
@@ -741,7 +762,7 @@ async function applyCSS(tabId, hostname, features) {
   }
 
   console.log(
-    `DEBUG: CSS Summary - included: ${includedFeatures}, skipped transparency: ${skippedTransparencyFeatures}, skipped disabled: ${skippedDisabledFeatures}`
+    `DEBUG: CSS Summary - included: ${includedFeatures}, skipped transparency: ${skippedTransparencyFeatures}, skipped hover: ${skippedHoverFeatures}, skipped footer: ${skippedFooterFeatures}, skipped disabled: ${skippedDisabledFeatures}`
   );
 
   if (combinedCSS) {

@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS = {
   whitelistMode: false, // Use blacklist mode by default for force styling
   whitelistStyleMode: false, // Use blacklist mode by default for regular styling
   disableTransparency: false, // Don't disable transparency by default
+  disableHover: false, // Don't disable hover effects by default
+  disableFooter: false, // Don't disable footers by default
 };
 
 // Helper function to ensure all required settings exist
@@ -553,6 +555,8 @@ new (class ExtensionPopup {
       // Check if transparency is globally disabled
       const isTransparencyDisabled =
         this.globalSettings.disableTransparency === true;
+      const isHoverDisabled = this.globalSettings.disableHover === true;
+      const isFooterDisabled = this.globalSettings.disableFooter === true;
 
       for (const [feature, css] of Object.entries(features)) {
         const displayFeatureName = feature.includes("-")
@@ -563,7 +567,13 @@ new (class ExtensionPopup {
         const isTransparencyFeature = feature
           .toLowerCase()
           .includes("transparency");
-        const isOverridden = isTransparencyDisabled && isTransparencyFeature;
+        const isHoverFeature = feature.toLowerCase().includes("hover");
+        const isFooterFeature = feature.toLowerCase().includes("footer");
+
+        const isOverridden =
+          (isTransparencyDisabled && isTransparencyFeature) ||
+          (isHoverDisabled && isHoverFeature) ||
+          (isFooterDisabled && isFooterFeature);
 
         const featureToggle = document.createElement("div");
         featureToggle.className = "feature-toggle";
@@ -585,7 +595,7 @@ new (class ExtensionPopup {
 
         featureToggle.innerHTML = toggleHTML;
 
-        // If this is a transparency feature and it's disabled globally, add a class
+        // If this feature is overridden by global settings, add a class
         if (isOverridden) {
           featureToggle.classList.add("overridden-feature");
         }

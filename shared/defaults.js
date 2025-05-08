@@ -10,6 +10,8 @@ export const DEFAULT_SETTINGS = {
   whitelistMode: false, // Use blacklist mode by default for force styling
   whitelistStyleMode: false, // Use blacklist mode by default for regular styling
   disableTransparency: false, // Don't disable transparency by default
+  disableHover: false, // Don't disable hover effects by default
+  disableFooter: false, // Don't disable footers by default
 };
 
 /**

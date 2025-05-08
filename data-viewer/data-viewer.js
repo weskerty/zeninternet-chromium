@@ -217,17 +217,9 @@ document.addEventListener("DOMContentLoaded", function () {
       settings.disableTransparency = isDisabled;
 
       await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      alert(
-        `Transparency has been ${
-          isDisabled ? "disabled" : "enabled"
-        } globally. This will affect all websites.`
-      );
+      // No notification - just save the setting silently
     } catch (error) {
       console.error("Error saving transparency settings:", error);
-      alert(
-        "An error occurred while saving the transparency setting: " +
-          error.message
-      );
     }
   }
 
@@ -241,17 +233,9 @@ document.addEventListener("DOMContentLoaded", function () {
       settings.disableHover = isDisabled;
 
       await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      alert(
-        `Hover effects have been ${
-          isDisabled ? "disabled" : "enabled"
-        } globally. This will affect all websites.`
-      );
+      // No notification - just save the setting silently
     } catch (error) {
       console.error("Error saving hover settings:", error);
-      alert(
-        "An error occurred while saving the hover effects setting: " +
-          error.message
-      );
     }
   }
 
@@ -264,16 +248,9 @@ document.addEventListener("DOMContentLoaded", function () {
       settings.disableFooter = isDisabled;
 
       await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      alert(
-        `Footers have been ${
-          isDisabled ? "hidden" : "shown"
-        } globally. This will affect all websites.`
-      );
+      // No notification - just save the setting silently
     } catch (error) {
       console.error("Error saving footer settings:", error);
-      alert(
-        "An error occurred while saving the footer setting: " + error.message
-      );
     }
   }
 

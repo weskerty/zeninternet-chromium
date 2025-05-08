@@ -27,49 +27,75 @@
         </header>
 
         <main class="app-content">
-
-            <div class="toggle-setting-container">
-                <div class="toggle-container">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disable-transparency">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="toggle-label">Disable Transparency Globally</span>
-                </div>
-                <div class="setting-description">
-                    This will disable all transparency features while keeping other styling effects active
-                </div>
-            </div>
-
-            <!-- New toggles for hover and footer effects -->
-            <div class="toggle-setting-container">
-                <div class="toggle-container">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disable-hover">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="toggle-label">Disable Hover Effects Globally</span>
-                </div>
-                <div class="setting-description">
-                    This will disable all hover animation features while keeping other styling effects active
+            <!-- Backup & Restore section moved to top -->
+            <div class="data-section">
+                <h2 class="section-title">Backup & Restore ✨</h2>
+                <div class="backup-restore-container">
+                    <p class="backup-description">
+                        Export your settings to a JSON file or import settings from a previously exported file.
+                        <br><strong>Note:</strong> This includes global settings, website lists, and website-specific
+                        feature toggles, but not the actual style data which will be re-fetched.
+                    </p>
+                    <div class="backup-actions">
+                        <button id="export-settings" class="action-button primary">
+                            <i class="fas fa-upload"></i> Export Settings
+                        </button>
+                        <div class="import-container">
+                            <label for="import-file" class="action-button secondary import-label">
+                                <i class="fas fa-download"></i> Import Settings
+                            </label>
+                            <input type="file" id="import-file" accept=".json" hidden>
+                        </div>
+                    </div>
+                    <div id="import-status" class="import-status"></div>
                 </div>
             </div>
 
-            <div class="toggle-setting-container">
-                <div class="toggle-container">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="disable-footer">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="toggle-label">Hide Footers Globally</span>
-                </div>
-                <div class="setting-description">
-                    This will hide page footers on websites where the feature is available
+            <!-- Global toggles grouped into a single section with a heading -->
+            <div class="data-section">
+                <h2 class="section-title">Global Feature Controls ✨</h2>
+                <div class="global-toggles-container">
+                    <div class="toggle-row">
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="disable-transparency">
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="toggle-label">Disable Transparency</span>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="disable-hover">
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="toggle-label">Disable Hover Effects</span>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="disable-footer">
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="toggle-label">Keep Footers</span>
+                        </div>
+                    </div>
+                    <div class="setting-description">
+                        These settings control specific feature types across all websites.
+                        Changes apply immediately to all open tabs and future browsing sessions.
+                    </div>
                 </div>
             </div>
-            
 
-            <!-- New section for custom repository URL -->
+            <div class="data-section">
+                <h2 class="section-title">Global Settings</h2>
+                <div id="global-settings-data" class="data-container"></div>
+            </div>
+
+            <div class="data-section">
+                <h2 class="section-title">Skip/Enable List</h2>
+                <div id="skip-list-data" class="data-container"></div>
+            </div>
+
+            <!-- Repository URL section moved above danger zone -->
             <div class="data-section">
                 <h2 class="section-title">Custom Styles Repository ✨</h2>
                 <div class="repository-url-container">
@@ -95,40 +121,6 @@
                 </div>
             </div>
 
-            <!-- New section for backup/restore -->
-            <div class="data-section">
-                <h2 class="section-title">Backup & Restore ✨</h2>
-                <div class="backup-restore-container">
-                    <p class="backup-description">
-                        Export your settings to a JSON file or import settings from a previously exported file.
-                        <br><strong>Note:</strong> This includes global settings, website lists, and website-specific
-                        feature toggles, but not the actual style data which will be re-fetched.
-                    </p>
-                    <div class="backup-actions">
-                        <button id="export-settings" class="action-button primary">
-                            <i class="fas fa-upload"></i> Export Settings
-                        </button>
-                        <div class="import-container">
-                            <label for="import-file" class="action-button secondary import-label">
-                                <i class="fas fa-download"></i> Import Settings
-                            </label>
-                            <input type="file" id="import-file" accept=".json" hidden>
-                        </div>
-                    </div>
-                    <div id="import-status" class="import-status"></div>
-                </div>
-            </div>
-
-            <div class="data-section">
-                <h2 class="section-title">Global Settings</h2>
-                <div id="global-settings-data" class="data-container"></div>
-            </div>
-
-            <div class="data-section">
-                <h2 class="section-title">Skip/Enable List</h2>
-                <div id="skip-list-data" class="data-container"></div>
-            </div>
-
             <div class="danger-zone">
                 <h3 class="danger-title">Danger Zone</h3>
                 <div class="danger-actions">
@@ -142,17 +134,18 @@
                 <h2 class="section-title">Websites and CSS</h2>
                 <div id="combined-websites-data" class="data-container"></div>
             </div>
-        </main>
 
-        <footer class="app-footer">
-            <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank">
-                <i class="fas fa-book"></i> Styles Repository
-            </a>
-            <div class="footer-divider"></div>
-            <a href="https://github.com/sameerasw/zeninternet" class="footer-link" target="_blank">
-                <i class="fa-brands fa-github"></i> Project Repository
-            </a>
-        </footer>
+
+            <footer class="app-footer">
+                <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank">
+                    <i class="fas fa-book"></i> Styles Repository
+                </a>
+                <div class="footer-divider"></div>
+                <a href="https://github.com/sameerasw/zeninternet" class="footer-link" target="_blank">
+                    <i class="fa-brands fa-github"></i> Project Repository
+                </a>
+            </footer>
+        </main>
     </div>
     <script src="data-viewer.js"></script>
 </body>

@@ -606,3 +606,35 @@ body {
     width: 100%;
   }
 }
+
+/* Global toggles container styling */
+.global-toggles-container {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.toggle-row .toggle-container {
+  flex: 1;
+  min-width: 180px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .toggle-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toggle-row .toggle-container {
+    margin-bottom: 4px;
+  }
+}

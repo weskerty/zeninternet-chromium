@@ -2,6 +2,8 @@
 
 A prettier Internet in Zen and Firefox.
 
+> Since I need to focus some time on work and on my fyp, I might throttle the development and do any updates only if bugs arise. But will try to continue adding themes whenever I am chill :)
+
 <a href="https://addons.mozilla.org/en-US/firefox/addon/zen-internet/">
     <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
 </a>

@@ -16,8 +16,13 @@
   // Update our stylesheet content
   function updateStyles(css) {
     const stylesheet = getStylesheet();
-    stylesheet.textContent = css || "";
-    console.log("ZenInternet: Styles were " + (css ? "updated" : "removed"));
+    // Only update if content has changed to avoid unnecessary reflows
+    if (stylesheet.textContent !== css) {
+      stylesheet.textContent = css || "";
+      console.log("ZenInternet: Styles were " + (css ? "updated" : "removed"));
+    } else {
+      console.log("ZenInternet: Styles unchanged, skipping update");
+    }
   }
 
   // Announce content script is ready and provide current hostname

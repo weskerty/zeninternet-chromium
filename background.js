@@ -386,10 +386,6 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   } else if (message.action === "disableAutoUpdate") {
     stopAutoUpdate();
     return true;
-  } else if (message.action === "reapplyStylesAfterFetch") {
-    // Triggered after fetching new styles from popup
-    await reapplyStylesToAllTabs();
-    return true;
   }
 
   // Update the icon when the content script reports ready
@@ -910,50 +906,16 @@ async function refetchCSS() {
       });
       console.info("Initialized default settings during first fetch");
     } else {
-      // Just update the lastFetchedTime while preserving other settings
-      const updatedSettings = {
-        ...settingsData[BROWSER_STORAGE_KEY],
-        lastFetchedTime: Date.now(),
-      };
-      await browser.storage.local.set({
-        [BROWSER_STORAGE_KEY]: updatedSettings,
-      });
+      // Just update the lastFetchedTime
+      await browser.storage.local.set({ lastFetchedTime: Date.now() });
     }
 
     console.info(`All styles refetched and updated from ${repositoryUrl}`);
 
-    // Clear CSS cache to ensure we use fresh styles
-    cssCache.clear();
-
-    // Preload the new styles while keeping site-specific settings
-    await preloadStyles();
-
-    // Reapply CSS to all active tabs
-    await reapplyStylesToAllTabs();
+    // Preload the new styles
+    preloadStyles();
   } catch (error) {
     console.error("Error refetching styles:", error);
-  }
-}
-
-// New function to reapply styles to all active tabs
-async function reapplyStylesToAllTabs() {
-  try {
-    // Clear styling state cache to ensure fresh evaluation
-    stylingStateCache.clear();
-
-    // Get all active tabs
-    const tabs = await browser.tabs.query({});
-
-    // Reapply CSS to each tab
-    for (const tab of tabs) {
-      if (tab.url && tab.url.startsWith("http")) {
-        applyCSSToTab(tab);
-      }
-    }
-
-    if (logging) console.log("Reapplied styles to all active tabs after fetch");
-  } catch (error) {
-    console.error("Error reapplying styles to tabs:", error);
   }
 }
 

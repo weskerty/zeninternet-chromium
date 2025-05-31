@@ -687,17 +687,6 @@ new (class ExtensionPopup {
 
       console.log("Fetching styles from:", repositoryUrl);
 
-      // Store existing site-specific settings before fetching new styles
-      const allStorageData = await browser.storage.local.get(null);
-      const existingSiteSettings = {};
-
-      // Identify and keep all site-specific settings
-      for (const [key, value] of Object.entries(allStorageData)) {
-        if (key.startsWith(this.BROWSER_STORAGE_KEY + ".")) {
-          existingSiteSettings[key] = value;
-        }
-      }
-
       const response = await fetch(repositoryUrl, {
         headers: {
           "Cache-Control": "no-cache",
@@ -742,24 +731,12 @@ new (class ExtensionPopup {
         // Update labels
         this.updateModeLabels();
       } else {
-        // Just update the lastFetchedTime while preserving other settings
-        const updatedSettings = {
-          ...settingsData[this.BROWSER_STORAGE_KEY],
-          lastFetchedTime: Date.now(),
-        };
-        await browser.storage.local.set({
-          [this.BROWSER_STORAGE_KEY]: updatedSettings,
-        });
+        // Just update the lastFetchedTime
+        await browser.storage.local.set({ lastFetchedTime: Date.now() });
       }
 
-      // Reload the current site features
-      await this.loadCurrentSiteFeatures();
-
-      // Notify background script to immediately reapply CSS to active tabs
-      browser.runtime.sendMessage({
-        action: "reapplyStylesAfterFetch",
-        preserveSettings: true,
-      });
+      this.loadCurrentSiteFeatures();
+      this.updateActiveTabStyling();
 
       this.refetchCSSButton.textContent = "Done!";
       setTimeout(() => {

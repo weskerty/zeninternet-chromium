@@ -725,6 +725,7 @@ async function applyCSS(tabId, hostname, features) {
   let skippedHoverFeatures = 0;
   let skippedFooterFeatures = 0;
   let skippedDisabledFeatures = 0;
+  let totalTransparencyFeatures = 0;
 
   for (const [feature, css] of Object.entries(features)) {
     const isTransparencyFeature = feature
@@ -732,6 +733,11 @@ async function applyCSS(tabId, hostname, features) {
       .includes("transparency");
     const isHoverFeature = feature.toLowerCase().includes("hover");
     const isFooterFeature = feature.toLowerCase().includes("footer");
+
+    // Count total transparency features
+    if (isTransparencyFeature) {
+      totalTransparencyFeatures++;
+    }
 
     // Skip any transparency feature if disableTransparency is enabled globally
     if (globalSettings.disableTransparency && isTransparencyFeature) {
@@ -762,11 +768,35 @@ async function applyCSS(tabId, hostname, features) {
     } else {
       console.log(`DEBUG: Feature disabled in site settings: ${feature}`);
       skippedDisabledFeatures++;
+      // Count disabled transparency features for site-specific logic
+      if (isTransparencyFeature) {
+        skippedTransparencyFeatures++;
+      }
     }
   }
 
+  // Check if transparency is effectively disabled (globally or all site transparency features disabled)
+  const transparencyDisabled =
+    globalSettings.disableTransparency ||
+    (totalTransparencyFeatures > 0 &&
+      skippedTransparencyFeatures === totalTransparencyFeatures);
+
+  // Add background color CSS if transparency is disabled
+  if (transparencyDisabled) {
+    const backgroundCSS = `
+/* ZenInternet: Background color when transparency is disabled */
+body {
+    background-color: light-dark(#fff, #111) !important;
+}
+`;
+    combinedCSS += backgroundCSS;
+    console.log(
+      `DEBUG: Added background color CSS due to disabled transparency`
+    );
+  }
+
   console.log(
-    `DEBUG: CSS Summary - included: ${includedFeatures}, skipped transparency: ${skippedTransparencyFeatures}, skipped hover: ${skippedHoverFeatures}, skipped footer: ${skippedFooterFeatures}, skipped disabled: ${skippedDisabledFeatures}`
+    `DEBUG: CSS Summary - included: ${includedFeatures}, skipped transparency: ${skippedTransparencyFeatures}, skipped hover: ${skippedHoverFeatures}, skipped footer: ${skippedFooterFeatures}, skipped disabled: ${skippedDisabledFeatures}, transparency disabled: ${transparencyDisabled}`
   );
 
   if (combinedCSS) {

@@ -50,8 +50,7 @@ function ensureDefaultSettings(settings = {}) {
   return result;
 }
 
-// Determine if styling should be applied to a hostname
-// This is the centralized logic for both CSS application and icon updates
+// Enhanced function to determine styling state with more detailed information
 async function shouldApplyStyling(hostname) {
   try {
     // Check if we already have the answer cached
@@ -68,10 +67,15 @@ async function shouldApplyStyling(hostname) {
       settingsData[BROWSER_STORAGE_KEY] || {}
     );
 
-    // If styling is globally disabled, styling is disabled
+    // If styling is globally disabled, return detailed state
     if (!settings.enableStyling) {
-      stylingStateCache.set(cacheKey, false);
-      return false;
+      const result = {
+        shouldApply: false,
+        reason: "globally_disabled",
+        shouldApplyMinimal: true, // Still apply background when globally disabled
+      };
+      stylingStateCache.set(cacheKey, result);
+      return result;
     }
 
     // Check if we have a specific style for this site
@@ -139,13 +143,23 @@ async function shouldApplyStyling(hostname) {
       if (styleMode) {
         // Whitelist mode
         const shouldApply = skipStyleList.includes(normalizedHostname);
-        stylingStateCache.set(cacheKey, shouldApply);
-        return shouldApply;
+        const result = {
+          shouldApply,
+          reason: shouldApply ? "whitelisted" : "not_whitelisted",
+          shouldApplyMinimal: !shouldApply, // Apply minimal when not whitelisted
+        };
+        stylingStateCache.set(cacheKey, result);
+        return result;
       } else {
         // Blacklist mode
         const shouldApply = !skipStyleList.includes(normalizedHostname);
-        stylingStateCache.set(cacheKey, shouldApply);
-        return shouldApply;
+        const result = {
+          shouldApply,
+          reason: shouldApply ? "not_blacklisted" : "blacklisted",
+          shouldApplyMinimal: !shouldApply, // Apply minimal when blacklisted
+        };
+        stylingStateCache.set(cacheKey, result);
+        return result;
       }
     }
 
@@ -162,22 +176,74 @@ async function shouldApplyStyling(hostname) {
       // In blacklist mode: apply unless site is in the list
       if (isWhitelistMode) {
         const shouldApply = skipForceList.includes(normalizedHostname);
-        stylingStateCache.set(cacheKey, shouldApply);
-        return shouldApply;
+        const result = {
+          shouldApply,
+          reason: shouldApply ? "force_whitelisted" : "force_not_whitelisted",
+          shouldApplyMinimal: !shouldApply, // Apply minimal when force not whitelisted
+        };
+        stylingStateCache.set(cacheKey, result);
+        return result;
       } else {
         const shouldApply = !skipForceList.includes(normalizedHostname);
-        stylingStateCache.set(cacheKey, shouldApply);
-        return shouldApply;
+        const result = {
+          shouldApply,
+          reason: shouldApply ? "force_not_blacklisted" : "force_blacklisted",
+          shouldApplyMinimal: !shouldApply, // Apply minimal when force blacklisted
+        };
+        stylingStateCache.set(cacheKey, result);
+        return result;
       }
     }
 
     // No styling applies
-    stylingStateCache.set(cacheKey, false);
-    return false;
+    const result = {
+      shouldApply: false,
+      reason: "no_styling_rules",
+      shouldApplyMinimal: false,
+    };
+    stylingStateCache.set(cacheKey, result);
+    return result;
   } catch (error) {
     console.error("Error determining styling state:", error);
-    return false;
+    return { shouldApply: false, reason: "error", shouldApplyMinimal: false };
   }
+}
+
+// New function to apply minimal styling (just background color)
+async function applyMinimalCSS(tabId, hostname) {
+  console.log(
+    "DEBUG: applyMinimalCSS called for tab",
+    tabId,
+    "hostname",
+    hostname
+  );
+
+  const backgroundCSS = `
+/* ZenInternet: Minimal styling - background color when main styling is disabled/skipped */
+body {
+    background-color: light-dark(#fff, #111) !important;
+}
+`;
+
+  try {
+    // Try to send via messaging first
+    console.log(`DEBUG: Sending minimal styles to tab ${tabId} via messaging`);
+    await browser.tabs.sendMessage(tabId, {
+      action: "applyStyles",
+      css: backgroundCSS,
+    });
+  } catch (e) {
+    // Fallback to insertCSS if messaging fails
+    console.log(
+      `DEBUG: Messaging failed, falling back to insertCSS: ${e.message}`
+    );
+    await browser.tabs.insertCSS(tabId, {
+      code: backgroundCSS,
+      runAt: "document_start",
+    });
+  }
+
+  console.log(`DEBUG: Successfully applied minimal CSS for ${hostname}`);
 }
 
 // Update the icon based on whether styling is active for the current tab
@@ -197,21 +263,20 @@ async function updateIconForTab(tabId, url) {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
 
-    // Determine if we should apply styling using the centralized logic
-    const isStylingEnabled = await shouldApplyStyling(hostname);
+    // Determine styling state using the enhanced function
+    const stylingState = await shouldApplyStyling(hostname);
 
-    // Update the icon based on whether styling is enabled for this site
-    setIcon(tabId, isStylingEnabled);
+    // Update the icon based on whether full styling is enabled for this site
+    setIcon(tabId, stylingState.shouldApply);
 
     if (logging)
       console.log(
         `Icon updated for ${hostname}: styling ${
-          isStylingEnabled ? "ON" : "OFF"
-        }`
+          stylingState.shouldApply ? "ON" : "OFF"
+        } (${stylingState.reason})`
       );
   } catch (error) {
     console.error("Error updating icon:", error);
-    // Default to off icon in case of error
     setIcon(tabId, false);
   }
 }
@@ -470,217 +535,153 @@ async function applyCSSToTab(tab) {
       ")"
     );
 
-    const settings = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+    // Use the enhanced shouldApplyStyling function
+    const stylingState = await shouldApplyStyling(hostname);
+    console.log("DEBUG: Styling state:", stylingState);
 
-    // Ensure defaults for any missing settings
-    const globalSettings = ensureDefaultSettings(
-      settings[BROWSER_STORAGE_KEY] || {}
-    );
+    // Update icon based on whether full styling is applied
+    setIcon(tab.id, stylingState.shouldApply);
 
-    // Save back any missing defaults
-    if (
-      JSON.stringify(globalSettings) !==
-      JSON.stringify(settings[BROWSER_STORAGE_KEY])
-    ) {
-      await browser.storage.local.set({
-        [BROWSER_STORAGE_KEY]: globalSettings,
-      });
-      if (logging)
-        console.log("Applied missing default settings during CSS application");
-    }
+    // If full styling should be applied, proceed with normal CSS application
+    if (stylingState.shouldApply) {
+      const settings = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+      const globalSettings = ensureDefaultSettings(
+        settings[BROWSER_STORAGE_KEY] || {}
+      );
 
-    console.log("DEBUG: Global settings:", JSON.stringify(globalSettings));
+      const data = await browser.storage.local.get("styles");
+      console.log(
+        "DEBUG: Loaded styles count:",
+        Object.keys(data.styles?.website || {}).length
+      );
 
-    const skipStyleListData = await browser.storage.local.get(SKIP_THEMING_KEY);
-    const skipStyleList = skipStyleListData[SKIP_THEMING_KEY] || [];
+      // Find the best matching CSS file
+      let bestMatch = null;
+      let bestMatchLength = 0;
+      let matchType = "none";
 
-    // Use default from settings if not explicitly set
-    const styleMode =
-      globalSettings.whitelistStyleMode ?? DEFAULT_SETTINGS.whitelistStyleMode;
+      for (const key of Object.keys(data.styles?.website || {})) {
+        const siteName = key.replace(".css", "");
+        const normalizedSiteName = normalizeHostname(siteName);
 
-    if (
-      globalSettings.enableStyling === false ||
-      (!styleMode && skipStyleList.includes(hostname)) ||
-      (styleMode && !skipStyleList.includes(hostname))
-    ) {
-      console.log("DEBUG: Styling is disabled, exiting early");
-      // Make sure the icon is updated to reflect the disabled state
-      setIcon(tab.id, false);
-
-      // Clear the cache entry to ensure we don't have stale data
-      const cacheKey = `styling:${hostname}`;
-      stylingStateCache.set(cacheKey, false);
-      return;
-    }
-
-    const data = await browser.storage.local.get("styles");
-    console.log(
-      "DEBUG: Loaded styles count:",
-      Object.keys(data.styles?.website || {}).length
-    );
-
-    const skipListData = await browser.storage.local.get(
-      SKIP_FORCE_THEMING_KEY
-    );
-    const siteList = skipListData[SKIP_FORCE_THEMING_KEY] || [];
-    console.log("DEBUG: Skip/Whitelist contains", siteList.length, "sites");
-    console.log("DEBUG: Current site in list:", siteList.includes(hostname));
-
-    const isWhitelistMode = globalSettings.whitelistMode || false;
-    console.log("DEBUG: Using whitelist mode:", isWhitelistMode);
-
-    // Find the best matching CSS file
-    let bestMatch = null;
-    let bestMatchLength = 0;
-    let matchType = "none";
-
-    for (const key of Object.keys(data.styles?.website || {})) {
-      const siteName = key.replace(".css", "");
-
-      // For site names in the styles list, also normalize by removing www. if present
-      const normalizedSiteName = normalizeHostname(siteName);
-
-      // Exact match has highest priority - compare normalized hostnames
-      if (hostname === normalizedSiteName) {
-        bestMatch = key;
-        matchType = "exact";
-        console.log("DEBUG: Found exact match:", key);
-        break;
-      }
-
-      // Then check wildcard matches
-      if (siteName.startsWith("+")) {
-        const baseSite = siteName.slice(1);
-        // Ensure we're matching with proper domain boundary
-        if (
-          (hostname === baseSite || hostname.endsWith(`.${baseSite}`)) &&
-          baseSite.length > bestMatchLength
-        ) {
+        // Exact match has highest priority - compare normalized hostnames
+        if (hostname === normalizedSiteName) {
           bestMatch = key;
-          bestMatchLength = baseSite.length;
-          matchType = "wildcard";
-          console.log(
-            "DEBUG: Found wildcard match:",
-            key,
-            "with length",
-            baseSite.length
-          );
+          matchType = "exact";
+          console.log("DEBUG: Found exact match:", key);
+          break;
         }
-      }
-      // Check TLD suffix matches (-domain.com) - fixed implementation
-      else if (siteName.startsWith("-")) {
-        const baseSite = siteName.slice(1);
 
-        // Extract domain name without the TLD
-        // For cached site: Use everything before the last dot(s)
-        const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
-
-        // For hostname: Similarly extract the domain without the TLD
-        const hostParts = hostname.split(".");
-        const hostDomain =
-          hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
-
-        console.log(
-          `DEBUG: Comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
-        );
-
-        // Match if the domain part (without TLD) matches
-        if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
-          // Only update if it's a better match (longer domain name part)
-          if (cachedDomain.length > bestMatchLength) {
+        // Then check wildcard matches
+        if (siteName.startsWith("+")) {
+          const baseSite = siteName.slice(1);
+          // Ensure we're matching with proper domain boundary
+          if (
+            (hostname === baseSite || hostname.endsWith(`.${baseSite}`)) &&
+            baseSite.length > bestMatchLength
+          ) {
             bestMatch = key;
-            bestMatchLength = cachedDomain.length;
-            matchType = "suffix";
+            bestMatchLength = baseSite.length;
+            matchType = "wildcard";
             console.log(
-              "DEBUG: Found TLD suffix match:",
+              "DEBUG: Found wildcard match:",
               key,
-              "for",
-              hostname,
-              "with domain part:",
-              cachedDomain
+              "with length",
+              baseSite.length
             );
           }
         }
-      }
-      // Last, check subdomain matches with proper domain boundary
-      else if (
-        hostname !== normalizedSiteName &&
-        hostname.endsWith(`.${normalizedSiteName}`) &&
-        !siteName.startsWith("-") &&
-        normalizedSiteName.length > bestMatchLength
-      ) {
-        bestMatch = key;
-        bestMatchLength = normalizedSiteName.length;
-        matchType = "subdomain";
-        console.log(
-          "DEBUG: Found domain suffix match:",
-          key,
-          "with length",
-          normalizedSiteName.length
-        );
-      }
-    }
+        // Check TLD suffix matches (-domain.com) - fixed implementation
+        else if (siteName.startsWith("-")) {
+          const baseSite = siteName.slice(1);
 
-    // If we found a direct match, use it
-    if (bestMatch) {
-      console.log("DEBUG: Using match:", bestMatch, "of type:", matchType);
-      await applyCSS(tab.id, hostname, data.styles.website[bestMatch]);
-      return;
-    } else {
-      console.log("DEBUG: No direct style match found for:", hostname);
-    }
+          // Extract domain name without the TLD
+          // For cached site: Use everything before the last dot(s)
+          const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
 
-    // Otherwise, check if we should apply forced styling
-    console.log("DEBUG: Force styling enabled:", globalSettings.forceStyling);
-    if (globalSettings.forceStyling) {
-      const siteInList = siteList.includes(hostname);
-      console.log("DEBUG: Site in list:", siteInList);
+          // For hostname: Similarly extract the domain without the TLD
+          const hostParts = hostname.split(".");
+          const hostDomain =
+            hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
 
-      // Use default from settings if not explicitly set
-      const isWhitelistMode =
-        globalSettings.whitelistMode ?? DEFAULT_SETTINGS.whitelistMode;
-      console.log("DEBUG: Using whitelist mode:", isWhitelistMode);
-
-      // In whitelist mode: apply only if site is in the list
-      // In blacklist mode: apply only if site is NOT in the list
-      const shouldApplyForcedStyling =
-        (isWhitelistMode && siteInList) || (!isWhitelistMode && !siteInList);
-      console.log(
-        "DEBUG: Should apply forced styling:",
-        shouldApplyForcedStyling,
-        "(Whitelist mode:",
-        isWhitelistMode,
-        ", Site in list:",
-        siteInList,
-        ")"
-      );
-
-      if (shouldApplyForcedStyling) {
-        if (data.styles.website["example.com.css"]) {
-          console.log("DEBUG: Applying forced styling with example.com.css");
-          await applyCSS(
-            tab.id,
-            hostname,
-            data.styles.website["example.com.css"]
+          console.log(
+            `DEBUG: Comparing domains - cached: ${cachedDomain}, host: ${hostDomain}`
           );
-        } else {
-          console.log("DEBUG: example.com.css not found in styles");
+
+          // Match if the domain part (without TLD) matches
+          if (cachedDomain && hostDomain && hostDomain === cachedDomain) {
+            // Only update if it's a better match (longer domain name part)
+            if (cachedDomain.length > bestMatchLength) {
+              bestMatch = key;
+              bestMatchLength = cachedDomain.length;
+              matchType = "suffix";
+              console.log(
+                "DEBUG: Found TLD suffix match:",
+                key,
+                "for",
+                hostname,
+                "with domain part:",
+                cachedDomain
+              );
+            }
+          }
         }
-      } else {
-        console.log("DEBUG: Skipping forced styling due to site list rules");
+        // Last, check subdomain matches with proper domain boundary
+        else if (
+          hostname !== normalizedSiteName &&
+          hostname.endsWith(`.${normalizedSiteName}`) &&
+          !siteName.startsWith("-") &&
+          normalizedSiteName.length > bestMatchLength
+        ) {
+          bestMatch = key;
+          bestMatchLength = normalizedSiteName.length;
+          matchType = "subdomain";
+          console.log(
+            "DEBUG: Found domain suffix match:",
+            key,
+            "with length",
+            normalizedSiteName.length
+          );
+        }
       }
-    } else {
-      console.log("DEBUG: Force styling is disabled, no styles applied");
+
+      // If we found a direct match, use it
+      if (bestMatch) {
+        console.log("DEBUG: Using match:", bestMatch, "of type:", matchType);
+        await applyCSS(tab.id, hostname, data.styles.website[bestMatch]);
+        return;
+      } else if (
+        globalSettings.forceStyling &&
+        data.styles.website["example.com.css"]
+      ) {
+        console.log("DEBUG: Applying forced styling with example.com.css");
+        await applyCSS(
+          tab.id,
+          hostname,
+          data.styles.website["example.com.css"]
+        );
+        return;
+      }
     }
 
-    // After successfully applying CSS, update the icon to ON state
-    // and update the styling state cache
-    const cacheKey = `styling:${hostname}`;
-    stylingStateCache.set(cacheKey, true);
-    setIcon(tab.id, true);
+    // If full styling is not applied but minimal styling should be applied
+    if (!stylingState.shouldApply && stylingState.shouldApplyMinimal) {
+      console.log(
+        "DEBUG: Applying minimal styling due to:",
+        stylingState.reason
+      );
+      await applyMinimalCSS(tab.id, hostname);
+      return;
+    }
+
+    console.log(
+      "DEBUG: No styling applied for:",
+      hostname,
+      "Reason:",
+      stylingState.reason
+    );
   } catch (error) {
     console.error(`DEBUG ERROR: Error applying CSS:`, error);
-    // If there's an error, make sure the icon is OFF
     setIcon(tab.id, false);
   }
 }

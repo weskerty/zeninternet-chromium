@@ -1004,10 +1004,11 @@ new (class ExtensionPopup {
 
   displayLastFetchedTime() {
     if (logging) console.log("displayLastFetchedTime called");
-    browser.storage.local.get("lastFetchedTime").then((result) => {
-      if (result.lastFetchedTime) {
+    browser.storage.local.get(this.BROWSER_STORAGE_KEY).then((result) => {
+      const settings = result[this.BROWSER_STORAGE_KEY] || {};
+      if (settings.lastFetchedTime) {
         this.lastFetchedTime.textContent = `Last fetched: ${new Date(
-          result.lastFetchedTime
+          settings.lastFetchedTime
         ).toLocaleString()}`;
       }
     });

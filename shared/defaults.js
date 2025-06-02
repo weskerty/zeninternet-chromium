@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   disableTransparency: false, // Don't disable transparency by default
   disableHover: false, // Don't disable hover effects by default
   disableFooter: false, // Don't disable footers by default
+  fallbackBackgroundList: [], // Empty array for fallback background sites
 };
 
 /**

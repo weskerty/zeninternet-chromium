@@ -1,6 +1,7 @@
 let logging = false;
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
+let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 
 // Default settings to use when values are missing
 const DEFAULT_SETTINGS = {
@@ -12,6 +13,7 @@ const DEFAULT_SETTINGS = {
   disableTransparency: false, // Don't disable transparency by default
   disableHover: false, // Don't disable hover effects by default
   disableFooter: false, // Don't disable footers by default
+  fallbackBackgroundList: [], // Empty array for fallback background sites
 };
 
 // Helper function to ensure all required settings exist
@@ -62,6 +64,8 @@ new (class ExtensionPopup {
   modeIndicator = document.getElementById("mode-indicator");
   whatsNewButton = document.getElementById("whats-new");
   howToUseButton = document.getElementById("how-to-use");
+  fallbackBackgroundSwitch = document.getElementById("fallback-background");
+  fallbackBackgroundList = [];
 
   constructor() {
     if (logging) console.log("Initializing ExtensionPopup");
@@ -69,9 +73,11 @@ new (class ExtensionPopup {
     this.loadSettings().then(() => {
       this.loadSkipForceThemingList().then(() => {
         this.loadSkipThemingList().then(() => {
-          this.getCurrentTabInfo().then(() => {
-            this.restoreSettings();
-            this.bindEvents();
+          this.loadFallbackBackgroundList().then(() => {
+            this.getCurrentTabInfo().then(() => {
+              this.restoreSettings();
+              this.bindEvents();
+            });
           });
         });
       });
@@ -190,6 +196,10 @@ new (class ExtensionPopup {
       this.saveSkipThemingList();
     });
 
+    this.fallbackBackgroundSwitch.addEventListener("change", () => {
+      this.saveFallbackBackgroundList();
+    });
+
     this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
   }
 
@@ -216,6 +226,11 @@ new (class ExtensionPopup {
     this.skipThemingSwitch.checked = this.skipThemingList.includes(
       normalizeHostname(this.currentSiteHostname)
     );
+
+    this.fallbackBackgroundSwitch.checked =
+      this.fallbackBackgroundList.includes(
+        normalizeHostname(this.currentSiteHostname)
+      );
 
     this.loadCurrentSiteFeatures();
   }
@@ -346,6 +361,17 @@ new (class ExtensionPopup {
     }
   }
 
+  async loadFallbackBackgroundList() {
+    const data = await browser.storage.local.get(FALLBACK_BACKGROUND_KEY);
+    this.fallbackBackgroundList = data[FALLBACK_BACKGROUND_KEY] || [];
+
+    // Initialize with empty array if missing
+    if (!data[FALLBACK_BACKGROUND_KEY]) {
+      await browser.storage.local.set({ [FALLBACK_BACKGROUND_KEY]: [] });
+      if (logging) console.log("Initialized empty fallback background list");
+    }
+  }
+
   saveSkipForceThemingList() {
     const isChecked = this.skipForceThemingSwitch.checked;
     const index = this.skipForceThemingList.indexOf(
@@ -388,6 +414,31 @@ new (class ExtensionPopup {
     browser.storage.local
       .set({
         [SKIP_THEMING_KEY]: this.skipThemingList,
+      })
+      .then(() => {
+        this.updateActiveTabStyling();
+      });
+  }
+
+  saveFallbackBackgroundList() {
+    const isChecked = this.fallbackBackgroundSwitch.checked;
+    const index = this.fallbackBackgroundList.indexOf(
+      normalizeHostname(this.currentSiteHostname)
+    );
+
+    if (isChecked && index === -1) {
+      // Add to the list
+      this.fallbackBackgroundList.push(
+        normalizeHostname(this.currentSiteHostname)
+      );
+    } else if (!isChecked && index !== -1) {
+      // Remove from the list
+      this.fallbackBackgroundList.splice(index, 1);
+    }
+
+    browser.storage.local
+      .set({
+        [FALLBACK_BACKGROUND_KEY]: this.fallbackBackgroundList,
       })
       .then(() => {
         this.updateActiveTabStyling();

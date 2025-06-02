@@ -1,5 +1,6 @@
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
+let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 let BROWSER_STORAGE_KEY = "transparentZenSettings";
 let logging = true; // Enable logging for debugging
 
@@ -29,6 +30,7 @@ const DEFAULT_SETTINGS = {
   disableTransparency: false, // Don't disable transparency by default
   disableHover: false, // Don't disable hover effects by default
   disableFooter: false, // Don't disable footers by default
+  fallbackBackgroundList: [], // Empty array for fallback background sites
 };
 
 // Helper function to normalize hostnames by removing www. prefix
@@ -704,8 +706,14 @@ async function applyCSS(tabId, hostname, features) {
     JSON.stringify(globalSettings)
   );
 
-  // UPDATED: Use normalized hostname for consistent settings retrieval
+  // Check if this site is in the fallback background list
+  const fallbackData = await browser.storage.local.get(FALLBACK_BACKGROUND_KEY);
+  const fallbackBackgroundList = fallbackData[FALLBACK_BACKGROUND_KEY] || [];
   const normalizedHostname = normalizeHostname(hostname);
+  const hasFallbackBackground =
+    fallbackBackgroundList.includes(normalizedHostname);
+
+  // UPDATED: Use normalized hostname for consistent settings retrieval
   const siteKey = `transparentZenSettings.${normalizedHostname}`;
   const siteData = await browser.storage.local.get(siteKey);
   const featureSettings = siteData[siteKey] || {};
@@ -737,10 +745,17 @@ async function applyCSS(tabId, hostname, features) {
       hasTransparencyFeature = true;
     }
 
-    // Skip any transparency feature if disableTransparency is enabled globally
-    if (isTransparencyFeature && globalSettings.disableTransparency) {
+    // Skip transparency if globally disabled OR if this site has fallback background enabled
+    if (
+      isTransparencyFeature &&
+      (globalSettings.disableTransparency || hasFallbackBackground)
+    ) {
       console.log(
-        `DEBUG: Skipping transparency feature ${feature} (globally disabled)`
+        `DEBUG: Skipping transparency feature ${feature} (${
+          hasFallbackBackground
+            ? "fallback background enabled"
+            : "globally disabled"
+        })`
       );
       skippedTransparencyFeatures++;
       transparencyDisabled = true;
@@ -784,8 +799,8 @@ async function applyCSS(tabId, hostname, features) {
     console.log(`DEBUG: Including feature: ${feature}`);
   }
 
-  // If transparency is disabled (globally or at site level) and this site has transparency features,
-  // add minimal background CSS
+  // If transparency is disabled (globally, by fallback background, or at site level)
+  // and this site has transparency features, add minimal background CSS
   if (transparencyDisabled && hasTransparencyFeature) {
     console.log(
       "DEBUG: Adding minimal background CSS due to disabled transparency"
@@ -799,6 +814,18 @@ html {
     combinedCSS += minimalBackgroundCSS;
   }
 
+  // If fallback background is enabled for this site, always add the fallback CSS
+  if (hasFallbackBackground) {
+    console.log("DEBUG: Adding fallback background CSS for this site");
+    const fallbackBackgroundCSS = `
+/* ZenInternet: Fallback background for this site */
+html{
+    background-color: light-dark(#fff, #111);
+}
+`;
+    combinedCSS += fallbackBackgroundCSS;
+  }
+
   console.log(`DEBUG: CSS application summary:
     - Included features: ${includedFeatures}
     - Skipped transparency (global): ${skippedTransparencyFeatures}
@@ -807,6 +834,7 @@ html {
     - Skipped (site disabled): ${skippedDisabledFeatures}
     - Has transparency feature: ${hasTransparencyFeature}
     - Transparency disabled: ${transparencyDisabled}
+    - Has fallback background: ${hasFallbackBackground}
     - Final CSS length: ${combinedCSS.length} characters`);
 
   if (combinedCSS.trim()) {
@@ -955,6 +983,13 @@ async function initializeExtension() {
   const skipThemingData = await browser.storage.local.get(SKIP_THEMING_KEY);
   if (!skipThemingData[SKIP_THEMING_KEY]) {
     await browser.storage.local.set({ [SKIP_THEMING_KEY]: [] });
+  }
+
+  const fallbackBackgroundData = await browser.storage.local.get(
+    FALLBACK_BACKGROUND_KEY
+  );
+  if (!fallbackBackgroundData[FALLBACK_BACKGROUND_KEY]) {
+    await browser.storage.local.set({ [FALLBACK_BACKGROUND_KEY]: [] });
   }
 
   // Preload styles immediately

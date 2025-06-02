@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const BROWSER_STORAGE_KEY = "transparentZenSettings";
   const SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
   const SKIP_THEMING_KEY = "skipThemingList";
+  const FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
   const REPOSITORY_URL_KEY = "stylesRepositoryUrl";
   const DEFAULT_REPOSITORY_URL =
     "https://sameerasw.github.io/my-internet/styles.json";
@@ -260,14 +261,23 @@ document.addEventListener("DOMContentLoaded", function () {
       // Retrieve all storage data to find site-specific settings
       const allData = await browser.storage.local.get(null);
 
+      // Get the fallback background list once
+      const fallbackBackgroundList = allData[FALLBACK_BACKGROUND_KEY] || [];
+
       // Extract only the settings we want to backup
       const settingsToBackup = {
         [BROWSER_STORAGE_KEY]: allData[BROWSER_STORAGE_KEY] || {},
         [SKIP_FORCE_THEMING_KEY]: allData[SKIP_FORCE_THEMING_KEY] || [],
         [SKIP_THEMING_KEY]: allData[SKIP_THEMING_KEY] || [],
+        [FALLBACK_BACKGROUND_KEY]: fallbackBackgroundList,
         [REPOSITORY_URL_KEY]:
           allData[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL,
       };
+
+      // Remove fallbackBackgroundList from global settings if it exists there
+      if (settingsToBackup[BROWSER_STORAGE_KEY].fallbackBackgroundList) {
+        delete settingsToBackup[BROWSER_STORAGE_KEY].fallbackBackgroundList;
+      }
 
       // Also extract site-specific settings (keys that start with BROWSER_STORAGE_KEY.)
       const siteSpecificSettings = {};
@@ -412,33 +422,26 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadAllData() {
     try {
       // Load all data from storage
-      const data = await browser.storage.local.get(null);
+      const allData = await browser.storage.local.get(null);
 
-      // Display global settings
-      const globalSettings = data[BROWSER_STORAGE_KEY] || {};
+      // Extract global settings
+      const globalSettings = allData[BROWSER_STORAGE_KEY] || {};
+
+      // Extract skip lists
+      const skipForceList = allData[SKIP_FORCE_THEMING_KEY] || [];
+      const skipThemingList = allData[SKIP_THEMING_KEY] || [];
+      const fallbackBackgroundList = allData[FALLBACK_BACKGROUND_KEY] || [];
+
+      // Display the data
       displayGlobalSettings(globalSettings);
-
-      // Set the toggle states
-      disableTransparencyToggle.checked =
-        globalSettings.disableTransparency || false;
-      // Set new toggle states
-      disableHoverToggle.checked = globalSettings.disableHover || false;
-      disableFooterToggle.checked = globalSettings.disableFooter || false;
-
-      // Display skip/enable lists for both forced and non-forced websites
-      const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];
-      const skipThemingList = data[SKIP_THEMING_KEY] || [];
       displayCombinedSkipLists(
         skipForceList,
         skipThemingList,
-        globalSettings.whitelistMode,
-        globalSettings.whitelistStyleMode
+        fallbackBackgroundList,
+        globalSettings.whitelistMode || false,
+        globalSettings.whitelistStyleMode || false
       );
-
-      // Display combined websites and settings
-      displayCombinedWebsiteData(data);
-
-      console.info("Data loaded successfully");
+      displayCombinedWebsiteData(allData);
     } catch (error) {
       console.error("Error loading data:", error);
     }
@@ -489,6 +492,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayCombinedSkipLists(
     skipForceList,
     skipThemingList,
+    fallbackBackgroundList,
     isWhitelistMode,
     isWhitelistStyleMode
   ) {
@@ -519,29 +523,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     skipListElement.appendChild(titleSection);
 
-    // Add Clear Both Lists button
-    if (skipForceList.length > 0 || skipThemingList.length > 0) {
-      const clearListButton = document.createElement("button");
-      clearListButton.classList.add(
+    // Add Clear All Lists button
+    if (
+      skipForceList.length > 0 ||
+      skipThemingList.length > 0 ||
+      fallbackBackgroundList.length > 0
+    ) {
+      const clearAllButton = document.createElement("button");
+      clearAllButton.classList.add(
         "action-button",
-        "secondary",
+        "danger",
         "clear-list-button"
       );
-      clearListButton.innerHTML =
-        '<i class="fas fa-trash"></i> Clear All Website Lists';
-      clearListButton.addEventListener("click", function () {
-        if (
-          confirm(
-            `Are you sure you want to clear ALL website lists? This will reset both Forced and Regular styling lists and may affect how styling is applied to websites.`
-          )
-        ) {
-          clearAllSkipLists();
-        }
-      });
-      skipListElement.appendChild(clearListButton);
+      clearAllButton.innerHTML = '<i class="fas fa-trash"></i> Clear All Lists';
+      clearAllButton.addEventListener("click", clearAllSkipLists);
+      skipListElement.appendChild(clearAllButton);
     }
 
-    // Create container for the two tables
+    // Create container for the three tables
     const tablesContainer = document.createElement("div");
     tablesContainer.className = "tables-container";
 
@@ -567,8 +566,18 @@ document.addEventListener("DOMContentLoaded", function () {
       SKIP_THEMING_KEY
     );
 
+    // Create fallback background list
+    const fallbackListSection = createSingleListSection(
+      fallbackBackgroundList,
+      false, // Fallback background is not whitelist/blacklist based
+      "Fallback Background List",
+      "Sites where a default background added, no transparency",
+      FALLBACK_BACKGROUND_KEY
+    );
+
     tablesContainer.appendChild(forceListSection);
     tablesContainer.appendChild(regularListSection);
+    tablesContainer.appendChild(fallbackListSection);
     skipListElement.appendChild(tablesContainer);
   }
 
@@ -664,18 +673,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function clearAllSkipLists() {
     try {
-      // Clear both lists at once
-      await browser.storage.local.remove([
-        SKIP_FORCE_THEMING_KEY,
-        SKIP_THEMING_KEY,
-      ]);
-      alert("All website lists have been cleared successfully.");
-      loadAllData(); // Reload data to reflect changes
+      if (
+        confirm(
+          "Are you sure you want to clear ALL website lists? This will remove all entries from:\n- Force Styling List\n- Regular Styling List\n- Fallback Background List\n\nThis action cannot be undone."
+        )
+      ) {
+        await browser.storage.local.set({
+          [SKIP_FORCE_THEMING_KEY]: [],
+          [SKIP_THEMING_KEY]: [],
+          [FALLBACK_BACKGROUND_KEY]: [],
+        });
+        loadAllData(); // Reload to show empty lists
+        console.log("All skip lists cleared");
+      }
     } catch (error) {
-      console.error("Error clearing lists:", error);
-      alert(
-        "An error occurred while trying to clear the lists: " + error.message
-      );
+      console.error("Error clearing skip lists:", error);
+      alert("An error occurred while clearing the lists: " + error.message);
     }
   }
 

@@ -440,8 +440,8 @@ body {
 /* Styling for the website lists section */
 .tables-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
   margin-top: 16px;
 }
 
@@ -597,6 +597,13 @@ body {
 }
 
 /* Add responsive adjustments for mobile */
+@media (max-width: 1024px) {
+  .tables-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .repository-url-buttons {
     flex-direction: column;

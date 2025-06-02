@@ -722,6 +722,8 @@ async function applyCSS(tabId, hostname, features) {
   let skippedHoverFeatures = 0;
   let skippedFooterFeatures = 0;
   let skippedDisabledFeatures = 0;
+  let hasTransparencyFeature = false;
+  let transparencyDisabled = false;
 
   for (const [feature, css] of Object.entries(features)) {
     const isTransparencyFeature = feature
@@ -730,48 +732,87 @@ async function applyCSS(tabId, hostname, features) {
     const isHoverFeature = feature.toLowerCase().includes("hover");
     const isFooterFeature = feature.toLowerCase().includes("footer");
 
+    // Track if this site has transparency features
+    if (isTransparencyFeature) {
+      hasTransparencyFeature = true;
+    }
+
     // Skip any transparency feature if disableTransparency is enabled globally
-    if (globalSettings.disableTransparency && isTransparencyFeature) {
-      console.log(`DEBUG: Skipping transparency feature: ${feature}`);
+    if (isTransparencyFeature && globalSettings.disableTransparency) {
+      console.log(
+        `DEBUG: Skipping transparency feature ${feature} (globally disabled)`
+      );
       skippedTransparencyFeatures++;
+      transparencyDisabled = true;
       continue;
     }
 
     // Skip any hover feature if disableHover is enabled globally
-    if (globalSettings.disableHover && isHoverFeature) {
-      console.log(`DEBUG: Skipping hover feature: ${feature}`);
+    if (isHoverFeature && globalSettings.disableHover) {
+      console.log(
+        `DEBUG: Skipping hover feature ${feature} (globally disabled)`
+      );
       skippedHoverFeatures++;
       continue;
     }
 
     // Skip any footer feature if disableFooter is enabled globally
-    if (globalSettings.disableFooter && isFooterFeature) {
-      console.log(`DEBUG: Skipping footer feature: ${feature}`);
+    if (isFooterFeature && globalSettings.disableFooter) {
+      console.log(
+        `DEBUG: Skipping footer feature ${feature} (globally disabled)`
+      );
       skippedFooterFeatures++;
       continue;
     }
 
-    const isFeatureEnabled = featureSettings[feature] !== false;
-    if (isFeatureEnabled) {
-      combinedCSS += css + "\n";
-      includedFeatures++;
-      console.log(`DEBUG: Including feature: ${feature}`);
-    } else {
-      console.log(`DEBUG: Feature disabled in site settings: ${feature}`);
+    // Check if this specific feature is disabled by site settings
+    if (featureSettings[feature] === false) {
+      console.log(
+        `DEBUG: Skipping feature ${feature} (disabled by site settings)`
+      );
       skippedDisabledFeatures++;
+      // Check if this is a transparency feature being disabled at site level
+      if (isTransparencyFeature) {
+        transparencyDisabled = true;
+      }
+      continue;
     }
+
+    // Include this feature's CSS
+    combinedCSS += css + "\n";
+    includedFeatures++;
+    console.log(`DEBUG: Including feature: ${feature}`);
   }
 
-  console.log(
-    `DEBUG: CSS Summary - included: ${includedFeatures}, skipped transparency: ${skippedTransparencyFeatures}, skipped hover: ${skippedHoverFeatures}, skipped footer: ${skippedFooterFeatures}, skipped disabled: ${skippedDisabledFeatures}`
-  );
+  // If transparency is disabled (globally or at site level) and this site has transparency features,
+  // add minimal background CSS
+  if (transparencyDisabled && hasTransparencyFeature) {
+    console.log(
+      "DEBUG: Adding minimal background CSS due to disabled transparency"
+    );
+    const minimalBackgroundCSS = `
+/* ZenInternet: Minimal background when transparency is disabled */
+html {
+    background-color: light-dark(#fff, #111);
+}
+`;
+    combinedCSS += minimalBackgroundCSS;
+  }
 
-  if (combinedCSS) {
+  console.log(`DEBUG: CSS application summary:
+    - Included features: ${includedFeatures}
+    - Skipped transparency (global): ${skippedTransparencyFeatures}
+    - Skipped hover (global): ${skippedHoverFeatures}
+    - Skipped footer (global): ${skippedFooterFeatures}
+    - Skipped (site disabled): ${skippedDisabledFeatures}
+    - Has transparency feature: ${hasTransparencyFeature}
+    - Transparency disabled: ${transparencyDisabled}
+    - Final CSS length: ${combinedCSS.length} characters`);
+
+  if (combinedCSS.trim()) {
     try {
-      // Try to send via messaging (most reliable for instant application)
-      console.log(
-        `DEBUG: Sending styles to tab ${tabId} via messaging (${combinedCSS.length} bytes)`
-      );
+      // Try to send via messaging first
+      console.log(`DEBUG: Sending styles to tab ${tabId} via messaging`);
       await browser.tabs.sendMessage(tabId, {
         action: "applyStyles",
         css: combinedCSS,
@@ -786,13 +827,11 @@ async function applyCSS(tabId, hostname, features) {
         runAt: "document_start",
       });
     }
-    console.log(`DEBUG: Successfully injected custom CSS for ${hostname}`);
-  } else {
-    console.log(`DEBUG: No CSS to inject after filtering features`);
-  }
 
-  // Update the icon based on our current state
-  setIcon(tabId, stylingStateCache.get(`styling:${hostname}`) || false);
+    console.log(`DEBUG: Successfully applied CSS for ${hostname}`);
+  } else {
+    console.log(`DEBUG: No CSS to apply for ${hostname}`);
+  }
 }
 
 // Also update icons when tabs are updated

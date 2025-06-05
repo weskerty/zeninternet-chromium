@@ -69,12 +69,11 @@ async function shouldApplyStyling(hostname) {
       settingsData[BROWSER_STORAGE_KEY] || {}
     );
 
-    // If styling is globally disabled, return detailed state
+    // If styling is globally disabled, return no styling at all
     if (!settings.enableStyling) {
       const result = {
         shouldApply: false,
         reason: "globally_disabled",
-        shouldApplyMinimal: true, // Still apply background when globally disabled
       };
       stylingStateCache.set(cacheKey, result);
       return result;
@@ -148,7 +147,6 @@ async function shouldApplyStyling(hostname) {
         const result = {
           shouldApply,
           reason: shouldApply ? "whitelisted" : "not_whitelisted",
-          shouldApplyMinimal: !shouldApply, // Apply minimal when not whitelisted
         };
         stylingStateCache.set(cacheKey, result);
         return result;
@@ -158,7 +156,6 @@ async function shouldApplyStyling(hostname) {
         const result = {
           shouldApply,
           reason: shouldApply ? "not_blacklisted" : "blacklisted",
-          shouldApplyMinimal: !shouldApply, // Apply minimal when blacklisted
         };
         stylingStateCache.set(cacheKey, result);
         return result;
@@ -181,7 +178,6 @@ async function shouldApplyStyling(hostname) {
         const result = {
           shouldApply,
           reason: shouldApply ? "force_whitelisted" : "force_not_whitelisted",
-          shouldApplyMinimal: !shouldApply, // Apply minimal when force not whitelisted
         };
         stylingStateCache.set(cacheKey, result);
         return result;
@@ -190,7 +186,6 @@ async function shouldApplyStyling(hostname) {
         const result = {
           shouldApply,
           reason: shouldApply ? "force_not_blacklisted" : "force_blacklisted",
-          shouldApplyMinimal: !shouldApply, // Apply minimal when force blacklisted
         };
         stylingStateCache.set(cacheKey, result);
         return result;
@@ -201,51 +196,13 @@ async function shouldApplyStyling(hostname) {
     const result = {
       shouldApply: false,
       reason: "no_styling_rules",
-      shouldApplyMinimal: false,
     };
     stylingStateCache.set(cacheKey, result);
     return result;
   } catch (error) {
     console.error("Error determining styling state:", error);
-    return { shouldApply: false, reason: "error", shouldApplyMinimal: false };
+    return { shouldApply: false, reason: "error" };
   }
-}
-
-// New function to apply minimal styling (just background color)
-async function applyMinimalCSS(tabId, hostname) {
-  console.log(
-    "DEBUG: applyMinimalCSS called for tab",
-    tabId,
-    "hostname",
-    hostname
-  );
-
-  const backgroundCSS = `
-/* ZenInternet: Minimal styling - background color when main styling is disabled/skipped */
-body {
-    background-color: light-dark(#fff, #111) !important;
-}
-`;
-
-  try {
-    // Try to send via messaging first
-    console.log(`DEBUG: Sending minimal styles to tab ${tabId} via messaging`);
-    await browser.tabs.sendMessage(tabId, {
-      action: "applyStyles",
-      css: backgroundCSS,
-    });
-  } catch (e) {
-    // Fallback to insertCSS if messaging fails
-    console.log(
-      `DEBUG: Messaging failed, falling back to insertCSS: ${e.message}`
-    );
-    await browser.tabs.insertCSS(tabId, {
-      code: backgroundCSS,
-      runAt: "document_start",
-    });
-  }
-
-  console.log(`DEBUG: Successfully applied minimal CSS for ${hostname}`);
 }
 
 // Update the icon based on whether styling is active for the current tab
@@ -662,16 +619,6 @@ async function applyCSSToTab(tab) {
       }
     }
 
-    // If full styling is not applied but minimal styling should be applied
-    if (!stylingState.shouldApply && stylingState.shouldApplyMinimal) {
-      console.log(
-        "DEBUG: Applying minimal styling due to:",
-        stylingState.reason
-      );
-      await applyMinimalCSS(tab.id, hostname);
-      return;
-    }
-
     console.log(
       "DEBUG: No styling applied for:",
       hostname,
@@ -814,7 +761,7 @@ html {
     combinedCSS += minimalBackgroundCSS;
   }
 
-  // If fallback background is enabled for this site, always add the fallback CSS
+  // Only add fallback background CSS if the toggle is specifically enabled for this site
   if (hasFallbackBackground) {
     console.log("DEBUG: Adding fallback background CSS for this site");
     const fallbackBackgroundCSS = `

@@ -483,6 +483,14 @@ document.addEventListener("DOMContentLoaded", function () {
         <td>${new Date(settings.lastFetchedTime).toLocaleString()}</td>
       `;
       tbody.appendChild(row);
+    } else {
+      // Show "Never" if no lastFetchedTime is found
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${formatSettingName("lastFetchedTime")}</td>
+        <td><span class="null-value">Never</span></td>
+      `;
+      tbody.appendChild(row);
     }
 
     table.appendChild(tbody);

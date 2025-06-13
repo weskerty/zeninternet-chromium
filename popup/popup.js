@@ -1070,8 +1070,14 @@ new (class ExtensionPopup {
         // Update labels
         this.updateModeLabels();
       } else {
-        // Just update the lastFetchedTime
-        await browser.storage.local.set({ lastFetchedTime: Date.now() });
+        // Update the lastFetchedTime in settings
+        const currentSettings = settingsData[this.BROWSER_STORAGE_KEY];
+        currentSettings.lastFetchedTime = Date.now();
+        await browser.storage.local.set({
+          [this.BROWSER_STORAGE_KEY]: currentSettings,
+        });
+        // Update our internal settings
+        this.globalSettings.lastFetchedTime = Date.now();
       }
 
       this.loadCurrentSiteFeatures();
@@ -1298,6 +1304,8 @@ new (class ExtensionPopup {
         this.lastFetchedTime.textContent = `Last fetched: ${new Date(
           settings.lastFetchedTime
         ).toLocaleString()}`;
+      } else {
+        this.lastFetchedTime.textContent = "Last fetched: Never";
       }
     });
   }

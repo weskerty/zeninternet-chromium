@@ -890,8 +890,12 @@ async function refetchCSS() {
       });
       console.info("Initialized default settings during first fetch");
     } else {
-      // Just update the lastFetchedTime
-      await browser.storage.local.set({ lastFetchedTime: Date.now() });
+      // Update the lastFetchedTime in existing settings
+      const currentSettings = settingsData[BROWSER_STORAGE_KEY];
+      currentSettings.lastFetchedTime = Date.now();
+      await browser.storage.local.set({
+        [BROWSER_STORAGE_KEY]: currentSettings,
+      });
     }
 
     console.info(`All styles refetched and updated from ${repositoryUrl}`);

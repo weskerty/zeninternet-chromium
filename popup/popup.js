@@ -520,10 +520,181 @@ new (class ExtensionPopup {
     return activeOption ? activeOption.getAttribute("data-value") : "unset";
   }
 
-  submitThemeRequest() {
+  async submitThemeRequest() {
     const forcingValue = this.getToggleValue("forcing-toggle");
     const accountValue = this.getToggleValue("account-toggle");
 
+    // Show loading state
+    const submitBtn = document.getElementById("submit-request");
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+    submitBtn.disabled = true;
+
+    try {
+      // Check if issue already exists
+      const existingIssue = await this.checkExistingIssue(
+        this.currentSiteHostname
+      );
+
+      if (existingIssue) {
+        // Show existing issue found screen
+        this.showExistingIssueScreen(existingIssue, forcingValue, accountValue);
+        return;
+      }
+
+      // No existing issue found, proceed with creation
+      this.createNewIssue(forcingValue, accountValue);
+    } catch (error) {
+      console.warn(
+        "Failed to check existing issues, proceeding anyway:",
+        error
+      );
+      // If API check fails, proceed with creating the issue
+      this.createNewIssue(forcingValue, accountValue);
+    } finally {
+      // Reset button state
+      submitBtn.innerHTML = originalText;
+      submitBtn.disabled = false;
+    }
+  }
+
+  async checkExistingIssue(hostname) {
+    const owner = "sameerasw";
+    const repo = "my-internet";
+    const searchTerm = hostname;
+
+    const query = encodeURIComponent(
+      `${searchTerm} repo:${owner}/${repo} in:title type:issue state:open`
+    );
+    const url = `https://api.github.com/search/issues?q=${query}`;
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        // Using anonymous requests to avoid token management
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        // Rate limit exceeded, proceed without checking
+        console.warn(
+          "GitHub API rate limit exceeded, skipping duplicate check"
+        );
+        return null;
+      }
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Look for issues that contain the hostname in the title
+    const matchingIssues = data.items.filter(
+      (issue) =>
+        issue.title.toLowerCase().includes(hostname.toLowerCase()) ||
+        issue.title.toLowerCase().includes("[theme]")
+    );
+
+    return matchingIssues.length > 0 ? matchingIssues[0] : null;
+  }
+
+  showExistingIssueScreen(existingIssue, forcingValue, accountValue) {
+    const prompt = document.querySelector(".theme-request-prompt");
+
+    // Store the original values for potential submission
+    this.pendingRequestData = { forcingValue, accountValue };
+
+    const createdDate = new Date(existingIssue.created_at).toLocaleDateString();
+    const issueState = existingIssue.state === "open" ? "Open" : "Closed";
+    const stateClass =
+      existingIssue.state === "open" ? "status-open" : "status-closed";
+
+    prompt.innerHTML = `
+      <h3>Existing Request Found</h3>
+      <div class="existing-issue-info">
+        <p>An existing theme request was found for <strong>${
+          this.currentSiteHostname
+        }</strong></p>
+        
+        <div class="issue-details">
+          <div class="issue-header">
+            <h4 class="issue-title">${existingIssue.title}</h4>
+            <span class="issue-state ${stateClass}">${issueState}</span>
+          </div>
+          
+          <div class="issue-meta">
+            <div class="issue-meta-item">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Created: ${createdDate}</span>
+            </div>
+            <div class="issue-meta-item">
+              <i class="fas fa-comments"></i>
+              <span>${existingIssue.comments} comments</span>
+            </div>
+            ${
+              existingIssue.assignee
+                ? `
+              <div class="issue-meta-item">
+                <i class="fas fa-user"></i>
+                <span>Assigned to ${existingIssue.assignee.login}</span>
+              </div>
+            `
+                : ""
+            }
+          </div>
+          
+          ${
+            existingIssue.body
+              ? `
+            <div class="issue-body">
+              <p><strong>Description:</strong></p>
+              <p class="issue-description">${this.truncateText(
+                existingIssue.body,
+                200
+              )}</p>
+            </div>
+          `
+              : ""
+          }
+        </div>
+
+        <div class="existing-issue-actions">
+          <button id="view-existing-issue" class="action-button secondary">
+            <i class="fas fa-external-link-alt"></i> View Existing Request
+          </button>
+        </div>
+      </div>
+
+      <div class="prompt-actions">
+        <button id="submit-anyway" class="action-button secondary">
+          Submit Anyway
+        </button>
+        <button id="close-request" class="action-button primary">
+          Close
+        </button>
+      </div>
+    `;
+
+    // Bind new event listeners
+    document
+      .getElementById("view-existing-issue")
+      .addEventListener("click", () => {
+        window.open(existingIssue.html_url, "_blank");
+      });
+
+    document.getElementById("submit-anyway").addEventListener("click", () => {
+      this.createNewIssue(
+        this.pendingRequestData.forcingValue,
+        this.pendingRequestData.accountValue
+      );
+    });
+
+    document.getElementById("close-request").addEventListener("click", () => {
+      this.hideThemeRequestOverlay();
+    });
+  }
+
+  createNewIssue(forcingValue, accountValue) {
     // Build the issue body with the responses
     let issueBody = `Please add a theme for ${this.currentSiteHostname}\n\n`;
 
@@ -556,6 +727,11 @@ new (class ExtensionPopup {
     // Open the URL and hide the overlay
     window.open(issueUrl, "_blank");
     this.hideThemeRequestOverlay();
+  }
+
+  truncateText(text, maxLength) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
   }
 
   async loadCurrentSiteFeatures() {

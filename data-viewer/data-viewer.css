@@ -94,6 +94,17 @@ body {
   color: var(--text-secondary);
 }
 
+/* Status indicators for consistency */
+.status-open {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.status-closed {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
 /* No data message */
 .no-data {
   padding: 16px;

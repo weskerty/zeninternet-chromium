@@ -700,7 +700,7 @@ input:checked + .slider:before {
 .prompt-question {
   margin-bottom: 20px;
 
-  h4{
+  h4 {
     margin-bottom: 5px !important;
   }
 }
@@ -820,5 +820,124 @@ input:checked + .slider:before {
     padding: 6px 12px;
     font-size: 11px;
     min-width: 35px;
+  }
+}
+
+/* Existing Issue Screen Styles */
+.existing-issue-info {
+  margin-bottom: 20px;
+}
+
+.issue-details {
+  background-color: var(--secondary-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 16px 0;
+  border-left: 3px solid var(--accent-color);
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.issue-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.issue-state {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-open {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.status-closed {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.issue-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.issue-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.issue-meta-item i {
+  width: 12px;
+  opacity: 0.7;
+}
+
+.issue-body {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.issue-body p {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+}
+
+.issue-description {
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.existing-issue-actions {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+/* Loading state for submit button */
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-button .fa-spinner {
+  margin-right: 6px;
+}
+
+/* Responsive adjustments for existing issue screen */
+@media (max-width: 380px) {
+  .issue-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .issue-meta {
+    font-size: 11px;
+  }
+
+  .issue-title {
+    font-size: 13px;
   }
 }

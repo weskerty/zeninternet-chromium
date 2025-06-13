@@ -2,8 +2,6 @@
 
 A prettier Internet in Zen and Firefox.
 
-> Since I need to focus some time on work and on my fyp, I might throttle the development and do any updates only if bugs arise. But will try to continue adding themes whenever I am chill :)
-
 <a href="https://addons.mozilla.org/en-US/firefox/addon/zen-internet/">
     <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
 </a>
@@ -15,8 +13,11 @@ A prettier Internet in Zen and Firefox.
 
 <img width="1305" alt="image" src="https://github.com/user-attachments/assets/3086e330-df6e-4164-b4cd-ae102ebe7a4f" />
 
-
 ## [Guide](https://www.sameerasw.com/zen)
+
+## Bug Reporting 🐛
+
+Found a bug? Use the "Bug?" button in the extension popup for streamlined reporting! It automatically includes your extension settings and configuration data to help us debug faster.
 
 If you would like to contribute to the addon, please follow these steps:
 
@@ -26,9 +27,10 @@ If you would like to contribute to the addon, please follow these steps:
 4. Push your changes to your fork and create a pull request.
 
 Thanks:
+
 - to [@YelehaUwU](https://github.com/YelehaUwU) for the contributions on the pop-up UI!
 - to the [Transparent Zen ](https://github.com/frostybiscuit/transparent-zen) for the addon base and the inspiration <3
-  
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

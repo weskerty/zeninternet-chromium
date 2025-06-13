@@ -133,6 +133,14 @@ new (class ExtensionPopup {
       });
     });
 
+    // Add event listener for bug report
+    document
+      .getElementById("bug-report-link")
+      ?.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.handleBugReport();
+      });
+
     // Setup auto-update and display last fetched time
     this.setupAutoUpdate();
     this.displayLastFetchedTime();
@@ -1425,5 +1433,177 @@ new (class ExtensionPopup {
     } else {
       icon.className = "fas fa-chevron-up";
     }
+  }
+
+  // Handle bug report with automatic data inclusion
+  async handleBugReport() {
+    try {
+      // Show loading state temporarily
+      const bugReportLink = document.getElementById("bug-report-link");
+      const originalText = bugReportLink.innerHTML;
+      bugReportLink.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+
+      // Collect all extension data
+      const bugReportData = await this.collectBugReportData();
+
+      // Format the JSON data for GitHub issue
+      const jsonData = JSON.stringify(bugReportData, null, 2);
+
+      // Get current tab info for context
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      const currentUrl = tabs.length > 0 ? tabs[0].url : "";
+
+      // Create the issue body with embedded JSON
+      const issueBody = this.createBugReportBody(jsonData, currentUrl);
+
+      // Create the GitHub issue URL with pre-filled template
+      const issueUrl = `https://github.com/sameerasw/zeninternet/issues/new?template=bug_report.md&title=[BUG] &body=${encodeURIComponent(
+        issueBody
+      )}`;
+
+      // Open the URL
+      window.open(issueUrl, "_blank");
+
+      // Reset button state
+      bugReportLink.innerHTML = originalText;
+    } catch (error) {
+      console.error("Error preparing bug report:", error);
+
+      // Fallback to simple bug report without data
+      const fallbackUrl =
+        "https://github.com/sameerasw/zeninternet/issues/new?template=bug_report.md&title=[BUG] ";
+      window.open(fallbackUrl, "_blank");
+
+      // Reset button state
+      const bugReportLink = document.getElementById("bug-report-link");
+      bugReportLink.innerHTML = '<i class="fa-brands fa-github"></i> Bug?';
+    }
+  }
+
+  // Collect all extension data for bug report
+  async collectBugReportData() {
+    try {
+      // Get all storage data
+      const allData = await browser.storage.local.get(null);
+
+      // Get addon version
+      const manifest = browser.runtime.getManifest();
+
+      // Get current tab info
+      const tabs = await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      const currentTab = tabs[0];
+
+      // Extract the same data structure as the export function, but exclude site-specific settings
+      const fallbackBackgroundList = allData[FALLBACK_BACKGROUND_KEY] || [];
+
+      const settingsToInclude = {
+        [this.BROWSER_STORAGE_KEY]: allData[this.BROWSER_STORAGE_KEY] || {},
+        [SKIP_FORCE_THEMING_KEY]: allData[SKIP_FORCE_THEMING_KEY] || [],
+        [SKIP_THEMING_KEY]: allData[SKIP_THEMING_KEY] || [],
+        [FALLBACK_BACKGROUND_KEY]: fallbackBackgroundList,
+        stylesRepositoryUrl:
+          allData.stylesRepositoryUrl ||
+          "https://sameerasw.github.io/my-internet/styles.json",
+      };
+
+      // Remove fallbackBackgroundList from global settings if it exists there
+      if (settingsToInclude[this.BROWSER_STORAGE_KEY].fallbackBackgroundList) {
+        delete settingsToInclude[this.BROWSER_STORAGE_KEY]
+          .fallbackBackgroundList;
+      }
+
+      // Get styles count for context (but don't include the actual styles data)
+      const stylesData = allData.styles || {};
+      const websiteStylesCount = Object.keys(stylesData.website || {}).length;
+
+      // Count site-specific settings without including them
+      let siteSettingsCount = 0;
+      for (const key of Object.keys(allData)) {
+        if (key.startsWith(this.BROWSER_STORAGE_KEY + ".")) {
+          siteSettingsCount++;
+        }
+      }
+
+      return {
+        reportDate: new Date().toISOString(),
+        addonVersion: manifest.version,
+        currentTabUrl: currentTab ? currentTab.url : "N/A",
+        currentTabHostname: currentTab
+          ? new URL(currentTab.url).hostname
+          : "N/A",
+        browserInfo: {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+        },
+        extensionData: {
+          settings: settingsToInclude,
+          siteSettingsCount: siteSettingsCount, // Just the count, not the actual data
+          stylesCount: websiteStylesCount,
+          hasStyles: websiteStylesCount > 0,
+        },
+      };
+    } catch (error) {
+      console.error("Error collecting bug report data:", error);
+      // Return minimal data if collection fails
+      const manifest = browser.runtime.getManifest();
+      return {
+        reportDate: new Date().toISOString(),
+        addonVersion: manifest.version,
+        error: "Failed to collect full data: " + error.message,
+      };
+    }
+  }
+
+  // Create formatted issue body for bug report
+  createBugReportBody(jsonData, currentUrl) {
+    return `## Describe the bug
+<!-- A clear and concise description of what the bug is. -->
+
+## Steps to reproduce
+Steps to reproduce the behavior:
+1. 
+2. 
+3. 
+
+## Expected behavior
+<!-- A clear and concise description of what you expected to happen. -->
+
+## Actual behavior
+<!-- Describe what actually happened. -->
+
+## ZenInternet Backup JSON (Auto-Generated)
+*This data was automatically collected to help with debugging.*
+
+<details>
+<summary>Click to expand JSON data</summary>
+
+\`\`\`json
+${jsonData}
+\`\`\`
+
+</details>
+
+## Zen Browser Version
+<!-- Please specify the version of the Zen browser you are using -->
+
+## Platform
+<!-- What platform are you using? (e.g., Windows, macOS, Linux, Android, iOS, etc.) -->
+
+## Website (if applicable)
+${
+  currentUrl
+    ? `Current tab: ${currentUrl}`
+    : "<!-- If this bug relates to a specific website, please provide its URL -->"
+}
+
+## Additional context
+<!-- Add any other context about the problem here. -->`;
   }
 })();

@@ -644,3 +644,181 @@ input:checked + .slider:before {
   margin-top: 12px;
   width: 100%;
 }
+
+/* Theme Request Overlay Styles */
+.theme-request-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.theme-request-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.theme-request-prompt {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 320px;
+  max-width: 90vw;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.theme-request-prompt h3 {
+  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  font-family: "sugar-magic", sans-serif;
+  font-size: 18px;
+  text-align: center;
+}
+
+.prompt-question {
+  margin-bottom: 20px;
+
+  h4{
+    margin-bottom: 5px !important;
+  }
+}
+
+.prompt-question p {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.custom-toggle-container {
+  display: flex;
+  justify-content: center;
+}
+
+.custom-toggle {
+  position: relative;
+  display: flex;
+  background-color: var(--secondary-bg);
+  border-radius: 20px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.toggle-option {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 2;
+  position: relative;
+  white-space: nowrap;
+  min-width: 40px;
+  text-align: center;
+}
+
+.toggle-option.active {
+  color: white;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  bottom: 2px;
+  background: linear-gradient(135deg, var(--accent-color), var(--hover-color));
+  border-radius: 18px;
+  transition: transform 0.3s ease, width 0.3s ease;
+  z-index: 1;
+}
+
+/* Default width for 3-option toggles */
+.custom-toggle .toggle-slider {
+  width: calc(33.333% - 1.33px);
+}
+
+/* Width for 2-option toggles */
+.custom-toggle[data-options="2"] .toggle-slider {
+  width: calc(50% - 1px);
+}
+
+/* Position slider based on active option for 3-option toggles */
+.custom-toggle[data-options="3"]
+  .toggle-option:nth-child(1).active
+  ~ .toggle-slider {
+  transform: translateX(0);
+}
+
+.custom-toggle[data-options="3"]
+  .toggle-option:nth-child(2).active
+  ~ .toggle-slider {
+  transform: translateX(100%);
+}
+
+.custom-toggle[data-options="3"]
+  .toggle-option:nth-child(3).active
+  ~ .toggle-slider {
+  transform: translateX(200%);
+}
+
+/* Position slider based on active option for 2-option toggles */
+.custom-toggle[data-options="2"]
+  .toggle-option:nth-child(1).active
+  ~ .toggle-slider {
+  transform: translateX(0);
+}
+
+.custom-toggle[data-options="2"]
+  .toggle-option:nth-child(2).active
+  ~ .toggle-slider {
+  transform: translateX(100%);
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.prompt-actions .action-button {
+  flex: 1;
+  padding: 10px 16px;
+}
+
+/* Responsive adjustments for the overlay */
+@media (max-width: 380px) {
+  .theme-request-prompt {
+    width: 280px;
+    padding: 20px;
+  }
+
+  .toggle-option {
+    padding: 6px 12px;
+    font-size: 11px;
+    min-width: 35px;
+  }
+}

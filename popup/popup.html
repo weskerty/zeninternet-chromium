@@ -144,6 +144,48 @@
       </a>
     </footer>
   </div>
+
+  <!-- Theme Request Prompt Overlay -->
+  <div id="theme-request-overlay" class="theme-request-overlay hidden">
+    <div class="theme-request-prompt">
+      <h3>Theme Request</h3>
+
+      <div class="prompt-question">
+        <h4>
+          Tried forcing the theme?
+        </h4>
+        <p>Please enable forcing for the website and see if a theme is still needed.</p>
+        <div class="custom-toggle-container">
+          <div class="custom-toggle" id="forcing-toggle" data-options="2">
+            <div class="toggle-option active" data-value="no">No</div>
+            <div class="toggle-option" data-value="yes">Yes</div>
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-question">
+        <h4>
+          Does the website require an account?
+        </h4>
+        <p>If I do not have an account, might take some time for others to contribute.</p>
+        <div class="custom-toggle-container">
+          <div class="custom-toggle" id="account-toggle" data-options="3">
+            <div class="toggle-option" data-value="no">No</div>
+            <div class="toggle-option active" data-value="unset">Unset</div>
+            <div class="toggle-option" data-value="yes">Yes</div>
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-actions">
+        <button id="cancel-request" class="action-button secondary">Cancel</button>
+        <button id="submit-request" class="action-button primary">Submit Request</button>
+      </div>
+    </div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 

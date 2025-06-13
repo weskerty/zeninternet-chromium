@@ -77,6 +77,7 @@ new (class ExtensionPopup {
             this.getCurrentTabInfo().then(() => {
               this.restoreSettings();
               this.bindEvents();
+              this.initializeThemeRequestOverlay(); // Add this line
             });
           });
         });
@@ -445,6 +446,118 @@ new (class ExtensionPopup {
       });
   }
 
+  initializeThemeRequestOverlay() {
+    const overlay = document.getElementById("theme-request-overlay");
+    const cancelBtn = document.getElementById("cancel-request");
+    const submitBtn = document.getElementById("submit-request");
+    const forcingToggle = document.getElementById("forcing-toggle");
+    const accountToggle = document.getElementById("account-toggle");
+
+    // Handle custom toggle clicks
+    this.setupCustomToggle(forcingToggle);
+    this.setupCustomToggle(accountToggle);
+
+    // Handle cancel button
+    cancelBtn.addEventListener("click", () => {
+      this.hideThemeRequestOverlay();
+    });
+
+    // Handle submit button
+    submitBtn.addEventListener("click", () => {
+      this.submitThemeRequest();
+    });
+
+    // Close overlay when clicking outside
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        this.hideThemeRequestOverlay();
+      }
+    });
+  }
+
+  setupCustomToggle(toggleElement) {
+    const options = toggleElement.querySelectorAll(".toggle-option");
+
+    options.forEach((option) => {
+      option.addEventListener("click", () => {
+        // Remove active class from all options
+        options.forEach((opt) => opt.classList.remove("active"));
+        // Add active class to clicked option
+        option.classList.add("active");
+      });
+    });
+  }
+
+  showThemeRequestOverlay() {
+    const overlay = document.getElementById("theme-request-overlay");
+    overlay.classList.remove("hidden");
+
+    // Reset toggles to default states
+    const forcingToggle = document.getElementById("forcing-toggle");
+    const accountToggle = document.getElementById("account-toggle");
+
+    // Reset forcing toggle to "Off" (middle position)
+    forcingToggle
+      .querySelectorAll(".toggle-option")
+      .forEach((opt) => opt.classList.remove("active"));
+    forcingToggle.querySelector('[data-value="off"]').classList.add("active");
+
+    // Reset account toggle to "Unset" (middle position)
+    accountToggle
+      .querySelectorAll(".toggle-option")
+      .forEach((opt) => opt.classList.remove("active"));
+    accountToggle.querySelector('[data-value="unset"]').classList.add("active");
+  }
+
+  hideThemeRequestOverlay() {
+    const overlay = document.getElementById("theme-request-overlay");
+    overlay.classList.add("hidden");
+  }
+
+  getToggleValue(toggleId) {
+    const toggle = document.getElementById(toggleId);
+    const activeOption = toggle.querySelector(".toggle-option.active");
+    return activeOption ? activeOption.getAttribute("data-value") : "unset";
+  }
+
+  submitThemeRequest() {
+    const forcingValue = this.getToggleValue("forcing-toggle");
+    const accountValue = this.getToggleValue("account-toggle");
+
+    // Build the issue body with the responses
+    let issueBody = `Please add a theme for ${this.currentSiteHostname}\n\n`;
+
+    // Add forcing status
+    if (forcingValue === "yes") {
+      issueBody += "**Tried forcing:** YES\n";
+    } else if (forcingValue === "no") {
+      issueBody += "**Tried forcing:** NO\n";
+    } else {
+      issueBody += "**Tried forcing:** Not specified\n";
+    }
+
+    // Add account requirement status
+    if (accountValue === "yes") {
+      issueBody += "**Requires account:** YES (open for contributions)\n";
+    } else if (accountValue === "no") {
+      issueBody += "**Requires account:** NO\n";
+    } else {
+      issueBody += "**Requires account:** Not specified\n";
+    }
+
+    issueBody +=
+      "\n---\n\n*This request was generated automatically from the Zen Internet extension.*";
+
+    // Create the GitHub issue URL
+    const issueUrl = `https://github.com/sameerasw/my-internet/issues/new?template=website-theme-request.md&title=[THEME] ${
+      this.currentSiteHostname
+    }&body=${encodeURIComponent(issueBody)}`;
+
+    // Open the URL and hide the overlay
+    window.open(issueUrl, "_blank");
+    this.hideThemeRequestOverlay();
+  }
+
   async loadCurrentSiteFeatures() {
     if (logging) console.log("loadCurrentSiteFeatures called");
     try {
@@ -561,8 +674,7 @@ new (class ExtensionPopup {
         requestThemeButton.className = "action-button primary";
         requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
         requestThemeButton.addEventListener("click", () => {
-          const issueUrl = `https://github.com/sameerasw/my-internet/issues/new?template=website-theme-request.md&title=[THEME] ${this.currentSiteHostname}&body=Please add a theme for ${this.currentSiteHostname}`;
-          window.open(issueUrl, "_blank");
+          this.showThemeRequestOverlay(); // Changed from direct URL opening
         });
 
         this.currentSiteFeatures.appendChild(requestThemeButton);

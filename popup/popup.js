@@ -787,6 +787,20 @@ new (class ExtensionPopup {
         featuresList.classList.add("collapsed");
         if (actionsContainer) actionsContainer.classList.add("collapsed");
 
+        // Hide the entire skip force theming toggle container when we have a specific theme
+        const skipForceThemingContainer =
+          this.skipForceThemingSwitch.closest(".toggle-container");
+        if (skipForceThemingContainer) {
+          skipForceThemingContainer.style.display = "none";
+        }
+
+        // show the skip theming toggle
+        const skipThemingContainer =
+          this.skipThemingSwitch.closest(".toggle-container");
+        if (skipThemingContainer) {
+          skipThemingContainer.style.display = "flex";
+        }
+
         // Update the icon to show collapsed state
         const toggleButton = document.getElementById("toggle-features");
         if (toggleButton) {
@@ -794,6 +808,20 @@ new (class ExtensionPopup {
           if (icon) icon.className = "fas fa-chevron-down";
         }
       } else {
+        // Show the skip force theming toggle container when no specific theme
+        const skipForceThemingContainer =
+          this.skipForceThemingSwitch.closest(".toggle-container");
+        if (skipForceThemingContainer) {
+          skipForceThemingContainer.style.display = "flex";
+        }
+
+        // hide the skip theming toggle
+        const skipThemingContainer =
+          this.skipThemingSwitch.closest(".toggle-container");
+        if (skipThemingContainer) {
+          skipThemingContainer.style.display = "none";
+        }
+
         // Keep expanded when no theme was found or using default
         featuresList.classList.remove("collapsed");
         if (actionsContainer) actionsContainer.classList.remove("collapsed");
@@ -824,22 +852,6 @@ new (class ExtensionPopup {
           const icon = toggleForcingButton.querySelector("i");
           if (icon) icon.className = "fas fa-chevron-up";
         }
-      }
-
-      // Disable the force styling toggle if we found a theme for this site
-      if (hasSpecificTheme) {
-        // We found a specific theme for this site, no need for force styling
-        // Disable the skip/enable toggle
-        this.skipForceThemingSwitch.disabled = true;
-        this.siteToggleLabel.innerHTML = `${
-          this.whitelistModeSwitch.checked ? "Enable" : "Skip Forcing"
-        } for this Site <span class="overridden-label">×</span>`;
-      } else {
-        // No specific theme found, enable the toggle
-        this.skipForceThemingSwitch.disabled = false;
-        this.siteToggleLabel.innerHTML = this.whitelistModeSwitch.checked
-          ? "Enable for this Site"
-          : "Skip Forcing for this Site";
       }
 
       if (!currentSiteKey && this.globalSettings.forceStyling) {

@@ -31,13 +31,6 @@
     <main class="app-content">
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
-        <button class="collapsible-button" id="toggle-features">
-          <span id="current-site-label">
-            <span id="site-domain" class="site-domain"></span>
-            <span>Features</span>
-          </span>
-          <i class="fas fa-chevron-down"></i>
-        </button>
         <div class="toggle-container">
           <label class="toggle-switch">
             <input type="checkbox" id="skip-theming">
@@ -45,11 +38,25 @@
           </label>
           <span id="site-style-toggle-label" class="toggle-label">Skip Styling for this Site</span>
         </div>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="skip-force-theming">
+            <span class="slider round"></span>
+          </label>
+          <span id="site-toggle-label" class="toggle-label">Skip Forcing for this Site</span>
+        </div>
+        <button class="collapsible-button" id="toggle-features">
+          <span id="current-site-label">
+            <span id="site-domain" class="site-domain"></span>
+            <span>Features</span>
+          </span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
         <div id="current-site-toggles" class="features-list collapsed"></div>
         <div class="actions" id="current-site-actions">
         </div>
       </div>
-      
+
       <div class="features-container">
         <div class="toggle-container">
           <label class="toggle-switch">
@@ -89,13 +96,6 @@
               <span class="slider round"></span>
             </label>
             <span id="whitelist-mode-label" class="toggle-label">Blacklist Mode</span>
-          </div>
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input type="checkbox" id="skip-force-theming">
-              <span class="slider round"></span>
-            </label>
-            <span id="site-toggle-label" class="toggle-label">Skip Forcing for this Site</span>
           </div>
           <div class="toggle-container">
             <label class="toggle-switch">

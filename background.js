@@ -497,6 +497,115 @@ async function applyCSSToTab(tab) {
     // Update icon based on whether full styling is applied
     setIcon(tab.id, stylingState.shouldApply);
 
+    // Check if this site is in the fallback background list
+    const fallbackData = await browser.storage.local.get(
+      FALLBACK_BACKGROUND_KEY
+    );
+    const fallbackBackgroundList = fallbackData[FALLBACK_BACKGROUND_KEY] || [];
+    const hasFallbackBackground = fallbackBackgroundList.includes(hostname);
+
+    // If global styling is disabled, skip everything (including fallback background)
+    if (stylingState.reason === "globally_disabled") {
+      setIcon(tab.id, false);
+      return;
+    }
+
+    // If fallback background is enabled for this site, always apply it (even if no other CSS)
+    if (hasFallbackBackground) {
+      let combinedCSS = `
+/* ZenInternet: Fallback background for this site */
+html {
+    background-color: light-dark(#fff, #111);
+}
+`;
+      // Try to also apply any site-specific CSS if available and allowed
+      const data = await browser.storage.local.get("styles");
+      let features = null;
+      let bestMatch = null;
+      let bestMatchLength = 0;
+      for (const key of Object.keys(data.styles?.website || {})) {
+        const siteName = key.replace(".css", "");
+        const normalizedSiteName = normalizeHostname(siteName);
+        if (hostname === normalizedSiteName) {
+          bestMatch = key;
+          break;
+        }
+        if (
+          siteName.startsWith("+") &&
+          (hostname === siteName.slice(1) ||
+            hostname.endsWith(`.${siteName.slice(1)}`)) &&
+          siteName.slice(1).length > bestMatchLength
+        ) {
+          bestMatch = key;
+          bestMatchLength = siteName.slice(1).length;
+        }
+        if (siteName.startsWith("-")) {
+          const baseSite = siteName.slice(1);
+          const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
+          const hostParts = hostname.split(".");
+          const hostDomain =
+            hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
+          if (
+            cachedDomain &&
+            hostDomain &&
+            hostDomain === cachedDomain &&
+            cachedDomain.length > bestMatchLength
+          ) {
+            bestMatch = key;
+            bestMatchLength = cachedDomain.length;
+          }
+        }
+        if (
+          hostname !== normalizedSiteName &&
+          hostname.endsWith(`.${normalizedSiteName}`) &&
+          !siteName.startsWith("-") &&
+          normalizedSiteName.length > bestMatchLength
+        ) {
+          bestMatch = key;
+          bestMatchLength = normalizedSiteName.length;
+        }
+      }
+      if (bestMatch) {
+        features = data.styles.website[bestMatch];
+      }
+      // Apply only non-transparency, non-hover, non-footer features if present
+      if (features) {
+        // UPDATED: Use normalized hostname for consistent settings retrieval
+        const siteKey = `transparentZenSettings.${hostname}`;
+        const siteData = await browser.storage.local.get(siteKey);
+        const featureSettings = siteData[siteKey] || {};
+        for (const [feature, css] of Object.entries(features)) {
+          const isTransparencyFeature = feature
+            .toLowerCase()
+            .includes("transparency");
+          const isHoverFeature = feature.toLowerCase().includes("hover");
+          const isFooterFeature = feature.toLowerCase().includes("footer");
+          // Only include features that are not transparency, hover, or footer
+          if (
+            !isTransparencyFeature &&
+            !isHoverFeature &&
+            !isFooterFeature &&
+            featureSettings[feature] !== false
+          ) {
+            combinedCSS += css + "\n";
+          }
+        }
+      }
+      try {
+        await browser.tabs.sendMessage(tab.id, {
+          action: "applyStyles",
+          css: combinedCSS,
+        });
+      } catch (e) {
+        await browser.tabs.insertCSS(tab.id, {
+          code: combinedCSS,
+          runAt: "document_start",
+        });
+      }
+      setIcon(tab.id, true);
+      return;
+    }
+
     // If full styling should be applied, proceed with normal CSS application
     if (stylingState.shouldApply) {
       const settings = await browser.storage.local.get(BROWSER_STORAGE_KEY);

@@ -427,6 +427,12 @@ document.addEventListener("DOMContentLoaded", function () {
       // Extract global settings
       const globalSettings = allData[BROWSER_STORAGE_KEY] || {};
 
+      // Restore the toggle states based on actual values
+      disableTransparencyToggle.checked =
+        globalSettings.disableTransparency || false;
+      disableHoverToggle.checked = globalSettings.disableHover || false;
+      disableFooterToggle.checked = globalSettings.disableFooter || false;
+
       // Extract skip lists
       const skipForceList = allData[SKIP_FORCE_THEMING_KEY] || [];
       const skipThemingList = allData[SKIP_THEMING_KEY] || [];

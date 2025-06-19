@@ -36,7 +36,7 @@
       </button>
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
-        <div class="toggle-container">
+        <div class="toggle-container skip-theming">
           <label class="toggle-switch">
             <input type="checkbox" id="skip-theming">
             <span class="slider round"></span>
@@ -46,7 +46,7 @@
             
             Whitelist mode: Enable to include below features">?</span>
         </div>
-        <div class="toggle-container">
+        <div class="toggle-container skip-theming">
           <label class="toggle-switch">
             <input type="checkbox" id="skip-force-theming">
             <span class="slider round"></span>
@@ -56,15 +56,17 @@
 
             Whitelist mode: Enable to force this website">?</span>
         </div>
-        <button class="collapsible-button" id="toggle-features">
-          <span id="current-site-label">
-            <span id="site-domain" class="site-domain"></span>
-            <span>Features</span>
-          </span>
-          <i class="fas fa-chevron-down"></i>
-        </button>
-        <div id="current-site-toggles" class="features-list collapsed"></div>
-        <div class="actions" id="current-site-actions">
+        <div class="expanded-section">
+          <button class="collapsible-button" id="toggle-features">
+            <span id="current-site-label">
+              <span id="site-domain" class="site-domain"></span>
+              <span>Features</span>
+            </span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div id="current-site-toggles" class="features-list collapsed"></div>
+          <div class="actions" id="current-site-actions">
+          </div>
         </div>
       </div>
 
@@ -89,37 +91,39 @@
           </div>
 
         </div>
-        <button class="collapsible-button" id="toggle-forcing">
-          <span>Force Styling Settings</span>
-          <i class="fas fa-chevron-down"></i>
-        </button>
-        <div id="forcing-content" class="forcing-container collapsed">
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input type="checkbox" id="force-styling">
-              <span class="slider round"></span>
-            </label>
-            <span class="toggle-label">Force Styling</span>
-            <span class="help-icon"
-              data-tooltip="Applies basic styling to websites that don't have specific pre-made theme and features.">?</span>
-          </div>
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input type="checkbox" id="whitelist-mode">
-              <span class="slider round"></span>
-            </label>
-            <span id="whitelist-mode-label" class="toggle-label">Forced Blacklist Mode</span>
-            <span class="help-icon"
-              data-tooltip="Blacklist mode: apply forced styling to all sites except those in the list. Whitelist mode: only apply forced styling to sites in the list.">?</span>
-          </div>
-          <div class="toggle-container">
-            <label class="toggle-switch">
-              <input type="checkbox" id="fallback-background">
-              <span class="slider round"></span>
-            </label>
-            <span class="toggle-label">Fallback Background</span>
-            <span class="help-icon"
-              data-tooltip="Adds a solid white background color to websites which never had a proper background and skipping still keeps a transparent background.">?</span>
+        <div class="expanded-section">
+          <button class="collapsible-button" id="toggle-forcing">
+            <span>Force Styling Settings</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div id="forcing-content" class="forcing-container collapsed">
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="force-styling">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-label">Force Styling</span>
+              <span class="help-icon"
+                data-tooltip="Applies basic styling to websites that don't have specific pre-made theme and features.">?</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="whitelist-mode">
+                <span class="slider round"></span>
+              </label>
+              <span id="whitelist-mode-label" class="toggle-label">Forced Blacklist Mode</span>
+              <span class="help-icon"
+                data-tooltip="Blacklist mode: apply forced styling to all sites except those in the list. Whitelist mode: only apply forced styling to sites in the list.">?</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="fallback-background">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-label">Fallback Background</span>
+              <span class="help-icon"
+                data-tooltip="Adds a solid white background color to websites which never had a proper background and skipping still keeps a transparent background.">?</span>
+            </div>
           </div>
         </div>
       </div>

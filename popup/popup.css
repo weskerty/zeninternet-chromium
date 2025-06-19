@@ -308,10 +308,45 @@ input:checked + .slider:before {
   margin-bottom: 8px;
 }
 
+/* Remove the separate card styling from features-list and move it to expanded-section */
 .features-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px;
+  margin-top: 0;
+}
+
+/* New expanded section styling that includes the button and content */
+.expanded-section {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.expanded-section:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.expanded-section .collapsible-button {
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+.expanded-section .collapsible-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.expanded-section .features-list,
+.expanded-section .forcing-container,
+.expanded-section #current-site-actions {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  margin-top: 0;
 }
 
 .feature-toggle {
@@ -571,6 +606,19 @@ input:checked + .slider:before {
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
   padding: 8px;
+  /* Remove the separate card styling - will be handled by expanded-section */
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Update forcing container to use new structure */
+.forcing-container {
+  padding: 12px;
+  margin-top: 0;
 }
 
 /* Make forcing container collapsible */
@@ -581,6 +629,7 @@ input:checked + .slider:before {
 .warning {
   color: var(--warning-color);
   margin-top: 8px;
+  text-align: center;
 }
 
 .mode-hint {
@@ -1117,8 +1166,8 @@ input:checked + .slider:before {
   }
 }
 
-#toggle-forcing, #toggle-features {
-  margin-top: 16px;
+.skip-theming {
+  margin-bottom: 16px;
 }
 
 #auto-update-container {
@@ -1130,4 +1179,20 @@ input:checked + .slider:before {
   border-radius: var(--radius-md);
   padding: 12px 8px;
   margin-bottom: 16px;
+}
+
+/* Add specific styling for current site actions card */
+#current-site-actions {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  /* padding: 12px; */
+  margin-top: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Update current site actions to use new structure */
+#current-site-actions {
+  /* padding: 12px; */
+  margin-top: 0;
 }

@@ -29,27 +29,6 @@
     </header>
 
     <main class="app-content">
-      <div class="features-container">
-        <div class="toggle-container">
-          <label class="toggle-switch">
-            <input type="checkbox" id="enable-styling">
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">Global Styling</span>
-        </div>
-        <div class="toggle-container">
-          <label class="toggle-switch">
-            <input type="checkbox" id="whitelist-style-mode">
-            <span class="slider round"></span>
-          </label>
-          <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
-        </div>
-        <!-- Moved reload button here -->
-        <button id="reload" class="action-button secondary">
-          Reload to apply <i class="fas fa-sync-alt"></i>
-        </button>
-      </div>
-
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
         <button class="collapsible-button" id="toggle-features">
@@ -68,24 +47,28 @@
         </div>
         <div id="current-site-toggles" class="features-list collapsed"></div>
         <div class="actions" id="current-site-actions">
-          <!-- Reload button was here, now moved above -->
         </div>
       </div>
-
-      <div class="actions">
-        <button id="refetch-css" class="action-button primary">
-          <i class="fas fa-sync-alt"></i> Refetch latest styles
+      
+      <div class="features-container">
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="enable-styling">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">Global Styling</span>
+        </div>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="whitelist-style-mode">
+            <span class="slider round"></span>
+          </label>
+          <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
+        </div>
+        <button id="reload" class="action-button secondary">
+          Reload to apply <i class="fas fa-sync-alt"></i>
         </button>
       </div>
-
-      <div class="toggle-container">
-        <label class="toggle-switch">
-          <input type="checkbox" id="auto-update">
-          <span class="slider round"></span>
-        </label>
-        <span class="toggle-label">Auto Update Styles</span>
-      </div>
-      <div id="last-fetched-time" class="last-fetched-time"></div>
 
       <div class="features-container">
         <button class="collapsible-button" id="toggle-forcing">
@@ -123,6 +106,22 @@
           </div>
         </div>
       </div>
+
+      <div class="actions">
+        <button id="refetch-css" class="action-button primary">
+          <i class="fas fa-sync-alt"></i> Refetch latest styles
+        </button>
+      </div>
+
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="auto-update">
+          <span class="slider round"></span>
+        </label>
+        <span class="toggle-label">Auto Update Styles</span>
+      </div>
+      <div id="last-fetched-time" class="last-fetched-time"></div>
+
 
       <div class="actions">
         <button id="view-data" class="action-button secondary">

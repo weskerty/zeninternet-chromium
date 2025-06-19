@@ -786,8 +786,6 @@ async function applyCSS(tabId, hostname, features) {
   let skippedHoverFeatures = 0;
   let skippedFooterFeatures = 0;
   let skippedDisabledFeatures = 0;
-  let hasTransparencyFeature = false;
-  let transparencyDisabled = false;
 
   for (const [feature, css] of Object.entries(features)) {
     const isTransparencyFeature = feature
@@ -795,11 +793,6 @@ async function applyCSS(tabId, hostname, features) {
       .includes("transparency");
     const isHoverFeature = feature.toLowerCase().includes("hover");
     const isFooterFeature = feature.toLowerCase().includes("footer");
-
-    // Track if this site has transparency features
-    if (isTransparencyFeature) {
-      hasTransparencyFeature = true;
-    }
 
     // Skip transparency if globally disabled OR if this site has fallback background enabled
     if (
@@ -814,7 +807,6 @@ async function applyCSS(tabId, hostname, features) {
         })`
       );
       skippedTransparencyFeatures++;
-      transparencyDisabled = true;
       continue;
     }
 
@@ -842,10 +834,6 @@ async function applyCSS(tabId, hostname, features) {
         `DEBUG: Skipping feature ${feature} (disabled by site settings)`
       );
       skippedDisabledFeatures++;
-      // Check if this is a transparency feature being disabled at site level
-      if (isTransparencyFeature) {
-        transparencyDisabled = true;
-      }
       continue;
     }
 
@@ -853,21 +841,6 @@ async function applyCSS(tabId, hostname, features) {
     combinedCSS += css + "\n";
     includedFeatures++;
     console.log(`DEBUG: Including feature: ${feature}`);
-  }
-
-  // If transparency is disabled (globally, by fallback background, or at site level)
-  // and this site has transparency features, add minimal background CSS
-  if (transparencyDisabled && hasTransparencyFeature) {
-    console.log(
-      "DEBUG: Adding minimal background CSS due to disabled transparency"
-    );
-    const minimalBackgroundCSS = `
-/* ZenInternet: Minimal background when transparency is disabled */
-html {
-    background-color: light-dark(#fff, #111);
-}
-`;
-    combinedCSS += minimalBackgroundCSS;
   }
 
   // Only add fallback background CSS if the toggle is specifically enabled for this site
@@ -888,8 +861,6 @@ html{
     - Skipped hover (global): ${skippedHoverFeatures}
     - Skipped footer (global): ${skippedFooterFeatures}
     - Skipped (site disabled): ${skippedDisabledFeatures}
-    - Has transparency feature: ${hasTransparencyFeature}
-    - Transparency disabled: ${transparencyDisabled}
     - Has fallback background: ${hasFallbackBackground}
     - Final CSS length: ${combinedCSS.length} characters`);
 

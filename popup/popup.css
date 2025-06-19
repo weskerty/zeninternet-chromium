@@ -570,8 +570,7 @@ input:checked + .slider:before {
 .forcing-container {
   background-color: var(--secondary-bg);
   border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 16px;
+  padding: 8px;
 }
 
 /* Make forcing container collapsible */
@@ -582,10 +581,6 @@ input:checked + .slider:before {
 .warning {
   color: var(--warning-color);
   margin-top: 8px;
-}
-
-#reload {
-  margin-top: 16px;
 }
 
 .mode-hint {
@@ -1006,7 +1001,7 @@ input:checked + .slider:before {
 
 /* Tooltip arrow */
 .help-icon::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: calc(100% + 2px);
   right: 8px;
@@ -1037,7 +1032,7 @@ input:checked + .slider:before {
     font-size: 11px;
     right: -10px;
   }
-  
+
   .help-icon::before {
     right: 2px;
   }
@@ -1069,12 +1064,12 @@ input:checked + .slider:before {
     right: -10px;
     left: auto;
   }
-  
+
   .help-icon::before {
     right: 2px;
     left: auto;
   }
-  
+
   /* Override alternative positioning on small screens */
   .toggle-container:first-child .help-icon::after,
   .toggle-container:nth-child(1) .help-icon::after,
@@ -1083,7 +1078,7 @@ input:checked + .slider:before {
     right: -10px;
     left: auto;
   }
-  
+
   .toggle-container:first-child .help-icon::before,
   .toggle-container:nth-child(1) .help-icon::before,
   .forcing-container .toggle-container:first-child .help-icon::before,
@@ -1091,14 +1086,14 @@ input:checked + .slider:before {
     right: 2px;
     left: auto;
   }
-  
+
   .forcing-container .help-icon::after {
     width: 160px;
     max-width: 160px;
     right: -10px;
     left: auto;
   }
-  
+
   .forcing-container .help-icon::before {
     right: 2px;
     left: auto;
@@ -1114,10 +1109,25 @@ input:checked + .slider:before {
     font-size: 10px;
     padding: 6px 10px;
   }
-  
+
   .forcing-container .help-icon::after {
     width: 140px;
     max-width: 140px;
     right: -5px;
   }
+}
+
+#toggle-forcing, #toggle-features {
+  margin-top: 16px;
+}
+
+#auto-update-container {
+  margin: 16px 0;
+}
+
+#main-toggles {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  margin-bottom: 16px;
 }

@@ -29,6 +29,11 @@
     </header>
 
     <main class="app-content">
+
+      <button id="reload" class="action-button secondary"
+        title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
+        Reload the page <i class="fas fa-sync-alt"></i>
+      </button>
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
         <div class="toggle-container">
@@ -64,30 +69,26 @@
       </div>
 
       <div class="features-container">
-        <div class="toggle-container">
-          <label class="toggle-switch">
-            <input type="checkbox" id="enable-styling">
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">Global Styling</span>
-          <span class="help-icon" data-tooltip="Master toggle for all the CSS styling">?</span>
-        </div>
-        <div class="toggle-container">
-          <label class="toggle-switch">
-            <input type="checkbox" id="whitelist-style-mode">
-            <span class="slider round"></span>
-          </label>
-          <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
-          <span class="help-icon" data-tooltip="Blacklist mode: apply styling to all sites except those in the list.
+        <div id="main-toggles">
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="enable-styling">
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">Global Styling</span>
+            <span class="help-icon" data-tooltip="Master toggle for all the CSS styling">?</span>
+          </div>
+          <div class="toggle-container">
+            <label class="toggle-switch">
+              <input type="checkbox" id="whitelist-style-mode">
+              <span class="slider round"></span>
+            </label>
+            <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
+            <span class="help-icon" data-tooltip="Blacklist mode: apply styling to all sites except those in the list.
             Whitelist mode: only apply styling to sites in the list.">?</span>
-        </div>
-        <button id="reload" class="action-button secondary"
-          title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
-          Reload to apply <i class="fas fa-sync-alt"></i>
-        </button>
-      </div>
+          </div>
 
-      <div class="features-container">
+        </div>
         <button class="collapsible-button" id="toggle-forcing">
           <span>Force Styling Settings</span>
           <i class="fas fa-chevron-down"></i>
@@ -123,22 +124,24 @@
         </div>
       </div>
 
-      <div class="actions">
-        <button id="refetch-css" class="action-button primary" title="Fetch the latest styles from the repository">
-          <i class="fas fa-sync-alt"></i> Refetch latest styles
-        </button>
-      </div>
+      <div class="features-container">
+        <div class="actions">
+          <button id="refetch-css" class="action-button primary" title="Fetch the latest styles from the repository">
+            <i class="fas fa-sync-alt"></i> Refetch latest styles
+          </button>
+        </div>
 
-      <div class="toggle-container">
-        <label class="toggle-switch">
-          <input type="checkbox" id="auto-update">
-          <span class="slider round"></span>
-        </label>
-        <span class="toggle-label">Auto Update Styles</span>
-        <span class="help-icon"
-          data-tooltip="Automatically checks for and downloads new styles every 2 hours. Keeps your themes up-to-date without manual intervention.">?</span>
+        <div class="toggle-container" id="auto-update-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="auto-update">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">Auto Update Styles</span>
+          <span class="help-icon"
+            data-tooltip="Automatically checks for and downloads new styles every 2 hours. Keeps your themes up-to-date without manual intervention.">?</span>
+        </div>
+        <div id="last-fetched-time" class="last-fetched-time"></div>
       </div>
-      <div id="last-fetched-time" class="last-fetched-time"></div>
 
       <div class="actions">
         <button id="view-data" class="action-button secondary" title="Open advanced settings in a new tab">
@@ -150,11 +153,13 @@
     </main>
 
     <footer class="app-footer">
-      <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank" title="Visit the project styles repository">
+      <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank"
+        title="Visit the project styles repository">
         <i class="fas fa-book"></i> Styles
       </a>
       <div class="footer-divider"></div>
-      <a href="#" id="bug-report-link" class="footer-link" title="Report a bug or issue to the addon's GitHub repository">
+      <a href="#" id="bug-report-link" class="footer-link"
+        title="Report a bug or issue to the addon's GitHub repository">
         <i class="fa-brands fa-github"></i> Bug?
       </a>
     </footer>

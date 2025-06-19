@@ -1378,11 +1378,11 @@ new (class ExtensionPopup {
 
   updateModeLabels() {
     if (this.whitelistModeSwitch.checked) {
-      this.whitelistModeLabel.textContent = "Whitelist Mode";
-      this.siteToggleLabel.textContent = "Enable for this Site";
+      this.whitelistModeLabel.textContent = "Forced Whitelist Mode";
+      this.siteToggleLabel.textContent = "Enable forcing for this Site";
     } else {
-      this.whitelistModeLabel.textContent = "Blacklist Mode";
-      this.siteToggleLabel.textContent = "Skip Forcing for this Site";
+      this.whitelistModeLabel.textContent = "Forced Blacklist Mode";
+      this.siteToggleLabel.textContent = "Skip forcing for this Site";
     }
 
     if (this.whitelistStylingModeSwitch.checked) {

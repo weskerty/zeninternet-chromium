@@ -717,7 +717,7 @@ new (class ExtensionPopup {
 
     // Add account requirement status
     if (accountValue === "yes") {
-      issueBody += "**Requires account:** YES (open for contributions)\n";
+      issueBody += "**Requires account:** YES\n";
     } else if (accountValue === "no") {
       issueBody += "**Requires account:** NO\n";
     } else {

@@ -37,8 +37,7 @@
             <span class="slider round"></span>
           </label>
           <span id="site-style-toggle-label" class="toggle-label">Skip Styling for this Site</span>
-          <span class="help-icon"
-            data-tooltip="Blacklist mode: Enable to skip adding below features.
+          <span class="help-icon" data-tooltip="Blacklist mode: Enable to skip adding below features.
             
             Whitelist mode: Enable to include below features">?</span>
         </div>
@@ -48,8 +47,7 @@
             <span class="slider round"></span>
           </label>
           <span id="site-toggle-label" class="toggle-label">Skip Forcing for this Site</span>
-          <span class="help-icon"
-            data-tooltip="Blacklist mode: Enable to skip force theming this website.
+          <span class="help-icon" data-tooltip="Blacklist mode: Enable to skip force theming this website.
 
             Whitelist mode: Enable to force this website">?</span>
         </div>
@@ -72,8 +70,7 @@
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">Global Styling</span>
-          <span class="help-icon"
-            data-tooltip="Master toggle for all the CSS styling">?</span>
+          <span class="help-icon" data-tooltip="Master toggle for all the CSS styling">?</span>
         </div>
         <div class="toggle-container">
           <label class="toggle-switch">
@@ -81,11 +78,11 @@
             <span class="slider round"></span>
           </label>
           <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
-          <span class="help-icon"
-            data-tooltip="Blacklist mode: apply styling to all sites except those in the list.
+          <span class="help-icon" data-tooltip="Blacklist mode: apply styling to all sites except those in the list.
             Whitelist mode: only apply styling to sites in the list.">?</span>
         </div>
-        <button id="reload" class="action-button secondary">
+        <button id="reload" class="action-button secondary"
+          title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
           Reload to apply <i class="fas fa-sync-alt"></i>
         </button>
       </div>
@@ -127,7 +124,7 @@
       </div>
 
       <div class="actions">
-        <button id="refetch-css" class="action-button primary">
+        <button id="refetch-css" class="action-button primary" title="Fetch the latest styles from the repository">
           <i class="fas fa-sync-alt"></i> Refetch latest styles
         </button>
       </div>
@@ -144,7 +141,7 @@
       <div id="last-fetched-time" class="last-fetched-time"></div>
 
       <div class="actions">
-        <button id="view-data" class="action-button secondary">
+        <button id="view-data" class="action-button secondary" title="Open advanced settings in a new tab">
           <i class="fa-solid fa-gear"></i>
           Advanced Settings
         </button>
@@ -153,11 +150,11 @@
     </main>
 
     <footer class="app-footer">
-      <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank">
+      <a href="https://sameerasw.github.io/my-internet/" class="footer-link" target="_blank" title="Visit the project styles repository">
         <i class="fas fa-book"></i> Styles
       </a>
       <div class="footer-divider"></div>
-      <a href="#" id="bug-report-link" class="footer-link">
+      <a href="#" id="bug-report-link" class="footer-link" title="Report a bug or issue to the addon's GitHub repository">
         <i class="fa-brands fa-github"></i> Bug?
       </a>
     </footer>

@@ -1052,9 +1052,6 @@ input:checked + .slider:before {
     padding: 6px 10px;
   }
 }
-  right: auto;
-  left: -160px;
-}
 
 .forcing-container .toggle-container:first-child .help-icon::before,
 .forcing-container .toggle-container:nth-child(1) .help-icon::before {

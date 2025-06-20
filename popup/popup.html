@@ -12,28 +12,31 @@
 <body>
   <div class="container">
     <header class="app-header">
-      <div id="header-container">
-        <div class="logo-container">
-          <img src="../assets/images/logo.png" alt="ZenInternet Logo" class="logo-img">
-          <h1 class="app-title">Zen Internet</h1>
+      <div class="header-row">
+        <div id="header-container">
+          <div class="logo-container">
+            <img src="../assets/images/logo.png" alt="ZenInternet Logo" class="logo-img">
+            <h1 class="app-title">Zen Internet</h1>
+          </div>
+          <div class="miniheader">
+            <div id="addon-version" class="addon-version"></div>
+            <div class="author">by <a href="https://www.sameerasw.com/" target="_blank">@sameerasw</a></div>
+          </div>
         </div>
-        <div class="miniheader">
-          <div id="addon-version" class="addon-version"></div>
-          <div class="author">by <a href="https://www.sameerasw.com/" target="_blank">@sameerasw</a></div>
+        <div class="header-buttons">
+          <button id="how-to-use" class="icon-button" title="How to use?">🤔</button>
+          <button id="whats-new" class="whats-new-button" title="What's New">✨</button>
         </div>
+
       </div>
-      <div class="header-buttons">
-        <button id="how-to-use" class="icon-button" title="How to use?">🤔</button>
-        <button id="whats-new" class="whats-new-button" title="What's New">✨</button>
-      </div>
+        <button id="reload" class="action-button secondary"
+          title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
+          Reload the page <i class="fas fa-sync-alt"></i>
+        </button>
     </header>
 
     <main class="app-content">
 
-      <button id="reload" class="action-button secondary"
-        title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
-        Reload the page <i class="fas fa-sync-alt"></i>
-      </button>
       <!-- Current Site Features Section -->
       <div id="current-site-features" class="features-container">
         <div class="toggle-container skip-theming">
@@ -216,7 +219,8 @@
               <div class="faq-answer">
                 <p>This can happen if the website's text color is too light or dark against a transparent background.
                 </p>
-                <p>If you are on a website without a dedicated dark theme, you can try using <strong>darkreader addon</strong> for better
+                <p>If you are on a website without a dedicated dark theme, you can try using <strong>darkreader
+                    addon</strong> for better
                   contrast.</p>
                 <ul>
                   <li>Toggle website's dark/ light theme manually</li>

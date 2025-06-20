@@ -29,10 +29,10 @@
         </div>
 
       </div>
-        <button id="reload" class="action-button secondary"
-          title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
-          <span>Reload the page</span> <i class="fas fa-sync-alt"></i>
-        </button>
+      <button id="reload" class="action-button secondary"
+        title="Reload the page to apply changes. Most-likely will be needed when removing styling.">
+        <span>Reload the page</span> <i class="fas fa-sync-alt"></i>
+      </button>
     </header>
 
     <main class="app-content">
@@ -45,9 +45,8 @@
             <span class="slider round"></span>
           </label>
           <span id="site-style-toggle-label" class="toggle-label">Skip Styling for this Site</span>
-          <span class="help-icon" data-tooltip="Blacklist mode: Enable to skip adding below features.
-            
-            Whitelist mode: Enable to include below features">?</span>
+          <span class="help-icon"
+            title="Blacklist mode: Enable to skip adding below features. Whitelist mode: Enable to include below features">?</span>
         </div>
         <div class="toggle-container skip-theming">
           <label class="toggle-switch">
@@ -55,9 +54,8 @@
             <span class="slider round"></span>
           </label>
           <span id="site-toggle-label" class="toggle-label">Skip Forcing for this Site</span>
-          <span class="help-icon" data-tooltip="Blacklist mode: Enable to skip force theming this website.
-
-            Whitelist mode: Enable to force this website">?</span>
+          <span class="help-icon"
+            title="Blacklist mode: Enable to skip force theming this website. Whitelist mode: Enable to force this website">?</span>
         </div>
         <div class="expanded-section">
           <button class="collapsible-button" id="toggle-features">
@@ -81,7 +79,7 @@
               <span class="slider round"></span>
             </label>
             <span class="toggle-label">Global Styling</span>
-            <span class="help-icon" data-tooltip="Master toggle for all the CSS styling">?</span>
+            <span class="help-icon" title="Master toggle for all the CSS styling">?</span>
           </div>
           <div class="toggle-container">
             <label class="toggle-switch">
@@ -89,8 +87,8 @@
               <span class="slider round"></span>
             </label>
             <span id="whitelist-style-mode-label" class="toggle-label">Blacklist Mode</span>
-            <span class="help-icon" data-tooltip="Blacklist mode: apply styling to all sites except those in the list.
-            Whitelist mode: only apply styling to sites in the list.">?</span>
+            <span class="help-icon"
+              title="Blacklist mode: apply styling to all sites except those in the list. Whitelist mode: only apply styling to sites in the list.">?</span>
           </div>
 
         </div>
@@ -107,7 +105,7 @@
               </label>
               <span class="toggle-label">Force Styling</span>
               <span class="help-icon"
-                data-tooltip="Applies basic styling to websites that don't have specific pre-made theme and features.">?</span>
+                title="Applies basic styling to websites that don't have specific pre-made theme and features.">?</span>
             </div>
             <div class="toggle-container">
               <label class="toggle-switch">
@@ -116,7 +114,7 @@
               </label>
               <span id="whitelist-mode-label" class="toggle-label">Forced Blacklist Mode</span>
               <span class="help-icon"
-                data-tooltip="Blacklist mode: apply forced styling to all sites except those in the list. Whitelist mode: only apply forced styling to sites in the list.">?</span>
+                title="Blacklist mode: apply forced styling to all sites except those in the list. Whitelist mode: only apply forced styling to sites in the list.">?</span>
             </div>
             <div class="toggle-container">
               <label class="toggle-switch">
@@ -125,7 +123,7 @@
               </label>
               <span class="toggle-label">Fallback Background</span>
               <span class="help-icon"
-                data-tooltip="Adds a solid white background color to websites which never had a proper background and skipping still keeps a transparent background.">?</span>
+                title="Adds a solid white background color to websites which never had a proper background and skipping still keeps a transparent background.">?</span>
             </div>
           </div>
         </div>
@@ -145,7 +143,7 @@
           </label>
           <span class="toggle-label">Auto Update Styles</span>
           <span class="help-icon"
-            data-tooltip="Automatically checks for and downloads new styles every 2 hours. Keeps your themes up-to-date without manual intervention.">?</span>
+            title="Automatically checks for and downloads new styles every 2 hours. Keeps your themes up-to-date without manual intervention.">?</span>
         </div>
         <div id="last-fetched-time" class="last-fetched-time"></div>
       </div>

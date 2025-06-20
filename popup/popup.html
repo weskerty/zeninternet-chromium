@@ -154,6 +154,114 @@
         </button>
       </div>
 
+      <!-- FAQ Section -->
+      <div class="faq-section">
+        <div class="expanded-section">
+          <button class="collapsible-button" id="toggle-faq">
+            <span>Frequently Asked Questions</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div id="faq-content" class="faq-container collapsed">
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>Why is transparency not working?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p><strong>OS Compatibility:</strong> Only some operating systems support transparency:</p>
+                <ul>
+                  <li>macOS (native support)</li>
+                  <li>Windows 11 (native mica and acrylic)</li>
+                  <li>Windows 11 with mods like Mica for Everyone or DWM blur glass</li>
+                  <li>Windows 10 with DWM blur glass</li>
+                  <li>Wayland on KDE with Kvin blur</li>
+                  <li>GTK Gnome DE (experimental with blur my shell)</li>
+                </ul>
+                <p><strong>Common fixes:</strong></p>
+                <ul>
+                  <li>Check your OS has transparency enabled for window borders</li>
+                  <li>Turn off Windows power saving settings</li>
+                  <li>Check Windows color settings aren't affecting transparency</li>
+                  <li>Disable conflicting mods like better letterboxing or custom themes</li>
+                  <li>Adjust Zen theme contrast slider for more transparency</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>How do site-specific features work?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>Each website can have customized features like transparency, hover effects, and layout adjustments.
+                </p>
+                <ul>
+                  <li>Browse to any website and check the addon popup</li>
+                  <li>You'll see available features for that site</li>
+                  <li>Toggle individual features on/off as needed</li>
+                  <li>Disabling features may require a page reload</li>
+                  <li>Use the "Global Feature Controls" in Advanced Settings for site-wide overrides</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>How do I request themes or report issues?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>You can request themes and report bugs directly from the addon:</p>
+                <ul>
+                  <li>Use the built-in "Request Theme" button for the active website</li>
+                  <li>Click "Bug?" in the footer to report issues with auto-included data</li>
+                  <li>Theme contributions are welcome on GitHub</li>
+                </ul>
+                <p><strong>Unsupported sites:</strong> Mozilla addons store, Settings pages, New tab page, PDF viewer,
+                  and other restricted pages cannot be themed.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>What is Force Theming?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>Force theming applies basic transparency to websites without specific themes:</p>
+                <ul>
+                  <li><strong>Blacklist mode:</strong> Apply to all sites except those you manually skip</li>
+                  <li><strong>Whitelist mode:</strong> Apply only to sites you specifically select</li>
+                  <li>Includes dark theme support for better transparency</li>
+                  <li>May cause some visual issues on complex sites</li>
+                </ul>
+                <p><strong>Fallback Background:</strong> Use this option for sites with no default background color when
+                  transparency doesn't take effect.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>How do I get better performance?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <ul>
+                  <li>Enable "Auto Update Styles" to keep themes current</li>
+                  <li>Use whitelist modes instead of blacklist for better control</li>
+                  <li>Disable unused global features in Advanced Settings</li>
+                  <li>Turn off force theming if you don't need it</li>
+                  <li>Reload pages after making changes for best results</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <footer class="app-footer">

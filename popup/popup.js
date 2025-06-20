@@ -210,6 +210,16 @@ new (class ExtensionPopup {
     });
 
     this.reloadButton.addEventListener("click", this.reloadPage.bind(this));
+
+    // Add FAQ event listeners
+    document
+      .getElementById("toggle-faq")
+      ?.addEventListener("click", this.toggleFAQ.bind(this));
+
+    // Add event delegation for FAQ items
+    document
+      .getElementById("faq-content")
+      ?.addEventListener("click", this.handleFAQClick.bind(this));
   }
 
   restoreSettings() {
@@ -1447,52 +1457,46 @@ new (class ExtensionPopup {
     }
   }
 
-  // Handle bug report with automatic data inclusion
-  async handleBugReport() {
-    try {
-      // Show loading state temporarily
-      const bugReportLink = document.getElementById("bug-report-link");
-      const originalText = bugReportLink.innerHTML;
-      bugReportLink.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+  // Toggle FAQ section visibility
+  toggleFAQ() {
+    const faqContent = document.getElementById("faq-content");
+    const toggleButton = document.getElementById("toggle-faq");
 
-      // Collect all extension data
-      const bugReportData = await this.collectBugReportData();
+    faqContent.classList.toggle("collapsed");
 
-      // Format the JSON data for GitHub issue
-      const jsonData = JSON.stringify(bugReportData, null, 2);
+    // Update the icon
+    const icon = toggleButton.querySelector("i");
+    if (faqContent.classList.contains("collapsed")) {
+      icon.className = "fas fa-chevron-down";
+    } else {
+      icon.className = "fas fa-chevron-up";
+    }
+  }
 
-      // Get current tab info for context
-      const tabs = await browser.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      const currentUrl = tabs.length > 0 ? tabs[0].url : "";
+  // Handle FAQ item clicks (only one open at a time)
+  handleFAQClick(event) {
+    // Find the closest FAQ item container
+    const faqItem = event.target.closest(".faq-item");
+    if (!faqItem) return;
 
-      // Create the issue body with embedded JSON
-      const issueBody = this.createBugReportBody(jsonData, currentUrl);
+    const question = faqItem.querySelector(".faq-question");
+    const answer = faqItem.querySelector(".faq-answer");
 
-      // Create the GitHub issue URL with pre-filled template
-      const issueUrl = `https://github.com/sameerasw/zeninternet/issues/new?template=bug_report.md&title=[BUG] &body=${encodeURIComponent(
-        issueBody
-      )}`;
+    if (!question || !answer) return;
 
-      // Open the URL
-      window.open(issueUrl, "_blank");
+    const isCurrentlyActive = question.classList.contains("active");
 
-      // Reset button state
-      bugReportLink.innerHTML = originalText;
-    } catch (error) {
-      console.error("Error preparing bug report:", error);
+    // Close all FAQ items
+    document.querySelectorAll(".faq-question").forEach((q) => {
+      q.classList.remove("active");
+      const a = q.nextElementSibling;
+      if (a) a.classList.remove("active");
+    });
 
-      // Fallback to simple bug report without data
-      const fallbackUrl =
-        "https://github.com/sameerasw/zeninternet/issues/new?template=bug_report.md&title=[BUG] ";
-      window.open(fallbackUrl, "_blank");
-
-      // Reset button state
-      const bugReportLink = document.getElementById("bug-report-link");
-      bugReportLink.innerHTML = '<i class="fa-brands fa-github"></i> Bug?';
+    // If the clicked item wasn't active, open it
+    if (!isCurrentlyActive) {
+      question.classList.add("active");
+      answer.classList.add("active");
     }
   }
 

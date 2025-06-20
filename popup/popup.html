@@ -174,17 +174,18 @@
                   <li>macOS (native support)</li>
                   <li>Windows 11 (native mica and acrylic)</li>
                   <li>Windows 11 with mods like Mica for Everyone or DWM blur glass</li>
-                  <li>Windows 10 with DWM blur glass</li>
+                  <li>Windows 10 with DWM blur glass (Questionable)</li>
                   <li>Wayland on KDE with Kvin blur</li>
                   <li>GTK Gnome DE (experimental with blur my shell)</li>
                 </ul>
                 <p><strong>Common fixes:</strong></p>
                 <ul>
-                  <li>Check your OS has transparency enabled for window borders</li>
-                  <li>Turn off Windows power saving settings</li>
-                  <li>Check Windows color settings aren't affecting transparency</li>
+                  <li>Check if transparency enabled in the OS</li>
+                  <li>Turn off power saving</li>
+                  <li>Turn off <strong>"Show accent color on window borders"</strong> in Windows</li>
                   <li>Disable conflicting mods like better letterboxing or custom themes</li>
                   <li>Adjust Zen theme contrast slider for more transparency</li>
+                  <li>Try re-opening the browser</li>
                 </ul>
               </div>
             </div>
@@ -202,8 +203,60 @@
                   <li>You'll see available features for that site</li>
                   <li>Toggle individual features on/off as needed</li>
                   <li>Disabling features may require a page reload</li>
-                  <li>Use the "Global Feature Controls" in Advanced Settings for site-wide overrides</li>
+                  <li>Use the "Global Feature Controls" in Advanced Settings for global overrides</li>
                 </ul>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>Text is unreadable</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>This can happen if the website's text color is too light or dark against a transparent background.
+                </p>
+                <p>If you are on a website without a dedicated dark theme, you can try using <strong>darkreader addon</strong> for better
+                  contrast.</p>
+                <ul>
+                  <li>Toggle website's dark/ light theme manually</li>
+                  <li>Try adjusting the Zen theme contrast slider</li>
+                  <li>Disable transparency for that site if needed</li>
+                  <li>Report the issue to request a specific theme</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>What is blacklist vs whitelist mode?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>These modes control how built-in and forced themes and features are applied:</p>
+                <ul>
+                  <li><strong>Blacklist Mode:</strong> Apply styles to all sites except those you manually skip</li>
+                  <li><strong>Whitelist Mode:</strong> Only apply styles to sites you specifically select</li>
+                  <p>Whitelist mode is generally recommended for better performance and control but may require more
+                    manual setup for each site.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>What is force theming?</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="faq-answer">
+                <p>Force theming applies basic transparency to websites without specific themes:</p>
+                <ul>
+                  <li>Can be used with the blacklist or whitelist mode</li>
+                  <li>Includes dark theme support with darkreader addon for better transparency</li>
+                  <li>May cause some visual issues on complex sites</li>
+                </ul>
+                <p><strong>Fallback Background:</strong> Use this option for sites with no default background color when
+                  transparency doesn't take effect. Enable if skipping the website still leaves it transparent.</p>
               </div>
             </div>
 
@@ -216,45 +269,11 @@
                 <p>You can request themes and report bugs directly from the addon:</p>
                 <ul>
                   <li>Use the built-in "Request Theme" button for the active website</li>
-                  <li>Click "Bug?" in the footer to report issues with auto-included data</li>
+                  <li>Click "Bug?" in the footer to report issues of the addon</li>
                   <li>Theme contributions are welcome on GitHub</li>
                 </ul>
                 <p><strong>Unsupported sites:</strong> Mozilla addons store, Settings pages, New tab page, PDF viewer,
                   and other restricted pages cannot be themed.</p>
-              </div>
-            </div>
-
-            <div class="faq-item">
-              <button class="faq-question">
-                <span>What is Force Theming?</span>
-                <i class="fas fa-chevron-down"></i>
-              </button>
-              <div class="faq-answer">
-                <p>Force theming applies basic transparency to websites without specific themes:</p>
-                <ul>
-                  <li><strong>Blacklist mode:</strong> Apply to all sites except those you manually skip</li>
-                  <li><strong>Whitelist mode:</strong> Apply only to sites you specifically select</li>
-                  <li>Includes dark theme support for better transparency</li>
-                  <li>May cause some visual issues on complex sites</li>
-                </ul>
-                <p><strong>Fallback Background:</strong> Use this option for sites with no default background color when
-                  transparency doesn't take effect.</p>
-              </div>
-            </div>
-
-            <div class="faq-item">
-              <button class="faq-question">
-                <span>How do I get better performance?</span>
-                <i class="fas fa-chevron-down"></i>
-              </button>
-              <div class="faq-answer">
-                <ul>
-                  <li>Enable "Auto Update Styles" to keep themes current</li>
-                  <li>Use whitelist modes instead of blacklist for better control</li>
-                  <li>Disable unused global features in Advanced Settings</li>
-                  <li>Turn off force theming if you don't need it</li>
-                  <li>Reload pages after making changes for best results</li>
-                </ul>
               </div>
             </div>
 

@@ -145,6 +145,21 @@ new (class ExtensionPopup {
     this.setupAutoUpdate();
     this.displayLastFetchedTime();
     this.displayAddonVersion();
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const header = document.querySelector(".app-header");
+
+      window.addEventListener("scroll", () => {
+        const scrollPercentage =
+          (window.scrollY / document.body.scrollHeight) * 100;
+
+        if (scrollPercentage > 5) {
+          header.classList.add("compact");
+        } else {
+          header.classList.remove("compact");
+        }
+      });
+    });
   }
 
   async getCurrentTabInfo() {

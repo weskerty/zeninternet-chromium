@@ -339,6 +339,45 @@
     </div>
   </div>
 
+  <!-- Bug Report Overlay -->
+  <div id="bug-report-overlay" class="theme-request-overlay hidden">
+    <div class="theme-request-prompt">
+      <h3>Bug Report</h3>
+
+      <div class="prompt-question">
+        <h4>What is your issue/bug related to?</h4>
+        <p>Select the category that best describes your issue:</p>
+        <div class="bug-options-container">
+          <button class="bug-option" data-type="1">
+            <i class="fas fa-palette"></i>
+            <span>Current website's theme</span>
+          </button>
+          <button class="bug-option" data-type="2">
+            <i class="fas fa-puzzle-piece"></i>
+            <span>An issue with the extension</span>
+          </button>
+          <button class="bug-option" data-type="3">
+            <i class="fas fa-eye"></i>
+            <span>Browser transparency issue</span>
+          </button>
+          <button class="bug-option" data-type="4">
+            <i class="fas fa-lightbulb"></i>
+            <span>Feature request</span>
+          </button>
+          <button class="bug-option" data-type="5">
+            <i class="fas fa-question"></i>
+            <span>Other...</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="prompt-actions">
+        <button id="cancel-bug-report" class="action-button secondary">Cancel</button>
+        <button id="submit-bug-report" class="action-button primary" disabled>Submit Report</button>
+      </div>
+    </div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 

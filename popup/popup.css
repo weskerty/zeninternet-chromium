@@ -67,6 +67,7 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     opacity: 0 !important;
+    overflow: hidden !important;
   }
 
   .header-row {
@@ -78,6 +79,7 @@ body {
     width: 24px;
     margin: 0;
     margin-left: 12px;
+    z-index: 1001;
     span {
       display: none;
     }

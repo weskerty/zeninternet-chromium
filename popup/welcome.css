@@ -315,13 +315,13 @@ body:has(.welcome-overlay:not(.hidden)) {
 /* Welcome Actions */
 .welcome-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   justify-content: center;
   margin-top: 24px;
 }
 
 .welcome-button {
-  padding: 12px 24px;
+  padding: 8px 16px;
   border: none;
   border-radius: var(--radius-md);
   font-weight: 500;
@@ -329,8 +329,10 @@ body:has(.welcome-overlay:not(.hidden)) {
   transition: var(--transition);
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 13px;
+  min-width: 80px;
+  justify-content: center;
 }
 
 .welcome-button.primary {
@@ -405,11 +407,12 @@ body:has(.welcome-overlay:not(.hidden)) {
   }
 
   .welcome-actions {
-    flex-direction: column;
+    gap: 6px;
   }
 
   .welcome-button {
-    width: 100%;
-    justify-content: center;
+    min-width: 70px;
+    padding: 6px 12px;
+    font-size: 12px;
   }
 }

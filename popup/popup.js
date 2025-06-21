@@ -1594,12 +1594,22 @@ new (class ExtensionPopup {
       // Create issue body
       const issueBody = this.createBugReportBodyForType(bugType, bugData);
 
-      // Create GitHub issue URL
-      const issueUrl = `https://github.com/${repoInfo.owner}/${
-        repoInfo.repo
-      }/issues/new?title=${encodeURIComponent(
-        repoInfo.title
-      )}&body=${encodeURIComponent(issueBody)}`;
+      // Create GitHub issue URL with proper template
+      let issueUrl = `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/new`;
+
+      // Add template parameter if available
+      if (repoInfo.template) {
+        issueUrl += `?template=${repoInfo.template}.md`;
+      }
+
+      // Add title and body parameters
+      const urlParams = new URLSearchParams();
+      urlParams.append("title", repoInfo.title);
+      urlParams.append("body", issueBody);
+
+      // Combine URL with parameters
+      const separator = repoInfo.template ? "&" : "?";
+      issueUrl += separator + urlParams.toString();
 
       // Open the URL
       browser.tabs.create({ url: issueUrl });
@@ -1622,22 +1632,26 @@ new (class ExtensionPopup {
       1: {
         owner: "sameerasw",
         repo: "my-internet",
-        title: "[THEME] Website Theme Issue",
+        title: "[BUG] Website Theme Issue",
+        template: "bug_report",
       },
       2: {
         owner: "sameerasw",
         repo: "zeninternet",
         title: "[BUG] Extension Issue",
+        template: "bug_report",
       },
       3: {
         owner: "sameerasw",
         repo: "my-internet",
         title: "[TRANSPARENCY] Browser Transparency Issue",
+        template: "bug_report",
       },
       4: {
         owner: "sameerasw",
         repo: "zeninternet",
         title: "[FEATURE] Feature Request",
+        template: "feature_request",
       },
       5: {
         owner: "sameerasw",

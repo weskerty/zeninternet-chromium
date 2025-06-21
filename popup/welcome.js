@@ -370,10 +370,104 @@ class WelcomeScreen {
     const overlay = document.getElementById("welcome-overlay");
     overlay.classList.add("hidden");
 
+    // Mark welcome as shown
+    this.markWelcomeAsShown();
+
     // Remove the overlay after animation completes
     setTimeout(() => {
       overlay.remove();
     }, 300);
+  }
+
+  async markWelcomeAsShown() {
+    try {
+      const BROWSER_STORAGE_KEY = "transparentZenSettings";
+      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+      const settings = data[BROWSER_STORAGE_KEY] || {};
+
+      settings.welcomeShown = true;
+      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    } catch (error) {
+      console.error("Error marking welcome as shown:", error);
+    }
+  }
+
+  showAgreementOnly() {
+    // Show the overlay first
+    this.show();
+
+    // Set up for agreement-only flow (steps 2 and 5)
+    this.currentStep = 2;
+    this.totalSteps = 2; // Only agreement and completion steps
+    this.isAgreementOnlyFlow = true;
+
+    // Update the progress dots for agreement-only flow
+    const progressContainer = document.querySelector(".welcome-progress");
+    if (progressContainer) {
+      progressContainer.innerHTML = `
+        <div class="progress-dot active"></div>
+        <div class="progress-dot"></div>
+      `;
+    }
+
+    // Update steps visibility
+    this.updateStepForAgreementFlow();
+
+    // Update the disclaimer navigation for agreement-only flow
+    this.updateDisclaimerForAgreementFlow();
+  }
+
+  updateStepForAgreementFlow() {
+    const steps = document.querySelectorAll(".welcome-step");
+    steps.forEach((step) => {
+      step.classList.remove("active");
+    });
+
+    if (this.currentStep === 2) {
+      // Show disclaimer step
+      document.querySelector(".step-disclaimer").classList.add("active");
+    } else if (this.currentStep === 5) {
+      // Show completion step
+      document.querySelector(".step-complete").classList.add("active");
+    }
+  }
+
+  updateDisclaimerForAgreementFlow() {
+    const disclaimerNext = document.getElementById("disclaimer-next");
+    const disclaimerBack = document.getElementById("disclaimer-back");
+
+    // Hide back button in agreement-only flow
+    if (disclaimerBack) {
+      disclaimerBack.style.display = "none";
+    }
+
+    // Update next button event for agreement-only flow
+    if (disclaimerNext) {
+      disclaimerNext.removeEventListener("click", this.nextStep);
+      disclaimerNext.addEventListener("click", () => {
+        if (this.isAgreementOnlyFlow) {
+          this.currentStep = 5; // Jump to completion step
+          this.updateStepForAgreementFlow();
+          this.updateProgressForAgreementFlow();
+        } else {
+          this.nextStep();
+        }
+      });
+    }
+  }
+
+  updateProgressForAgreementFlow() {
+    const dots = document.querySelectorAll(".progress-dot");
+    if (this.isAgreementOnlyFlow) {
+      dots.forEach((dot, index) => {
+        dot.classList.remove("active", "completed");
+        if (this.currentStep === 2 && index === 0) {
+          dot.classList.add("completed");
+        } else if (this.currentStep === 5 && index === 1) {
+          dot.classList.add("active");
+        }
+      });
+    }
   }
 
   show() {
@@ -394,16 +488,30 @@ class WelcomeScreen {
 // Function to check if user is first-time and show welcome screen
 async function checkAndShowWelcome() {
   try {
-    const data = await browser.storage.local.get(["styles"]);
+    const BROWSER_STORAGE_KEY = "transparentZenSettings";
+    const data = await browser.storage.local.get([
+      BROWSER_STORAGE_KEY,
+      "styles",
+    ]);
 
-    // If no styles exist, user is first-time
-    if (
-      !data.styles ||
-      !data.styles.website ||
-      Object.keys(data.styles.website).length === 0
-    ) {
+    const settings = data[BROWSER_STORAGE_KEY] || {};
+    const hasStyles =
+      data.styles &&
+      data.styles.website &&
+      Object.keys(data.styles.website).length > 0;
+    const welcomeShown = settings.welcomeShown;
+
+    // New users (no styles fetched) - show full welcome flow
+    if (!hasStyles) {
       const welcome = new WelcomeScreen();
       welcome.show();
+      return true; // Welcome screen is shown
+    }
+
+    // Existing users who haven't seen the new agreement - show agreement-only flow
+    if (hasStyles && (welcomeShown === undefined || welcomeShown === false)) {
+      const welcome = new WelcomeScreen();
+      welcome.showAgreementOnly();
       return true; // Welcome screen is shown
     }
 

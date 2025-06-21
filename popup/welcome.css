@@ -149,7 +149,7 @@ body:has(.welcome-overlay:not(.hidden)) {
   gap: 12px;
   margin-bottom: 24px;
   padding: 12px;
-  background-color: var(--secondary-bg);
+  background-color: var(--bg-color);
   border-radius: var(--radius-md);
 }
 

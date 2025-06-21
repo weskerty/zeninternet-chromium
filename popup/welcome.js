@@ -39,16 +39,16 @@ class WelcomeScreen {
 
         <!-- Step 2: Disclaimer -->
         <div class="welcome-step step-disclaimer" data-step="2">
-          <h2 class="disclaimer-title">This is not a license agreement, So pwees read it</h2>
+          <h2 class="disclaimer-title">This is NOT a license agreement, So please 🙏 read it</h2>
           <div class="disclaimer-content">
             <p>Sample text that will be replaced later. This section will contain important information about the extension's functionality, privacy considerations, and usage guidelines.</p>
             <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
             <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          </div>
+          
           <div class="disclaimer-checkbox">
             <input type="checkbox" id="understand-checkbox">
             <label for="understand-checkbox">I understand</label>
-          </div>
+          </div></div>
           <div class="welcome-actions">
             <button class="welcome-button secondary" id="disclaimer-back">
               <i class="fas fa-arrow-left"></i>

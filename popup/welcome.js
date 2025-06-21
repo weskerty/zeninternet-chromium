@@ -39,15 +39,33 @@ class WelcomeScreen {
 
         <!-- Step 2: Disclaimer -->
         <div class="welcome-step step-disclaimer" data-step="2">
-          <h2 class="disclaimer-title">This is NOT a license agreement, So please 🙏 read it</h2>
+          <h2 class="disclaimer-title">Important Disclaimer</h2>
           <div class="disclaimer-content">
-            <p>Sample text that will be replaced later. This section will contain important information about the extension's functionality, privacy considerations, and usage guidelines.</p>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
-            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <div class="disclaimer-highlight">
+              <p><strong>⚠️ This is a third party modification.<br/> </strong> If you encounter any issues regarding transparency or website colors, <br/><strong>DO NOT</strong> report issues to the official browser repository or issue tracker.<br/>Instead use the built-in issue/bug report feature in this addon or report it directly to the developer.</p>
+            </div>
+            
+            <p><strong>Some common issues you may experience are:</strong></p>
+            <ol class="disclaimer-list">
+              <li>White background</li>
+              <li>Unreadable text</li>
+              <li>No transparency</li>
+              <li>No blur</li>
+              <li>And many others</li>
+            </ol>
+            
+            <div class="disclaimer-instructions">
+              <p><strong>📖 Before reporting issues:</strong></p>
+              <p>First check the <strong>FAQ</strong> in the addon popup page at the bottom. <br/>If that does not solve your problem, then reach out to me through the proper channels.</p>
+            </div>
+            
+            <div class="disclaimer-question">
+              <p><strong>Do you understand this disclaimer and agree to comply with the given options and <br/>not to bother the browser development and other developers?</strong></p>
+            </div>
           
           <div class="disclaimer-checkbox">
             <input type="checkbox" id="understand-checkbox">
-            <label for="understand-checkbox">I understand</label>
+            <label for="understand-checkbox">Yes, <br/>I understand and agree</label>
           </div></div>
           <div class="welcome-actions">
             <button class="welcome-button secondary" id="disclaimer-back">
@@ -64,16 +82,16 @@ class WelcomeScreen {
         <!-- Step 3: Theme Mode Selection -->
         <div class="welcome-step step-theme-mode" data-step="3">
           <h2 class="theme-mode-title">Choose Your Theming Preference</h2>
-          <p class="theme-mode-description">How would you like themes to be applied by default?</p>
+          <p class="theme-mode-description">How would you like themes to be applied?</p>
           
           <div class="theme-mode-options">
             <div class="theme-mode-option" data-mode="blacklist">
               <h4>Enable themes by default</h4>
-              <p>Themes will be applied to all websites automatically. You can disable them for specific sites if needed.</p>
+              <p>Themes will be applied to all websites automatically. You can skip websites if needed.</p>
             </div>
             <div class="theme-mode-option" data-mode="whitelist">
               <h4>Only apply to websites I choose</h4>
-              <p>Themes will only be applied to websites you specifically select. Better performance but requires manual setup.</p>
+              <p>Themes will only be applied to websites you specifically select in the addon.</p>
             </div>
           </div>
 
@@ -92,7 +110,7 @@ class WelcomeScreen {
         <!-- Step 4: Fetch Styles -->
         <div class="welcome-step step-fetch-styles" data-step="4">
           <h2 class="fetch-styles-title">Download Latest Themes</h2>
-          <p class="fetch-styles-description">Click below to fetch the latest themes from our repository. This is required to start using the extension.</p>
+          <p class="fetch-styles-description">Click below to fetch the latest themes from our repository.</p>
           
           <div class="fetch-styles-actions">
             <button class="welcome-button primary fetch-styles-button" id="welcome-fetch-styles">
@@ -105,7 +123,7 @@ class WelcomeScreen {
                 <input type="checkbox" id="welcome-auto-update" checked>
                 <span class="slider round"></span>
               </label>
-              <span class="toggle-label">Auto Update Styles</span>
+              <span class="toggle-label">Auto Update Styles (2h)</span>
             </div>
           </div>
 
@@ -130,7 +148,7 @@ class WelcomeScreen {
           </div>
           <h2 class="complete-title">All Done!</h2>
           <p class="complete-description">
-            Your Zen Internet extension is now ready to use!<br>
+            Zen Internet extension is now ready to use!<br>
             Read FAQ if you find anything confusing or reach out for help.
           </p>
           

@@ -38,6 +38,8 @@
     "data-viewer/data-viewer.html",
     "data-viewer/data-viewer.js",
     "data-viewer/data-viewer.css",
+    "popup/welcome.css",
+    "popup/welcome.js",
     "shared/*"
   ]
 }

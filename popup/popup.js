@@ -84,6 +84,9 @@ new (class ExtensionPopup {
       });
     });
 
+    // Check and show welcome screen for first-time users
+    this.checkWelcomeScreen();
+
     // Bind event listeners
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
     this.refetchCSSButton.addEventListener(
@@ -1651,7 +1654,7 @@ new (class ExtensionPopup {
         owner: "sameerasw",
         repo: "zeninternet",
         title: "[FEATURE] Feature Request",
-        template: "feature_request",
+        template: "bug_report",
       },
       5: {
         owner: "sameerasw",
@@ -1932,5 +1935,43 @@ ${
 
 ## Additional context
 <!-- Add any other context about the problem here. -->`;
+  }
+
+  // Add welcome screen check method
+  async checkWelcomeScreen() {
+    try {
+      // Check if welcome screen should be shown
+      const shouldShow = await window.checkAndShowWelcome();
+
+      if (shouldShow) {
+        // Hide the main popup content while welcome is shown
+        const container = document.querySelector(".container");
+        if (container) {
+          container.style.opacity = "0.3";
+          container.style.pointerEvents = "none";
+        }
+
+        // Listen for welcome screen completion
+        const checkWelcomeComplete = setInterval(() => {
+          const welcomeOverlay = document.getElementById("welcome-overlay");
+          if (!welcomeOverlay || welcomeOverlay.classList.contains("hidden")) {
+            clearInterval(checkWelcomeComplete);
+            // Restore main popup content
+            if (container) {
+              container.style.opacity = "1";
+              container.style.pointerEvents = "auto";
+            }
+            // Reload settings to reflect welcome screen changes
+            this.loadSettings().then(() => {
+              this.restoreSettings();
+              this.updateModeLabels();
+              this.updateModeIndicator();
+            });
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error checking welcome screen:", error);
+    }
   }
 })();

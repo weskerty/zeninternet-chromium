@@ -73,6 +73,13 @@ document.addEventListener("DOMContentLoaded", function () {
   exportButton.addEventListener("click", exportSettings);
   importFileInput.addEventListener("change", importSettings);
 
+  // Add event delegation for feature toggles
+  combinedWebsitesElement.addEventListener("change", async (event) => {
+    if (event.target.type === "checkbox" && event.target.dataset.website && event.target.dataset.feature) {
+      await saveFeatureToggle(event.target.dataset.website, event.target.dataset.feature, event.target.checked);
+    }
+  });
+
   // Load the repository URL from storage
   loadRepositoryUrl();
 
@@ -252,6 +259,27 @@ document.addEventListener("DOMContentLoaded", function () {
       // No notification - just save the setting silently
     } catch (error) {
       console.error("Error saving footer settings:", error);
+    }
+  }
+
+  // Function to save individual feature toggle settings
+  async function saveFeatureToggle(websiteDomain, feature, isEnabled) {
+    try {
+      const siteKey = `${BROWSER_STORAGE_KEY}.${websiteDomain}`;
+      
+      // Get existing site settings
+      const data = await browser.storage.local.get(siteKey);
+      const siteSettings = data[siteKey] || {};
+      
+      // Update the specific feature setting
+      siteSettings[feature] = isEnabled;
+      
+      // Save the updated settings
+      await browser.storage.local.set({ [siteKey]: siteSettings });
+      
+      console.log(`Feature ${feature} for ${websiteDomain} set to ${isEnabled}`);
+    } catch (error) {
+      console.error("Error saving feature toggle:", error);
     }
   }
 
@@ -858,20 +886,26 @@ document.addEventListener("DOMContentLoaded", function () {
         // Get the feature's enabled status from site settings
         const isEnabled = settingsData[feature] !== false; // true by default
 
-        // Create the block header with feature name and status
+        // Create the block header with feature name and toggle switch
         const cssBlockHeader = document.createElement("div");
         cssBlockHeader.classList.add("css-block-header");
         cssBlockHeader.innerHTML = `
           <span class="feature-name">${feature}</span>
-          <span class="feature-status ${isEnabled ? "enabled" : "disabled"}">${
-          isEnabled ? "Enabled" : "Disabled"
-        }</span>
+          <label class="toggle-switch">
+            <input type="checkbox" 
+                   data-website="${domainName}" 
+                   data-feature="${feature}" 
+                   ${isEnabled ? "checked" : ""}>
+            <span class="slider round"></span>
+          </label>
         `;
 
         // Make the CSS block header toggleable
         cssBlockHeader.addEventListener("click", function (e) {
-          // Don't expand if clicking on status badge
-          if (e.target.classList.contains("feature-status")) return;
+          // Don't expand if clicking on toggle switch
+          if (e.target.type === 'checkbox' || e.target.classList.contains('slider') || e.target.classList.contains('toggle-switch')) {
+            return;
+          }
 
           this.classList.toggle("active");
           const cssContent = this.nextElementSibling;

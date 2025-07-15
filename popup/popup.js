@@ -35,36 +35,51 @@ function normalizeHostname(hostname) {
   return hostname.startsWith("www.") ? hostname.substring(4) : hostname;
 }
 
+// === DOM Utility ===
+const $ = (selector) => document.getElementById(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+const on = (el, event, handler) => el && el.addEventListener(event, handler);
+
+// === Overlay/Modal Utility ===
+function setupOverlay({ overlayId, cancelId, submitId, onCancel, onSubmit, onShow, onHide }) {
+  const overlay = $(overlayId);
+  if (!overlay) return;
+  if (cancelId) on($(cancelId), 'click', () => { onCancel && onCancel(); hide(); });
+  if (submitId) on($(submitId), 'click', () => { onSubmit && onSubmit(); });
+  on(overlay, 'click', (e) => { if (e.target === overlay) hide(); });
+  function show() { overlay.classList.remove('hidden'); onShow && onShow(); }
+  function hide() { overlay.classList.add('hidden'); onHide && onHide(); }
+  return { show, hide };
+}
+
 new (class ExtensionPopup {
   BROWSER_STORAGE_KEY = "transparentZenSettings";
   globalSettings = {};
   siteSettings = {};
-  enableStylingSwitch = document.getElementById("enable-styling");
-  whitelistStylingModeSwitch = document.getElementById("whitelist-style-mode");
-  whitelistStylingModeLabel = document.getElementById(
-    "whitelist-style-mode-label"
-  );
-  skipThemingSwitch = document.getElementById("skip-theming");
-  siteStyleToggleLabel = document.getElementById("site-style-toggle-label");
+  enableStylingSwitch = $("enable-styling");
+  whitelistStylingModeSwitch = $("whitelist-style-mode");
+  whitelistStylingModeLabel = $("whitelist-style-mode-label");
+  skipThemingSwitch = $("skip-theming");
+  siteStyleToggleLabel = $("site-style-toggle-label");
   skipThemingList = [];
-  refetchCSSButton = document.getElementById("refetch-css");
-  websitesList = document.getElementById("websites-list");
-  currentSiteFeatures = document.getElementById("current-site-toggles");
+  refetchCSSButton = $("refetch-css");
+  websitesList = $("websites-list");
+  currentSiteFeatures = $("current-site-toggles");
   currentSiteHostname = "";
   normalizedCurrentSiteHostname = "";
-  autoUpdateSwitch = document.getElementById("auto-update");
-  lastFetchedTime = document.getElementById("last-fetched-time");
-  forceStylingSwitch = document.getElementById("force-styling");
-  whitelistModeSwitch = document.getElementById("whitelist-mode");
-  whitelistModeLabel = document.getElementById("whitelist-mode-label");
-  skipForceThemingSwitch = document.getElementById("skip-force-theming");
-  siteToggleLabel = document.getElementById("site-toggle-label");
+  autoUpdateSwitch = $("auto-update");
+  lastFetchedTime = $("last-fetched-time");
+  forceStylingSwitch = $("force-styling");
+  whitelistModeSwitch = $("whitelist-mode");
+  whitelistModeLabel = $("whitelist-mode-label");
+  skipForceThemingSwitch = $("skip-force-theming");
+  siteToggleLabel = $("site-toggle-label");
   skipForceThemingList = [];
-  reloadButton = document.getElementById("reload");
-  modeIndicator = document.getElementById("mode-indicator");
-  whatsNewButton = document.getElementById("whats-new");
-  howToUseButton = document.getElementById("how-to-use");
-  fallbackBackgroundSwitch = document.getElementById("fallback-background");
+  reloadButton = $("reload");
+  modeIndicator = $("mode-indicator");
+  whatsNewButton = $("whats-new");
+  howToUseButton = $("how-to-use");
+  fallbackBackgroundSwitch = $("fallback-background");
   fallbackBackgroundList = [];
 
   constructor() {
@@ -76,7 +91,7 @@ new (class ExtensionPopup {
           this.loadFallbackBackgroundList().then(() => {
             this.getCurrentTabInfo().then(() => {
               this.restoreSettings();
-              this.bindEvents();
+              this.bindAllEvents();
               this.initializeThemeRequestOverlay(); // Add this line
             });
           });
@@ -200,8 +215,8 @@ new (class ExtensionPopup {
     }
   }
 
-  bindEvents() {
-    if (logging) console.log("bindEvents called");
+  bindAllEvents() {
+    if (logging) console.log("bindAllEvents called");
     // Bind event listeners for settings changes
     this.enableStylingSwitch.addEventListener("change", () => {
       this.saveSettings();
@@ -483,11 +498,11 @@ new (class ExtensionPopup {
   }
 
   initializeThemeRequestOverlay() {
-    const overlay = document.getElementById("theme-request-overlay");
-    const cancelBtn = document.getElementById("cancel-request");
-    const submitBtn = document.getElementById("submit-request");
-    const forcingToggle = document.getElementById("forcing-toggle");
-    const accountToggle = document.getElementById("account-toggle");
+    const overlay = $("theme-request-overlay");
+    const cancelBtn = $("cancel-request");
+    const submitBtn = $("submit-request");
+    const forcingToggle = $("forcing-toggle");
+    const accountToggle = $("account-toggle");
 
     // Handle custom toggle clicks
     this.setupCustomToggle(forcingToggle);
@@ -525,12 +540,12 @@ new (class ExtensionPopup {
   }
 
   showThemeRequestOverlay() {
-    const overlay = document.getElementById("theme-request-overlay");
+    const overlay = $("theme-request-overlay");
     overlay.classList.remove("hidden");
 
     // Reset toggles to default states
-    const forcingToggle = document.getElementById("forcing-toggle");
-    const accountToggle = document.getElementById("account-toggle");
+    const forcingToggle = $("forcing-toggle");
+    const accountToggle = $("account-toggle");
 
     // Reset forcing toggle to "Off" (middle position)
     forcingToggle
@@ -546,12 +561,12 @@ new (class ExtensionPopup {
   }
 
   hideThemeRequestOverlay() {
-    const overlay = document.getElementById("theme-request-overlay");
+    const overlay = $("theme-request-overlay");
     overlay.classList.add("hidden");
   }
 
   getToggleValue(toggleId) {
-    const toggle = document.getElementById(toggleId);
+    const toggle = $(toggleId);
     const activeOption = toggle.querySelector(".toggle-option.active");
     return activeOption ? activeOption.getAttribute("data-value") : "unset";
   }
@@ -561,7 +576,7 @@ new (class ExtensionPopup {
     const accountValue = this.getToggleValue("account-toggle");
 
     // Show loading state
-    const submitBtn = document.getElementById("submit-request");
+    const submitBtn = $("submit-request");
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
     submitBtn.disabled = true;
@@ -651,13 +666,13 @@ new (class ExtensionPopup {
         <p>An existing theme request was found for <strong>${
           this.currentSiteHostname
         }</strong></p>
-        
+
         <div class="issue-details">
           <div class="issue-header">
             <h4 class="issue-title">${existingIssue.title}</h4>
             <span class="issue-state ${stateClass}">${issueState}</span>
           </div>
-          
+
           <div class="issue-meta">
             <div class="issue-meta-item">
               <i class="fas fa-calendar-alt"></i>
@@ -678,7 +693,7 @@ new (class ExtensionPopup {
                 : ""
             }
           </div>
-          
+
           ${
             existingIssue.body
               ? `
@@ -808,8 +823,8 @@ new (class ExtensionPopup {
         currentSiteKey && currentSiteKey !== "example.com.css";
 
       // Apply collapsed class based on whether we have a theme
-      const featuresList = document.getElementById("current-site-toggles");
-      const actionsContainer = document.getElementById("current-site-actions");
+      const featuresList = $("current-site-toggles");
+      const actionsContainer = $("current-site-actions");
 
       if (hasSpecificTheme) {
         featuresList.classList.add("collapsed");
@@ -830,7 +845,7 @@ new (class ExtensionPopup {
         }
 
         // Update the icon to show collapsed state
-        const toggleButton = document.getElementById("toggle-features");
+        const toggleButton = $("toggle-features");
         if (toggleButton) {
           const icon = toggleButton.querySelector("i");
           if (icon) icon.className = "fas fa-chevron-down";
@@ -855,7 +870,7 @@ new (class ExtensionPopup {
         if (actionsContainer) actionsContainer.classList.remove("collapsed");
 
         // Update the icon to show expanded state
-        const toggleButton = document.getElementById("toggle-features");
+        const toggleButton = $("toggle-features");
         if (toggleButton) {
           const icon = toggleButton.querySelector("i");
           if (icon) icon.className = "fas fa-chevron-up";
@@ -863,8 +878,8 @@ new (class ExtensionPopup {
       }
 
       // Set the forcing section's initial collapsed state
-      const forcingContent = document.getElementById("forcing-content");
-      const toggleForcingButton = document.getElementById("toggle-forcing");
+      const forcingContent = $("forcing-content");
+      const toggleForcingButton = $("toggle-forcing");
 
       if (hasSpecificTheme) {
         // We have a specific theme, collapse the forcing section
@@ -1332,7 +1347,7 @@ new (class ExtensionPopup {
     if (logging) console.log("displayAddonVersion called");
     const manifest = browser.runtime.getManifest();
     const version = manifest.version;
-    document.getElementById("addon-version").textContent = `v${version}`;
+    $("addon-version").textContent = `v${version}`;
   }
 
   setupAutoUpdate() {
@@ -1349,11 +1364,11 @@ new (class ExtensionPopup {
     browser.storage.local.get(this.BROWSER_STORAGE_KEY).then((result) => {
       const settings = result[this.BROWSER_STORAGE_KEY] || {};
       if (settings.lastFetchedTime) {
-        this.lastFetchedTime.textContent = `Last fetched: ${new Date(
+        $("last-fetched-time").textContent = `Last fetched: ${new Date(
           settings.lastFetchedTime
         ).toLocaleString()}`;
       } else {
-        this.lastFetchedTime.textContent = "Last fetched: Never";
+        $("last-fetched-time").textContent = "Last fetched: Never";
       }
     });
   }
@@ -1438,9 +1453,9 @@ new (class ExtensionPopup {
 
   // Toggle features section visibility
   toggleFeatures() {
-    const featuresList = document.getElementById("current-site-toggles");
-    const actionsContainer = document.getElementById("current-site-actions");
-    const toggleButton = document.getElementById("toggle-features");
+    const featuresList = $("current-site-toggles");
+    const actionsContainer = $("current-site-actions");
+    const toggleButton = $("toggle-features");
 
     featuresList.classList.toggle("collapsed");
     if (actionsContainer) {
@@ -1461,8 +1476,8 @@ new (class ExtensionPopup {
 
   // Toggle forcing section visibility
   toggleForcing() {
-    const forcingContent = document.getElementById("forcing-content");
-    const toggleButton = document.getElementById("toggle-forcing");
+    const forcingContent = $("forcing-content");
+    const toggleButton = $("toggle-forcing");
 
     forcingContent.classList.toggle("collapsed");
 
@@ -1477,8 +1492,8 @@ new (class ExtensionPopup {
 
   // Toggle FAQ section visibility
   toggleFAQ() {
-    const faqContent = document.getElementById("faq-content");
-    const toggleButton = document.getElementById("toggle-faq");
+    const faqContent = $("faq-content");
+    const toggleButton = $("toggle-faq");
 
     faqContent.classList.toggle("collapsed");
 
@@ -1520,7 +1535,7 @@ new (class ExtensionPopup {
 
   // Show bug report overlay
   showBugReportOverlay() {
-    const overlay = document.getElementById("bug-report-overlay");
+    const overlay = $("bug-report-overlay");
     overlay.classList.remove("hidden");
 
     // Reset all bug option selections
@@ -1529,7 +1544,7 @@ new (class ExtensionPopup {
     });
 
     // Reset submit button
-    const submitBtn = document.getElementById("submit-bug-report");
+    const submitBtn = $("submit-bug-report");
     submitBtn.disabled = true;
 
     // Setup bug option event listeners
@@ -1570,7 +1585,7 @@ new (class ExtensionPopup {
 
   // Hide bug report overlay
   hideBugReportOverlay() {
-    const overlay = document.getElementById("bug-report-overlay");
+    const overlay = $("bug-report-overlay");
     overlay.classList.add("hidden");
   }
 
@@ -1580,7 +1595,7 @@ new (class ExtensionPopup {
     if (!selectedOption) return;
 
     const bugType = selectedOption.getAttribute("data-type");
-    const submitBtn = document.getElementById("submit-bug-report");
+    const submitBtn = $("submit-bug-report");
 
     // Show loading state
     const originalText = submitBtn.innerHTML;
@@ -1898,9 +1913,9 @@ new (class ExtensionPopup {
 
 ## Steps to reproduce
 Steps to reproduce the behavior:
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Expected behavior
 <!-- A clear and concise description of what you expected to happen. -->
@@ -1953,7 +1968,7 @@ ${
 
         // Listen for welcome screen completion
         const checkWelcomeComplete = setInterval(() => {
-          const welcomeOverlay = document.getElementById("welcome-overlay");
+          const welcomeOverlay = $("welcome-overlay");
           if (!welcomeOverlay || welcomeOverlay.classList.contains("hidden")) {
             clearInterval(checkWelcomeComplete);
             // Restore main popup content

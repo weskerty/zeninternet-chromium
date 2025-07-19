@@ -56,6 +56,11 @@ function ensureDefaultSettings(settings = {}) {
 // Enhanced function to determine styling state with more detailed information
 async function shouldApplyStyling(hostname) {
   try {
+    // Ensure the CSS cache is populated if empty
+    if (cssCache.size === 0) {
+      if (logging) console.log("cssCache is empty, preloading styles...");
+      await preloadStyles();
+    }
     // Check if we already have the answer cached
     const cacheKey = `styling:${hostname}`;
     if (stylingStateCache.has(cacheKey)) {

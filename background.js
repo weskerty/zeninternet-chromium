@@ -2,6 +2,7 @@ let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
 let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 let BROWSER_STORAGE_KEY = "transparentZenSettings";
+let STYLES_MAPPING_KEY = "stylesMapping";
 let logging = true; // Enable logging for debugging
 
 // Create a cache for pre-processed CSS to speed up repeated visits
@@ -129,7 +130,20 @@ async function shouldApplyStyling(hostname) {
       }
     }
 
-    // If we have a specific style, check blacklist/whitelist for regular styling
+    // Check for mapped styles if no direct style found
+    if (!hasSpecificStyle) {
+      const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+      if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+        for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+          if (targetSites.includes(normalizedHostname)) {
+            hasSpecificStyle = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // If we have a specific style (including mapped styles), check blacklist/whitelist for regular styling
     if (hasSpecificStyle) {
       // Get skip styling list - only do this lookup if we have a specific style
       const skipStyleListData = await browser.storage.local.get(
@@ -255,6 +269,7 @@ async function preloadStyles() {
     const data = await browser.storage.local.get([
       "styles",
       BROWSER_STORAGE_KEY,
+      STYLES_MAPPING_KEY,
     ]);
 
     // Ensure we have all required settings with defaults
@@ -276,13 +291,35 @@ async function preloadStyles() {
     cssCache.clear();
 
     if (data.styles?.website) {
+      // Create a reverse mapping lookup for quick access
+      const reverseMapping = {};
+      if (data[STYLES_MAPPING_KEY]?.mapping) {
+        for (const [sourceStyle, targetSites] of Object.entries(data[STYLES_MAPPING_KEY].mapping)) {
+          for (const targetSite of targetSites) {
+            reverseMapping[targetSite] = sourceStyle;
+          }
+        }
+      }
+
       for (const [website, features] of Object.entries(data.styles.website)) {
         // Process and store default CSS for each website (with all features enabled)
         let combinedCSS = "";
         for (const [feature, css] of Object.entries(features)) {
           combinedCSS += css + "\n";
         }
-        cssCache.set(website.replace(".css", ""), combinedCSS);
+
+        const websiteKey = website.replace(".css", "");
+        cssCache.set(websiteKey, combinedCSS);
+
+        // Handle mappings - apply this style to mapped sites
+        if (data[STYLES_MAPPING_KEY]?.mapping && data[STYLES_MAPPING_KEY].mapping[website]) {
+          const mappedSites = data[STYLES_MAPPING_KEY].mapping[website];
+          for (const mappedSite of mappedSites) {
+            const normalizedMappedSite = normalizeHostname(mappedSite);
+            cssCache.set(normalizedMappedSite, combinedCSS);
+            if (logging) console.log(`Mapped ${website} styles to ${normalizedMappedSite}`);
+          }
+        }
       }
       if (logging) console.log("Styles preloaded for faster injection");
     }
@@ -419,6 +456,24 @@ async function getStylesForHostname(hostname, settings) {
           `DEBUG: Found subdomain match: ${cachedSite} for ${hostname}`
         );
         return cachedCSS;
+      }
+    }
+
+    // Check for mapped styles if no direct match found
+    const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+    if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+      for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+        if (targetSites.includes(hostname)) {
+          console.log(`DEBUG: Found mapped style: ${sourceStyle} for ${hostname}`);
+          // Get the CSS for the source style
+          const sourceStyleKey = sourceStyle.replace(".css", "");
+          if (cssCache.has(sourceStyleKey)) {
+            console.log(`DEBUG: Returning mapped CSS from ${sourceStyleKey}`);
+            return cssCache.get(sourceStyleKey);
+          } else {
+            console.log(`DEBUG: Source style ${sourceStyleKey} not found in cache`);
+          }
+        }
       }
     }
 
@@ -907,7 +962,8 @@ browser.storage.onChanged.addListener((changes, areaName) => {
     if (
       changes[BROWSER_STORAGE_KEY] ||
       changes[SKIP_THEMING_KEY] ||
-      changes[SKIP_FORCE_THEMING_KEY]
+      changes[SKIP_FORCE_THEMING_KEY] ||
+      changes[STYLES_MAPPING_KEY]
     ) {
       // Clear the styling state cache when relevant settings change
       stylingStateCache.clear();
@@ -949,7 +1005,26 @@ async function refetchCSS() {
     if (!response.ok)
       throw new Error(`Failed to fetch styles (Status: ${response.status})`);
     const styles = await response.json();
-    await browser.storage.local.set({ styles });
+
+    // Check if the fetched data includes mappings
+    const hasNewMappings = styles.mapping && Object.keys(styles.mapping).length > 0;
+
+    // If new mappings are found, use them; otherwise preserve existing mappings
+    let mappingData;
+    if (hasNewMappings) {
+      mappingData = { mapping: styles.mapping };
+      console.log("Background: Using new mappings from repository:", styles.mapping);
+    } else {
+      const existingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+      mappingData = existingData[STYLES_MAPPING_KEY] || { mapping: {} };
+      console.log("Background: Preserving existing mappings:", mappingData);
+    }
+
+    // Save styles and mappings
+    await browser.storage.local.set({
+      styles,
+      [STYLES_MAPPING_KEY]: mappingData
+    });
 
     // Check if we need to initialize default settings
     const settingsData = await browser.storage.local.get(BROWSER_STORAGE_KEY);
@@ -1021,6 +1096,12 @@ async function initializeExtension() {
   );
   if (!fallbackBackgroundData[FALLBACK_BACKGROUND_KEY]) {
     await browser.storage.local.set({ [FALLBACK_BACKGROUND_KEY]: [] });
+  }
+
+  // Initialize mapping storage if it doesn't exist
+  const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+  if (!mappingData[STYLES_MAPPING_KEY]) {
+    await browser.storage.local.set({ [STYLES_MAPPING_KEY]: { mapping: {} } });
   }
 
   // Preload styles immediately

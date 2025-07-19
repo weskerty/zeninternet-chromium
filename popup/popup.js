@@ -2,6 +2,7 @@ let logging = false;
 let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
 let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
+let STYLES_MAPPING_KEY = "stylesMapping";
 
 // Default settings to use when values are missing
 const DEFAULT_SETTINGS = {
@@ -807,10 +808,17 @@ new (class ExtensionPopup {
         this.isCurrentSite(site.replace(".css", ""))
       );
 
-      if (logging && currentSiteKey) {
-        console.log("Found matching site key:", currentSiteKey);
-      } else if (logging) {
-        console.log("No matching site key found");
+      // Check for mapped styles if no direct match found
+      if (!currentSiteKey) {
+        const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+        if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+          for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+            if (targetSites.includes(this.normalizedCurrentSiteHostname)) {
+              currentSiteKey = sourceStyle;
+              break;
+            }
+          }
+        }
       }
 
       // Check if we have any styles at all, including example.com
@@ -1097,7 +1105,25 @@ new (class ExtensionPopup {
       if (!response.ok)
         throw new Error(`Failed to fetch styles (Status: ${response.status})`);
       const styles = await response.json();
-      await browser.storage.local.set({ styles });
+
+      // Check if the fetched data includes mappings
+      const hasNewMappings = styles.mapping && Object.keys(styles.mapping).length > 0;
+
+      // If new mappings are found, use them; otherwise preserve existing mappings
+      let mappingData;
+      if (hasNewMappings) {
+        mappingData = { mapping: styles.mapping };
+        console.log("Popup: Using new mappings from repository:", styles.mapping);
+      } else {
+        const existingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+        mappingData = existingData[STYLES_MAPPING_KEY] || { mapping: {} };
+        console.log("Popup: Preserving existing mappings:", mappingData);
+      }
+
+      await browser.storage.local.set({
+        styles,
+        [STYLES_MAPPING_KEY]: mappingData
+      });
 
       // Check if we need to initialize default settings
       const settingsData = await browser.storage.local.get(
@@ -1302,34 +1328,67 @@ new (class ExtensionPopup {
           await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
           console.info(`Applied CSS to ${hostname} (direct match)`);
         }
-      } else if (this.globalSettings.forceStyling) {
-        // Otherwise check for forced styling
-        const isInList = this.skipForceThemingList.includes(hostname);
-        const isWhitelistMode = this.globalSettings.whitelistMode;
+      } else {
+        // Check for mapped styles if no direct match found
+        const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+        if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+          for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+            if (targetSites.includes(normalizedHostname)) {
+              // Get the CSS for the source style
+              if (styles[sourceStyle]) {
+                const features = styles[sourceStyle];
+                const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
+                const siteData = await browser.storage.local.get(normalizedSiteStorageKey);
+                const featureSettings = siteData[normalizedSiteStorageKey] || {};
 
-        // Determine if we should apply forced styling
-        const shouldApplyForcedStyling =
-          (isWhitelistMode && isInList) || (!isWhitelistMode && !isInList);
+                let combinedCSS = "";
+                for (const [feature, css] of Object.entries(features)) {
+                  if (featureSettings[feature] !== false) {
+                    combinedCSS += css + "\n";
+                  }
+                }
 
-        if (shouldApplyForcedStyling && styles["example.com.css"]) {
-          const features = styles["example.com.css"];
-          const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
-          const siteData = await browser.storage.local.get(siteStorageKey);
-          const featureSettings = siteData[siteStorageKey] || {};
-
-          let combinedCSS = "";
-          for (const [feature, css] of Object.entries(features)) {
-            if (featureSettings[feature] !== false) {
-              combinedCSS += css + "\n";
+                if (combinedCSS) {
+                  await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+                  console.info(`Applied mapped CSS from ${sourceStyle} to ${hostname}`);
+                  return; // Exit early since we found and applied a mapped style
+                }
+              }
+              break;
             }
           }
+        }
 
-          if (combinedCSS) {
-            await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
-            console.info(`Applied forced CSS to ${hostname}`);
+        // If no mapped style found, check for forced styling
+        if (this.globalSettings.forceStyling) {
+          // Otherwise check for forced styling
+          const isInList = this.skipForceThemingList.includes(hostname);
+          const isWhitelistMode = this.globalSettings.whitelistMode;
+
+          // Determine if we should apply forced styling
+          const shouldApplyForcedStyling =
+            (isWhitelistMode && isInList) || (!isWhitelistMode && !isInList);
+
+          if (shouldApplyForcedStyling && styles["example.com.css"]) {
+            const features = styles["example.com.css"];
+            const siteStorageKey = `${this.BROWSER_STORAGE_KEY}.${hostname}`;
+            const siteData = await browser.storage.local.get(siteStorageKey);
+            const featureSettings = siteData[siteStorageKey] || {};
+
+            let combinedCSS = "";
+            for (const [feature, css] of Object.entries(features)) {
+              if (featureSettings[feature] !== false) {
+                combinedCSS += css + "\n";
+              }
+            }
+
+            if (combinedCSS) {
+              await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+              console.info(`Applied forced CSS to ${hostname}`);
+            }
+          } else {
+            console.info(`Skipping forced styling for ${hostname}`);
           }
-        } else {
-          console.info(`Skipping forced styling for ${hostname}`);
         }
       }
     } catch (error) {

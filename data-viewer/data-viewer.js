@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const SKIP_THEMING_KEY = "skipThemingList";
   const FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
   const REPOSITORY_URL_KEY = "stylesRepositoryUrl";
+  const STYLES_MAPPING_KEY = "stylesMapping";
   const DEFAULT_REPOSITORY_URL =
     "https://sameerasw.github.io/my-internet/styles.json";
 
@@ -162,6 +163,11 @@ document.addEventListener("DOMContentLoaded", function () {
       // Keep repository URL
       if (allData[REPOSITORY_URL_KEY]) {
         dataToKeep[REPOSITORY_URL_KEY] = allData[REPOSITORY_URL_KEY];
+      }
+
+      // Keep mappings
+      if (allData[STYLES_MAPPING_KEY]) {
+        dataToKeep[STYLES_MAPPING_KEY] = allData[STYLES_MAPPING_KEY];
       }
 
       // Clear all storage first
@@ -421,33 +427,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadAllData() {
     try {
-      // Load all data from storage
-      const allData = await browser.storage.local.get(null);
+      const data = await browser.storage.local.get(null);
+      console.log("All storage data:", data);
 
-      // Extract global settings
-      const globalSettings = allData[BROWSER_STORAGE_KEY] || {};
+      // Display global settings
+      const settings = data[BROWSER_STORAGE_KEY] || {};
 
       // Restore the toggle states based on actual values
-      disableTransparencyToggle.checked =
-        globalSettings.disableTransparency || false;
-      disableHoverToggle.checked = globalSettings.disableHover || false;
-      disableFooterToggle.checked = globalSettings.disableFooter || false;
+      disableTransparencyToggle.checked = settings.disableTransparency || false;
+      disableHoverToggle.checked = settings.disableHover || false;
+      disableFooterToggle.checked = settings.disableFooter || false;
 
-      // Extract skip lists
-      const skipForceList = allData[SKIP_FORCE_THEMING_KEY] || [];
-      const skipThemingList = allData[SKIP_THEMING_KEY] || [];
-      const fallbackBackgroundList = allData[FALLBACK_BACKGROUND_KEY] || [];
+      displayGlobalSettings(settings);
 
-      // Display the data
-      displayGlobalSettings(globalSettings);
+      // Display skip lists
+      const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];
+      const skipThemingList = data[SKIP_THEMING_KEY] || [];
+      const fallbackBackgroundList = data[FALLBACK_BACKGROUND_KEY] || [];
+      const isWhitelistMode = settings.whitelistMode || false;
+      const isWhitelistStyleMode = settings.whitelistStyleMode || false;
+
       displayCombinedSkipLists(
         skipForceList,
         skipThemingList,
         fallbackBackgroundList,
-        globalSettings.whitelistMode || false,
-        globalSettings.whitelistStyleMode || false
+        isWhitelistMode,
+        isWhitelistStyleMode
       );
-      displayCombinedWebsiteData(allData);
+
+      // Display website data
+      displayCombinedWebsiteData(data);
     } catch (error) {
       console.error("Error loading data:", error);
     }

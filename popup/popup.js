@@ -988,9 +988,16 @@ new (class ExtensionPopup {
       const isFooterDisabled = this.globalSettings.disableFooter === true;
 
       for (const [feature, css] of Object.entries(features)) {
-        const displayFeatureName = feature.includes("-")
+        // Split feature name and caption if $ is present
+        let displayFeatureName = feature.includes("-")
           ? feature.split("-")[1]
           : feature;
+        let featureCaption = null;
+        if (displayFeatureName.includes("$")) {
+          const parts = displayFeatureName.split("$");
+          displayFeatureName = parts[0].trim();
+          featureCaption = parts.slice(1).join("$").trim();
+        }
 
         const isChecked = this.siteSettings[feature] ?? true;
         const isTransparencyFeature = feature
@@ -1007,27 +1014,34 @@ new (class ExtensionPopup {
         const featureToggle = document.createElement("div");
         featureToggle.className = "feature-toggle";
 
-        // Create the base toggle HTML
-        let toggleHTML = `
-          <span class="feature-name">${displayFeatureName}${
-          isOverridden
-            ? ' <span class="overridden-label">[overridden]</span>'
-            : ""
-        }</span>
-          <label class="toggle-switch ${isOverridden ? "disabled-toggle" : ""}">
-            <input type="checkbox" name="${currentSiteKey}|${feature}" ${
-          isChecked ? "checked" : ""
-        } ${isOverridden ? "disabled" : ""}>
-            <span class="slider round"></span>
-          </label>
-        `;
+        // Unique ID for the description card and button
+        const featureId = `feature-desc-${currentSiteKey.replace(/[^a-zA-Z0-9]/g, "_")}-${displayFeatureName.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
-        featureToggle.innerHTML = toggleHTML;
+        // Create a flex row for name and toggle
+        const featureRow = document.createElement("div");
+        featureRow.className = "feature-toggle-row";
 
-        // If this feature is overridden by global settings, add a class
-        if (isOverridden) {
-          featureToggle.classList.add("overridden-feature");
+        // Feature name
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "feature-name feature-title-ellipsis";
+        nameSpan.innerHTML = displayFeatureName + (isOverridden ? ' <span class="overridden-label">[overridden]</span>' : "");
+        if (featureCaption) {
+          nameSpan.title = featureCaption;
+          nameSpan.classList.add("feature-has-tooltip");
         }
+        featureRow.appendChild(nameSpan);
+
+        // Toggle
+        const toggleLabel = document.createElement("label");
+        toggleLabel.className = `toggle-switch${isOverridden ? " disabled-toggle" : ""}`;
+        toggleLabel.innerHTML = `<input type="checkbox" name="${currentSiteKey}|${feature}" ${isChecked ? "checked" : ""} ${isOverridden ? "disabled" : ""}><span class="slider round"></span>`;
+        featureRow.appendChild(toggleLabel);
+
+        if (isOverridden) {
+          featureRow.classList.add("overridden-feature");
+        }
+
+        featureToggle.appendChild(featureRow);
 
         this.currentSiteFeatures.appendChild(featureToggle);
       }

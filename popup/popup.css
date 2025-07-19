@@ -415,17 +415,47 @@ input:checked + .slider:before {
 
 .feature-toggle {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   padding: 8px 12px;
   background-color: var(--secondary-bg);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
+  margin-bottom: 0;
+}
+
+.feature-toggle-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.feature-title-ellipsis {
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .feature-name {
   font-weight: 500;
   color: var(--text-primary);
+}
+
+.feature-caption {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  margin-left: 1px;
+  padding: 0.25em;
+  font-style: italic;
+  line-height: 1.1;
 }
 
 /* Collapsible Websites List */
@@ -1444,4 +1474,8 @@ input:checked + .slider:before {
 
 .mapped-badge i {
   font-size: 10px;
+}
+
+.feature-has-tooltip {
+  cursor: help;
 }

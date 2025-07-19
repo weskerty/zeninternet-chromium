@@ -845,6 +845,9 @@ new (class ExtensionPopup {
       const hasSpecificTheme =
         currentSiteKey && (currentSiteKey !== "example.com.css" || isMappedStyle);
 
+      // Special: If this site is mapped (custom or not) to example.com.css, suppress request theme and warning
+      const isMappedToExample = isMappedStyle && mappedSourceStyle === "example.com.css";
+
       // Add mapped theme indicator if this is a mapped style
       if (isMappedStyle && mappedSourceStyle) {
         const sourceWebsite = mappedSourceStyle.replace('.css', '');
@@ -934,37 +937,38 @@ new (class ExtensionPopup {
         }
       }
 
-      if (!currentSiteKey && this.globalSettings.forceStyling) {
-        currentSiteKey = Object.keys(styles).find(
-          (site) => site === "example.com.css"
-        );
-      }
-
-      // Only show the request theme button if we have at least the example.com style
-      // but no specific theme for this site
-      if (
-        (!currentSiteKey || currentSiteKey === "example.com.css") &&
-        hasExampleSite
-      ) {
-        const requestThemeButton = document.createElement("button");
-        requestThemeButton.className = "action-button primary";
-        requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
-        requestThemeButton.addEventListener("click", () => {
-          this.showThemeRequestOverlay(); // Changed from direct URL opening
-        });
-
-        this.currentSiteFeatures.appendChild(requestThemeButton);
-      } else if (hasNoStyles) {
-        // No styles at all, suggest to fetch first
-        const fetchFirstMessage = document.createElement("div");
-        fetchFirstMessage.className = "toggle-container";
-        fetchFirstMessage.innerHTML = `
-          <div class="actions secondary">
-            <span class="toggle-label warning">Please fetch styles first using the "Refetch latest styles" button</span>
-          </div>
-        `;
-        this.currentSiteFeatures.appendChild(fetchFirstMessage);
-      }
+     // If this site is mapped to example.com.css, do NOT show request theme or warning, even in forced mode
+     if (!isMappedToExample) {
+       if (!currentSiteKey && this.globalSettings.forceStyling) {
+         currentSiteKey = Object.keys(styles).find(
+           (site) => site === "example.com.css"
+         );
+       }
+       // Only show the request theme button if we have at least the example.com style
+       // but no specific theme for this site
+       if (
+         (!currentSiteKey || currentSiteKey === "example.com.css") &&
+         hasExampleSite
+       ) {
+         const requestThemeButton = document.createElement("button");
+         requestThemeButton.className = "action-button primary";
+         requestThemeButton.innerHTML = `Request Theme for ${this.currentSiteHostname}`;
+         requestThemeButton.addEventListener("click", () => {
+           this.showThemeRequestOverlay();
+         });
+         this.currentSiteFeatures.appendChild(requestThemeButton);
+       } else if (hasNoStyles) {
+         // No styles at all, suggest to fetch first
+         const fetchFirstMessage = document.createElement("div");
+         fetchFirstMessage.className = "toggle-container";
+         fetchFirstMessage.innerHTML = `
+           <div class="actions secondary">
+             <span class="toggle-label warning">Please fetch styles first using the \"Refetch latest styles\" button</span>
+           </div>
+         `;
+         this.currentSiteFeatures.appendChild(fetchFirstMessage);
+       }
+     }
 
       if (!currentSiteKey) {
         return;
@@ -979,7 +983,8 @@ new (class ExtensionPopup {
 
       const features = styles[currentSiteKey];
 
-      if (currentSiteKey === "example.com.css") {
+      // Only show the 'No specific theme found' message if NOT mapped to example.com.css
+      if (currentSiteKey === "example.com.css" && !isMappedToExample) {
         const skipForceThemingToggle = document.createElement("div");
         skipForceThemingToggle.className = "toggle-container";
         skipForceThemingToggle.innerHTML = `
@@ -987,7 +992,6 @@ new (class ExtensionPopup {
           <span class="toggle-label warning">No specific theme found for this website. Using default styling.</span>
         </div>
         `;
-
         this.currentSiteFeatures.appendChild(skipForceThemingToggle);
       }
 

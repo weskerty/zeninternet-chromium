@@ -658,3 +658,128 @@ body {
     margin-bottom: 4px;
   }
 }
+
+/* Collapsible sections */
+.collapsible {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.collapsible:hover {
+  color: var(--accent-color);
+}
+
+.collapsible i {
+  transition: transform 0.3s ease;
+  margin-right: 8px;
+}
+
+.collapsible.expanded i {
+  transform: rotate(180deg);
+}
+
+.data-container.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0;
+  margin: 0;
+}
+
+.data-container:not(.collapsed) {
+  max-height: 2000px;
+  transition: max-height 0.3s ease;
+}
+
+/* Scrollable sections for large data */
+.data-container[data-section="websites-section"]:not(.collapsed) {
+  max-height: 1500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.data-container[data-section="mappings-section"]:not(.collapsed) {
+  max-height: 2000px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar styling */
+.data-container[data-section="websites-section"]::-webkit-scrollbar,
+.data-container[data-section="mappings-section"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.data-container[data-section="websites-section"]::-webkit-scrollbar-track,
+.data-container[data-section="mappings-section"]::-webkit-scrollbar-track {
+  background: var(--secondary-bg);
+  border-radius: 4px;
+}
+
+.data-container[data-section="websites-section"]::-webkit-scrollbar-thumb,
+.data-container[data-section="mappings-section"]::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.data-container[data-section="websites-section"]::-webkit-scrollbar-thumb:hover,
+.data-container[data-section="mappings-section"]::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* Mapping display styles */
+.mappings-container {
+  margin-top: 16px;
+}
+
+.mapping-item {
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.mapping-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.source-style {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.target-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: var(--secondary-bg);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.target-sites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.target-site-tag {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.no-mappings {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 32px 16px;
+}

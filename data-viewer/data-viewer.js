@@ -428,41 +428,34 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadAllData() {
     try {
       const data = await browser.storage.local.get(null);
-      console.log("All storage data:", data);
 
       // Display global settings
-      const settings = data[BROWSER_STORAGE_KEY] || {};
+      displayGlobalSettings(data);
 
-      // Restore the toggle states based on actual values
-      disableTransparencyToggle.checked = settings.disableTransparency || false;
-      disableHoverToggle.checked = settings.disableHover || false;
-      disableFooterToggle.checked = settings.disableFooter || false;
-
-      displayGlobalSettings(settings);
-
-      // Display skip lists
-      const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];
-      const skipThemingList = data[SKIP_THEMING_KEY] || [];
-      const fallbackBackgroundList = data[FALLBACK_BACKGROUND_KEY] || [];
-      const isWhitelistMode = settings.whitelistMode || false;
-      const isWhitelistStyleMode = settings.whitelistStyleMode || false;
-
-      displayCombinedSkipLists(
-        skipForceList,
-        skipThemingList,
-        fallbackBackgroundList,
-        isWhitelistMode,
-        isWhitelistStyleMode
-      );
+      // Display skip/enable lists
+      displaySkipLists(data);
 
       // Display website data
       displayCombinedWebsiteData(data);
+
+      // Display mapping data
+      displayMappingData(data);
+
+      // Setup collapsible sections
+      setupCollapsibleSections();
     } catch (error) {
       console.error("Error loading data:", error);
     }
   }
 
-  function displayGlobalSettings(settings) {
+  function displayGlobalSettings(data) {
+    const settings = data[BROWSER_STORAGE_KEY] || {};
+
+    // Restore the toggle states based on actual values
+    disableTransparencyToggle.checked = settings.disableTransparency || false;
+    disableHoverToggle.checked = settings.disableHover || false;
+    disableFooterToggle.checked = settings.disableFooter || false;
+
     globalSettingsElement.innerHTML = "";
 
     const table = document.createElement("table");
@@ -510,6 +503,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     table.appendChild(tbody);
     globalSettingsElement.appendChild(table);
+  }
+
+  function displaySkipLists(data) {
+    const settings = data[BROWSER_STORAGE_KEY] || {};
+    const skipForceList = data[SKIP_FORCE_THEMING_KEY] || [];
+    const skipThemingList = data[SKIP_THEMING_KEY] || [];
+    const fallbackBackgroundList = data[FALLBACK_BACKGROUND_KEY] || [];
+    const isWhitelistMode = settings.whitelistMode || false;
+    const isWhitelistStyleMode = settings.whitelistStyleMode || false;
+
+    displayCombinedSkipLists(
+      skipForceList,
+      skipThemingList,
+      fallbackBackgroundList,
+      isWhitelistMode,
+      isWhitelistStyleMode
+    );
   }
 
   function displayCombinedSkipLists(
@@ -923,6 +933,75 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     }
+  }
+
+  function displayMappingData(data) {
+    const mappingData = data[STYLES_MAPPING_KEY];
+    const mappingsContainer = document.getElementById("mappings-data");
+
+    if (!mappingData || !mappingData.mapping || Object.keys(mappingData.mapping).length === 0) {
+      mappingsContainer.innerHTML = '<div class="no-mappings">No style mappings found.</div>';
+      return;
+    }
+
+    const mapping = mappingData.mapping;
+    const mappingKeys = Object.keys(mapping);
+
+    // Sort mappings alphabetically by source style
+    mappingKeys.sort();
+
+    const mappingsHTML = mappingKeys.map(sourceStyle => {
+      const targetSites = mapping[sourceStyle];
+      const targetSitesHTML = targetSites.map(site =>
+        `<span class="target-site-tag">${site}</span>`
+      ).join('');
+
+      return `
+        <div class="mapping-item">
+          <div class="mapping-header">
+            <span class="source-style">${sourceStyle}</span>
+            <span class="target-count">${targetSites.length} mapped sites</span>
+          </div>
+          <div class="target-sites-list">
+            ${targetSitesHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    mappingsContainer.innerHTML = `
+      <div class="mappings-container">
+        ${mappingsHTML}
+      </div>
+    `;
+  }
+
+  function setupCollapsibleSections() {
+    const collapsibleHeaders = document.querySelectorAll('.collapsible');
+
+    collapsibleHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const targetId = header.getAttribute('data-target');
+        const targetSection = document.querySelector(`[data-section="${targetId}"]`);
+        const icon = header.querySelector('i');
+
+        if (targetSection) {
+          const isCollapsed = targetSection.classList.contains('collapsed');
+
+          if (isCollapsed) {
+            // Expand
+            targetSection.classList.remove('collapsed');
+            header.classList.add('expanded');
+            icon.className = 'fas fa-chevron-up';
+          } else {
+            // Collapse
+            targetSection.classList.add('collapsed');
+            header.classList.remove('expanded');
+            icon.className = 'fas fa-chevron-down';
+          }
+        }
+      });
+    });
   }
 
   // Helper Functions

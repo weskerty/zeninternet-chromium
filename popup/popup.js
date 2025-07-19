@@ -810,6 +810,7 @@ new (class ExtensionPopup {
 
       // Check for mapped styles if no direct match found
       let isMappedStyle = false;
+      let mappedSourceStyle = null;
       if (!currentSiteKey) {
         const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
         if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
@@ -817,6 +818,7 @@ new (class ExtensionPopup {
             if (targetSites.includes(this.normalizedCurrentSiteHostname)) {
               currentSiteKey = sourceStyle;
               isMappedStyle = true;
+              mappedSourceStyle = sourceStyle;
               console.log(`Found mapped style: ${sourceStyle} for ${this.normalizedCurrentSiteHostname}`);
               break;
             }
@@ -832,6 +834,20 @@ new (class ExtensionPopup {
       // Otherwise keep it expanded to show the request theme button
       const hasSpecificTheme =
         currentSiteKey && (currentSiteKey !== "example.com.css" || isMappedStyle);
+
+      // Add mapped theme indicator if this is a mapped style
+      if (isMappedStyle && mappedSourceStyle) {
+        const sourceWebsite = mappedSourceStyle.replace('.css', '');
+        const mappedIndicator = document.createElement("div");
+        mappedIndicator.className = "mapped-theme-indicator";
+        mappedIndicator.innerHTML = `
+          <span class="mapped-badge">
+            <i class="fas fa-link"></i>
+            Mapped from ${sourceWebsite}
+          </span>
+        `;
+        this.currentSiteFeatures.appendChild(mappedIndicator);
+      }
 
       // Apply collapsed class based on whether we have a theme
       const featuresList = $("current-site-toggles");

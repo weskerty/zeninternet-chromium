@@ -769,17 +769,40 @@ html {
         console.log("DEBUG: Using match:", bestMatch, "of type:", matchType);
         await applyCSS(tab.id, hostname, data.styles.website[bestMatch]);
         return;
-      } else if (
-        globalSettings.forceStyling &&
-        data.styles.website["example.com.css"]
-      ) {
-        console.log("DEBUG: Applying forced styling with example.com.css");
-        await applyCSS(
-          tab.id,
-          hostname,
+      } else {
+        // Check for mapped styles if no direct match found
+        const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+        console.log(`DEBUG: Checking mappings for ${hostname}:`, mappingData[STYLES_MAPPING_KEY]);
+        if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+          for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+            console.log(`DEBUG: Checking mapping ${sourceStyle} -> ${targetSites}`);
+            if (targetSites.includes(hostname)) {
+              // Get the CSS for the source style
+              if (data.styles.website[sourceStyle]) {
+                console.log(`DEBUG: Found mapped style ${sourceStyle} for ${hostname}`);
+                await applyCSS(tab.id, hostname, data.styles.website[sourceStyle]);
+                return;
+              } else {
+                console.log(`DEBUG: Mapped style ${sourceStyle} not found in styles data`);
+              }
+              break;
+            }
+          }
+        }
+
+        // If no mapped style found, check for forced styling
+        if (
+          globalSettings.forceStyling &&
           data.styles.website["example.com.css"]
-        );
-        return;
+        ) {
+          console.log("DEBUG: Applying forced styling with example.com.css");
+          await applyCSS(
+            tab.id,
+            hostname,
+            data.styles.website["example.com.css"]
+          );
+          return;
+        }
       }
     }
 

@@ -809,12 +809,15 @@ new (class ExtensionPopup {
       );
 
       // Check for mapped styles if no direct match found
+      let isMappedStyle = false;
       if (!currentSiteKey) {
         const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
         if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
           for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
             if (targetSites.includes(this.normalizedCurrentSiteHostname)) {
               currentSiteKey = sourceStyle;
+              isMappedStyle = true;
+              console.log(`Found mapped style: ${sourceStyle} for ${this.normalizedCurrentSiteHostname}`);
               break;
             }
           }
@@ -828,7 +831,7 @@ new (class ExtensionPopup {
       // Only collapse if we found a specific theme for this site
       // Otherwise keep it expanded to show the request theme button
       const hasSpecificTheme =
-        currentSiteKey && currentSiteKey !== "example.com.css";
+        currentSiteKey && (currentSiteKey !== "example.com.css" || isMappedStyle);
 
       // Apply collapsed class based on whether we have a theme
       const featuresList = $("current-site-toggles");
@@ -1332,10 +1335,13 @@ new (class ExtensionPopup {
         // Check for mapped styles if no direct match found
         const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
         if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
+          console.log(`Popup: Checking mappings for ${normalizedHostname}:`, mappingData[STYLES_MAPPING_KEY].mapping);
           for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
+            console.log(`Popup: Checking mapping ${sourceStyle} -> ${targetSites}`);
             if (targetSites.includes(normalizedHostname)) {
               // Get the CSS for the source style
               if (styles[sourceStyle]) {
+                console.log(`Popup: Found mapped style ${sourceStyle} for ${normalizedHostname}`);
                 const features = styles[sourceStyle];
                 const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
                 const siteData = await browser.storage.local.get(normalizedSiteStorageKey);

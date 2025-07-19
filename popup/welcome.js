@@ -44,7 +44,7 @@ class WelcomeScreen {
             <div class="disclaimer-highlight">
               <p><strong>⚠️ This is a third party modification.<br/> </strong> If you encounter any issues regarding transparency or website colors, <br/><strong>DO NOT</strong> report issues to the official browser repository or issue tracker.<br/>Instead use the built-in issue/bug report feature in this addon or report it directly to the developer.</p>
             </div>
-            
+
             <p><strong>Some common issues you may experience are:</strong></p>
             <ol class="disclaimer-list">
               <li>White background</li>
@@ -53,16 +53,16 @@ class WelcomeScreen {
               <li>No blur</li>
               <li>And many others</li>
             </ol>
-            
+
             <div class="disclaimer-instructions">
               <p><strong>📖 Before reporting issues:</strong></p>
               <p>First check the <strong>FAQ</strong> in the addon popup page at the bottom. <br/>If that does not solve your problem, then reach out to me through the proper channels.</p>
             </div>
-            
+
             <div class="disclaimer-question">
               <p><strong>Do you understand this disclaimer and agree to comply with the given options and <br/>not to bother the browser development and other developers?</strong></p>
             </div>
-          
+
           <div class="disclaimer-checkbox">
             <input type="checkbox" id="understand-checkbox">
             <label for="understand-checkbox">Yes, <br/>I understand and agree</label>
@@ -83,7 +83,7 @@ class WelcomeScreen {
         <div class="welcome-step step-theme-mode" data-step="3">
           <h2 class="theme-mode-title">Choose Your Theming Preference</h2>
           <p class="theme-mode-description">How would you like themes to be applied?</p>
-          
+
           <div class="theme-mode-options">
             <div class="theme-mode-option" data-mode="blacklist">
               <h4>Enable themes by default</h4>
@@ -111,13 +111,13 @@ class WelcomeScreen {
         <div class="welcome-step step-fetch-styles" data-step="4">
           <h2 class="fetch-styles-title">Download Latest Themes</h2>
           <p class="fetch-styles-description">Click below to fetch the latest themes from our repository.</p>
-          
+
           <div class="fetch-styles-actions">
             <button class="welcome-button primary fetch-styles-button" id="welcome-fetch-styles">
               <i class="fas fa-download"></i>
               Fetch Latest Styles
             </button>
-            
+
             <div class="auto-update-container">
               <label class="toggle-switch">
                 <input type="checkbox" id="welcome-auto-update" checked>
@@ -151,7 +151,7 @@ class WelcomeScreen {
             Zen Internet extension is now ready to use!<br>
             Read FAQ if you find anything confusing or reach out for help.
           </p>
-          
+
           <div class="welcome-actions">
             <button class="welcome-button primary" id="welcome-close">
               <i class="fas fa-check"></i>
@@ -328,7 +328,18 @@ class WelcomeScreen {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
       const styles = await response.json();
-      await browser.storage.local.set({ styles });
+
+      // Handle mappings (same as refetchCSS in popup.js)
+      const STYLES_MAPPING_KEY = "stylesMapping";
+      let mappingData;
+      if (styles.mapping && Object.keys(styles.mapping).length > 0) {
+        mappingData = { mapping: styles.mapping };
+      } else {
+        const existingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
+        mappingData = existingData[STYLES_MAPPING_KEY] || { mapping: {} };
+      }
+
+      await browser.storage.local.set({ styles, [STYLES_MAPPING_KEY]: mappingData });
 
       // Update auto-update setting
       const BROWSER_STORAGE_KEY = "transparentZenSettings";

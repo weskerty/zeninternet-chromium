@@ -3,6 +3,7 @@ let SKIP_FORCE_THEMING_KEY = "skipForceThemingList";
 let SKIP_THEMING_KEY = "skipThemingList";
 let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 let STYLES_MAPPING_KEY = "stylesMapping";
+const USER_STYLES_MAPPING_KEY = "userStylesMapping";
 
 // Default settings to use when values are missing
 const DEFAULT_SETTINGS = {
@@ -813,15 +814,24 @@ new (class ExtensionPopup {
       let mappedSourceStyle = null;
       if (!currentSiteKey) {
         const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
-        if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
-          for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
-            if (targetSites.includes(this.normalizedCurrentSiteHostname)) {
-              currentSiteKey = sourceStyle;
-              isMappedStyle = true;
-              mappedSourceStyle = sourceStyle;
-              console.log(`Found mapped style: ${sourceStyle} for ${this.normalizedCurrentSiteHostname}`);
-              break;
+        const userMappingData = await browser.storage.local.get(USER_STYLES_MAPPING_KEY);
+        // Merge mappings: user mappings take precedence/addition
+        const mergedMapping = { ...(mappingData[STYLES_MAPPING_KEY]?.mapping || {}) };
+        if (userMappingData[USER_STYLES_MAPPING_KEY]?.mapping) {
+          for (const [src, targets] of Object.entries(userMappingData[USER_STYLES_MAPPING_KEY].mapping)) {
+            if (!mergedMapping[src]) mergedMapping[src] = [];
+            for (const t of targets) {
+              if (!mergedMapping[src].includes(t)) mergedMapping[src].push(t);
             }
+          }
+        }
+        for (const [sourceStyle, targetSites] of Object.entries(mergedMapping)) {
+          if (targetSites.includes(this.normalizedCurrentSiteHostname)) {
+            currentSiteKey = sourceStyle;
+            isMappedStyle = true;
+            mappedSourceStyle = sourceStyle;
+            console.log(`Found mapped style: ${sourceStyle} for ${this.normalizedCurrentSiteHostname}`);
+            break;
           }
         }
       }
@@ -1364,34 +1374,41 @@ new (class ExtensionPopup {
       } else {
         // Check for mapped styles if no direct match found
         const mappingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
-        if (mappingData[STYLES_MAPPING_KEY]?.mapping) {
-          console.log(`Popup: Checking mappings for ${normalizedHostname}:`, mappingData[STYLES_MAPPING_KEY].mapping);
-          for (const [sourceStyle, targetSites] of Object.entries(mappingData[STYLES_MAPPING_KEY].mapping)) {
-            console.log(`Popup: Checking mapping ${sourceStyle} -> ${targetSites}`);
-            if (targetSites.includes(normalizedHostname)) {
-              // Get the CSS for the source style
-              if (styles[sourceStyle]) {
-                console.log(`Popup: Found mapped style ${sourceStyle} for ${normalizedHostname}`);
-                const features = styles[sourceStyle];
-                const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
-                const siteData = await browser.storage.local.get(normalizedSiteStorageKey);
-                const featureSettings = siteData[normalizedSiteStorageKey] || {};
+        const userMappingData = await browser.storage.local.get(USER_STYLES_MAPPING_KEY);
+        // Merge mappings: user mappings take precedence/addition
+        const mergedMapping = { ...(mappingData[STYLES_MAPPING_KEY]?.mapping || {}) };
+        if (userMappingData[USER_STYLES_MAPPING_KEY]?.mapping) {
+          for (const [src, targets] of Object.entries(userMappingData[USER_STYLES_MAPPING_KEY].mapping)) {
+            if (!mergedMapping[src]) mergedMapping[src] = [];
+            for (const t of targets) {
+              if (!mergedMapping[src].includes(t)) mergedMapping[src].push(t);
+            }
+          }
+        }
+        for (const [sourceStyle, targetSites] of Object.entries(mergedMapping)) {
+          if (targetSites.includes(normalizedHostname)) {
+            // Get the CSS for the source style
+            if (styles[sourceStyle]) {
+              console.log(`Popup: Found mapped style (user or repo): ${sourceStyle} for ${normalizedHostname}`);
+              const features = styles[sourceStyle];
+              const normalizedSiteStorageKey = `${this.BROWSER_STORAGE_KEY}.${normalizedHostname}`;
+              const siteData = await browser.storage.local.get(normalizedSiteStorageKey);
+              const featureSettings = siteData[normalizedSiteStorageKey] || {};
 
-                let combinedCSS = "";
-                for (const [feature, css] of Object.entries(features)) {
-                  if (featureSettings[feature] !== false) {
-                    combinedCSS += css + "\n";
-                  }
-                }
-
-                if (combinedCSS) {
-                  await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
-                  console.info(`Applied mapped CSS from ${sourceStyle} to ${hostname}`);
-                  return; // Exit early since we found and applied a mapped style
+              let combinedCSS = "";
+              for (const [feature, css] of Object.entries(features)) {
+                if (featureSettings[feature] !== false) {
+                  combinedCSS += css + "\n";
                 }
               }
-              break;
+
+              if (combinedCSS) {
+                await browser.tabs.insertCSS(tab.id, { code: combinedCSS });
+                console.info(`Applied mapped CSS from ${sourceStyle} to ${hostname}`);
+                return; // Exit early since we found and applied a mapped style
+              }
             }
+            break;
           }
         }
 

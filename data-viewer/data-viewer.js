@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const STYLES_MAPPING_KEY = "stylesMapping";
   const DEFAULT_REPOSITORY_URL =
     "https://sameerasw.github.io/my-internet/styles.json";
+  const USER_STYLES_MAPPING_KEY = "userStylesMapping";
 
   const globalSettingsElement = document.getElementById("global-settings-data");
   const skipListElement = document.getElementById("skip-list-data");
@@ -293,6 +294,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      const userMappingData = allData[USER_STYLES_MAPPING_KEY] || { mapping: {} };
+      settingsToBackup.userMappings = userMappingData;
+
       // Add export timestamp and version
       const manifest = browser.runtime.getManifest();
       const exportData = {
@@ -378,6 +382,10 @@ document.addEventListener("DOMContentLoaded", function () {
               }
             }
 
+            if (importData.userMappings) {
+              importOperations[USER_STYLES_MAPPING_KEY] = importData.userMappings;
+            }
+
             // Apply all settings at once
             await browser.storage.local.set(importOperations);
 
@@ -440,6 +448,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Display mapping data
       displayMappingData(data);
+
+      // Load user mapping UI after mapping section is rendered
+      await loadUserMappingsUI();
 
       // Setup collapsible sections
       setupCollapsibleSections();
@@ -935,32 +946,105 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  async function loadUserMappingsUI() {
+    const userMappingsList = document.getElementById("user-mappings-list");
+    const addMappingForm = document.getElementById("add-mapping-form");
+    const sourceInput = document.getElementById("source-style-input");
+    const targetInput = document.getElementById("target-site-input");
+
+    // Load user mappings from storage
+    const data = await browser.storage.local.get(USER_STYLES_MAPPING_KEY);
+    let userMapping = data[USER_STYLES_MAPPING_KEY] || { mapping: {} };
+
+    // Render user mappings
+    function renderUserMappings() {
+      userMappingsList.innerHTML = '';
+      const mapping = userMapping.mapping || {};
+      const keys = Object.keys(mapping);
+      if (keys.length === 0) {
+        userMappingsList.innerHTML = '<div class="no-mappings">No custom mappings added.</div>';
+        return;
+      }
+      keys.sort();
+      keys.forEach(source => {
+        mapping[source].forEach((site, idx) => {
+          const item = document.createElement('div');
+          item.className = 'user-mapping-item';
+          item.innerHTML = `<span class="source-style">${source}</span> → <span class="target-site-tag">${site}</span> <button class="remove-user-mapping" data-source="${source}" data-site="${site}"><i class="fas fa-times"></i></button>`;
+          userMappingsList.appendChild(item);
+        });
+      });
+      // Add remove event listeners
+      userMappingsList.querySelectorAll('.remove-user-mapping').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const source = btn.getAttribute('data-source');
+          const site = btn.getAttribute('data-site');
+          if (userMapping.mapping[source]) {
+            userMapping.mapping[source] = userMapping.mapping[source].filter(s => s !== site);
+            if (userMapping.mapping[source].length === 0) delete userMapping.mapping[source];
+            await browser.storage.local.set({ [USER_STYLES_MAPPING_KEY]: userMapping });
+            renderUserMappings();
+            loadAllData(); // Refresh mapping display
+          }
+        });
+      });
+    }
+    renderUserMappings();
+
+    // Add mapping form handler
+    addMappingForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const source = sourceInput.value.trim();
+      const site = targetInput.value.trim().replace(/^https?:\/\//, '').replace(/^www\./, '');
+      if (!source || !site) return;
+      if (!userMapping.mapping[source]) userMapping.mapping[source] = [];
+      if (!userMapping.mapping[source].includes(site)) {
+        userMapping.mapping[source].push(site);
+        await browser.storage.local.set({ [USER_STYLES_MAPPING_KEY]: userMapping });
+        renderUserMappings();
+        loadAllData(); // Refresh mapping display
+      }
+      addMappingForm.reset();
+    };
+  }
+
   function displayMappingData(data) {
     const mappingData = data[STYLES_MAPPING_KEY];
+    const userMappingData = data[USER_STYLES_MAPPING_KEY] || { mapping: {} };
     const mappingsContainer = document.getElementById("mappings-data");
-
-    if (!mappingData || !mappingData.mapping || Object.keys(mappingData.mapping).length === 0) {
+    // Merge mappings: fetched first, then user (user can override/add)
+    const merged = {};
+    if (mappingData && mappingData.mapping) {
+      for (const [src, targets] of Object.entries(mappingData.mapping)) {
+        merged[src] = [...targets];
+      }
+    }
+    if (userMappingData && userMappingData.mapping) {
+      for (const [src, targets] of Object.entries(userMappingData.mapping)) {
+        if (!merged[src]) merged[src] = [];
+        for (const t of targets) {
+          if (!merged[src].includes(t)) merged[src].push(t);
+        }
+      }
+    }
+    const mappingKeys = Object.keys(merged);
+    if (mappingKeys.length === 0) {
       mappingsContainer.innerHTML = '<div class="no-mappings">No style mappings found.</div>';
       return;
     }
-
-    const mapping = mappingData.mapping;
-    const mappingKeys = Object.keys(mapping);
-
-    // Sort mappings alphabetically by source style
     mappingKeys.sort();
-
     const mappingsHTML = mappingKeys.map(sourceStyle => {
-      const targetSites = mapping[sourceStyle];
-      const targetSitesHTML = targetSites.map(site =>
-        `<span class="target-site-tag">${site}</span>`
-      ).join('');
-
+      const fetched = (mappingData && mappingData.mapping && mappingData.mapping[sourceStyle]) || [];
+      const user = (userMappingData && userMappingData.mapping && userMappingData.mapping[sourceStyle]) || [];
+      const targetSitesHTML = merged[sourceStyle].map(site => {
+        const isUser = user.includes(site);
+        return `<span class="target-site-tag${isUser ? ' user-mapping' : ''}">${site}${isUser ? ' <i class=\'fas fa-user-edit\' title=\'Custom mapping\'></i>' : ''}</span>`;
+      }).join('');
       return `
         <div class="mapping-item">
           <div class="mapping-header">
             <span class="source-style">${sourceStyle}</span>
-            <span class="target-count">${targetSites.length} mapped sites</span>
+            <span class="target-count">${merged[sourceStyle].length} mapped sites</span>
           </div>
           <div class="target-sites-list">
             ${targetSitesHTML}
@@ -968,12 +1052,7 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
       `;
     }).join('');
-
-    mappingsContainer.innerHTML = `
-      <div class="mappings-container">
-        ${mappingsHTML}
-      </div>
-    `;
+    mappingsContainer.innerHTML = `<div class="mappings-container">${mappingsHTML}</div>`;
   }
 
   function setupCollapsibleSections() {

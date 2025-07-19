@@ -144,6 +144,21 @@
                     Style Mappings ✨
                 </h2>
                 <div id="mappings-data" class="data-container collapsed" data-section="mappings-section"></div>
+                <div id="user-mapping-controls" class="mapping-controls">
+                    <div class="mapping-instructions">
+                        <strong>Custom Mapping:</strong> Add your own site-to-style mappings below.<br>
+                        <em>Do <b>not</b> include <b>https://</b> or <b>www</b> in the site field. Use only the domain
+                            (e.g. <b>example.com</b>).</em>
+                    </div>
+                    <form id="add-mapping-form" class="add-mapping-form">
+                        <input type="text" id="source-style-input" placeholder="Source Style (e.g. github.com.css)"
+                            required>
+                        <input type="text" id="target-site-input" placeholder="Target Site (e.g. gist.github.com)"
+                            required>
+                        <button type="submit" class="action-button primary">Add Mapping</button>
+                    </form>
+                    <div id="user-mappings-list" class="user-mappings-list"></div>
+                </div>
             </div>
 
 

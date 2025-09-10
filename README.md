@@ -1,6 +1,17 @@
 # Zen internet
 
-A prettier Internet in Zen and Firefox.
+
+**NOTE:** This is an unofficial port of the original Zen Internet Firefox extension for Chromium-based browsers (like Google Chrome and Microsoft Edge). All credit for the original concept, design, and code goes to the original author.
+
+*   **Original Author:** [sameerasw](https://www.sameerasw.com/)
+*   **Original Firefox Add-on:** [Zen Internet on Mozilla Add-ons](https://addons.mozilla.org/en-US/firefox/addon/zen-internet/)
+*   **Original GitHub Repository:** [github.com/sameerasw/zeninternet](https://github.com/sameerasw/zeninternet)
+
+This repository's purpose is solely to maintain compatibility for Chromium browsers. Please report any issues specific to the Firefox version on the original repository.
+
+---
+
+A prettier Internet.
 
 <a href="https://addons.mozilla.org/en-US/firefox/addon/zen-internet/">
     <img alt="Firefox Add-Ons" src="https://blog.mozilla.org/addons/files/2015/11/get-the-addon.png" height="40">
@@ -34,3 +45,4 @@ Thanks:
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+

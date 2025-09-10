@@ -1,0 +1,32 @@
+name: Create GitHub Release
+
+# This workflow runs whenever a new tag is pushed that starts with "v" (e.g., v1.0, v2.7.1)
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        # This step checks out your repository's code so the workflow can access it.
+        uses: actions/checkout@v3
+
+      - name: Build ZIP file
+        # This step creates a zip file of your extension, excluding development files.
+        run: zip -r extension-pack.zip . -x ".git/*" ".github/*" "README.md"
+
+      - name: Create GitHub Release
+        # This powerful action creates the release and uploads the zip file as an asset.
+        uses: softprops/action-gh-release@v1
+        with:
+          # The name of the asset file attached to the release will be the same as our zip file.
+          files: extension-pack.zip
+        env:
+          # The GITHUB_TOKEN is a special secret automatically provided by GitHub.
+          # You do NOT need to create this secret yourself.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -270,13 +270,10 @@ class WelcomeScreen {
     });
   }
 
-  async applyThemeMode() {
-    try {
-      const BROWSER_STORAGE_KEY = "transparentZenSettings";
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  applyThemeMode() {
+    const BROWSER_STORAGE_KEY = "transparentZenSettings";
+    chrome.storage.local.get(BROWSER_STORAGE_KEY, (data) => {
       const settings = data[BROWSER_STORAGE_KEY] || {};
-
-      // Apply theme mode settings
       if (this.selectedThemeMode === "whitelist") {
         settings.whitelistStyleMode = true;
         settings.forceStyling = false;
@@ -284,25 +281,19 @@ class WelcomeScreen {
         settings.whitelistStyleMode = false;
         settings.forceStyling = false;
       }
-
-      // Ensure other default settings
       settings.enableStyling = true;
       settings.autoUpdate = document.getElementById(
-        "welcome-auto-update"
+        "welcome-auto-update",
       ).checked;
-
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-    } catch (error) {
-      console.error("Error applying theme mode:", error);
-    }
+      chrome.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    });
   }
 
-  async fetchStyles() {
+  fetchStyles() {
     const fetchButton = document.getElementById("welcome-fetch-styles");
     const fetchStatus = document.getElementById("welcome-fetch-status");
     const nextButton = document.getElementById("fetch-styles-next");
 
-    // Show loading state
     fetchButton.disabled = true;
     fetchButton.innerHTML =
       '<i class="fas fa-spinner fa-spin"></i> Fetching...';
@@ -310,97 +301,95 @@ class WelcomeScreen {
     fetchStatus.className = "fetch-status loading";
     fetchStatus.textContent = "Downloading latest themes...";
 
-    try {
-      // Get the repository URL from storage or use the default one
-      const DEFAULT_REPOSITORY_URL =
-        "https://sameerasw.github.io/my-internet/styles.json";
-      const repoUrlData = await browser.storage.local.get(
-        "stylesRepositoryUrl"
-      );
+    const BROWSER_STORAGE_KEY = "transparentZenSettings";
+    const STYLES_MAPPING_KEY = "stylesMapping";
+    const DEFAULT_REPOSITORY_URL =
+      "https://sameerasw.github.io/my-internet/styles.json";
+
+    chrome.storage.local.get("stylesRepositoryUrl", (repoUrlData) => {
       const repositoryUrl =
         repoUrlData.stylesRepositoryUrl || DEFAULT_REPOSITORY_URL;
 
-      const response = await fetch(repositoryUrl, {
-        headers: { "Cache-Control": "no-cache" },
-      });
+      fetch(repositoryUrl, { headers: { "Cache-Control": "no-cache" } })
+        .then((response) => {
+          if (!response.ok)
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          return response.json();
+        })
+        .then((styles) => {
+          chrome.storage.local.get(
+            [STYLES_MAPPING_KEY, BROWSER_STORAGE_KEY],
+            (data) => {
+              let mappingData;
+              if (styles.mapping && Object.keys(styles.mapping).length > 0) {
+                mappingData = { mapping: styles.mapping };
+              } else {
+                mappingData = data[STYLES_MAPPING_KEY] || { mapping: {} };
+              }
 
-      if (!response.ok)
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              const settings = data[BROWSER_STORAGE_KEY] || {};
+              settings.autoUpdate = document.getElementById(
+                "welcome-auto-update",
+              ).checked;
+              settings.lastFetchedTime = Date.now();
 
-      const styles = await response.json();
+              chrome.storage.local.set(
+                {
+                  styles,
+                  [STYLES_MAPPING_KEY]: mappingData,
+                  [BROWSER_STORAGE_KEY]: settings,
+                },
+                () => {
+                  fetchStatus.className = "fetch-status success";
+                  fetchStatus.textContent = `Successfully downloaded ${
+                    Object.keys(styles.website || {}).length
+                  } website themes!`;
+                  fetchButton.innerHTML =
+                    '<i class="fas fa-check"></i> Download Complete';
+                  nextButton.disabled = false;
 
-      // Handle mappings (same as refetchCSS in popup.js)
-      const STYLES_MAPPING_KEY = "stylesMapping";
-      let mappingData;
-      if (styles.mapping && Object.keys(styles.mapping).length > 0) {
-        mappingData = { mapping: styles.mapping };
-      } else {
-        const existingData = await browser.storage.local.get(STYLES_MAPPING_KEY);
-        mappingData = existingData[STYLES_MAPPING_KEY] || { mapping: {} };
-      }
-
-      await browser.storage.local.set({ styles, [STYLES_MAPPING_KEY]: mappingData });
-
-      // Update auto-update setting
-      const BROWSER_STORAGE_KEY = "transparentZenSettings";
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
-      const settings = data[BROWSER_STORAGE_KEY] || {};
-      settings.autoUpdate = document.getElementById(
-        "welcome-auto-update"
-      ).checked;
-      settings.lastFetchedTime = Date.now();
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-
-      // Show success state
-      fetchStatus.className = "fetch-status success";
-      fetchStatus.textContent = `Successfully downloaded ${
-        Object.keys(styles.website || {}).length
-      } website themes!`;
-      fetchButton.innerHTML = '<i class="fas fa-check"></i> Download Complete';
-      nextButton.disabled = false;
-
-      // Enable auto-update if selected
-      if (settings.autoUpdate) {
-        try {
-          await browser.runtime.sendMessage({ action: "enableAutoUpdate" });
-        } catch (e) {
-          // Background script might not be ready, ignore
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching styles:", error);
-      fetchStatus.className = "fetch-status error";
-      fetchStatus.textContent = `Failed to download themes: ${error.message}`;
-      fetchButton.innerHTML =
-        '<i class="fas fa-exclamation-triangle"></i> Retry Download';
-      fetchButton.disabled = false;
-    }
+                  if (settings.autoUpdate) {
+                    chrome.runtime.sendMessage(
+                      { action: "enableAutoUpdate" },
+                      (response) => {
+                        if (chrome.runtime.lastError) {
+                          /* Silently fail */
+                        }
+                      },
+                    );
+                  }
+                },
+              );
+            },
+          );
+        })
+        .catch((error) => {
+          console.error("Error fetching styles:", error);
+          fetchStatus.className = "fetch-status error";
+          fetchStatus.textContent = `Failed to download themes: ${error.message}`;
+          fetchButton.innerHTML =
+            '<i class="fas fa-exclamation-triangle"></i> Retry Download';
+          fetchButton.disabled = false;
+        });
+    });
   }
 
   closeWelcome() {
     const overlay = document.getElementById("welcome-overlay");
     overlay.classList.add("hidden");
-
-    // Mark welcome as shown
     this.markWelcomeAsShown();
-
-    // Remove the overlay after animation completes
     setTimeout(() => {
-      overlay.remove();
+      if (overlay) overlay.remove();
     }, 300);
   }
 
-  async markWelcomeAsShown() {
-    try {
-      const BROWSER_STORAGE_KEY = "transparentZenSettings";
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  markWelcomeAsShown() {
+    const BROWSER_STORAGE_KEY = "transparentZenSettings";
+    chrome.storage.local.get(BROWSER_STORAGE_KEY, (data) => {
       const settings = data[BROWSER_STORAGE_KEY] || {};
-
       settings.welcomeShown = true;
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-    } catch (error) {
-      console.error("Error marking welcome as shown:", error);
-    }
+      chrome.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    });
   }
 
   showAgreementOnly() {
@@ -497,42 +486,48 @@ class WelcomeScreen {
 }
 
 // Function to check if user is first-time and show welcome screen
-async function checkAndShowWelcome() {
-  try {
+function checkAndShowWelcome() {
+  // Wrap the callback-based API in a Promise to maintain compatibility with popup.js
+  return new Promise((resolve) => {
     const BROWSER_STORAGE_KEY = "transparentZenSettings";
-    const data = await browser.storage.local.get([
-      BROWSER_STORAGE_KEY,
-      "styles",
-    ]);
+    try {
+      chrome.storage.local.get([BROWSER_STORAGE_KEY, "styles"], (data) => {
+        if (chrome.runtime.lastError) {
+          console.error(
+            "Error checking welcome screen status:",
+            chrome.runtime.lastError,
+          );
+          return resolve(false);
+        }
 
-    const settings = data[BROWSER_STORAGE_KEY] || {};
-    const hasStyles =
-      data.styles &&
-      data.styles.website &&
-      Object.keys(data.styles.website).length > 0;
-    const welcomeShown = settings.welcomeShown;
+        const settings = data[BROWSER_STORAGE_KEY] || {};
+        const hasStyles =
+          data.styles &&
+          data.styles.website &&
+          Object.keys(data.styles.website).length > 0;
+        const welcomeShown = settings.welcomeShown;
 
-    // New users (no styles fetched) - show full welcome flow
-    if (!hasStyles) {
-      const welcome = new WelcomeScreen();
-      welcome.show();
-      return true; // Welcome screen is shown
+        if (!hasStyles) {
+          const welcome = new WelcomeScreen();
+          welcome.show();
+          resolve(true);
+        } else if (
+          hasStyles &&
+          (welcomeShown === undefined || welcomeShown === false)
+        ) {
+          const welcome = new WelcomeScreen();
+          welcome.showAgreementOnly();
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+    } catch (error) {
+      console.error("Error checking welcome screen status:", error);
+      resolve(false);
     }
-
-    // Existing users who haven't seen the new agreement - show agreement-only flow
-    if (hasStyles && (welcomeShown === undefined || welcomeShown === false)) {
-      const welcome = new WelcomeScreen();
-      welcome.showAgreementOnly();
-      return true; // Welcome screen is shown
-    }
-
-    return false; // Welcome screen not needed
-  } catch (error) {
-    console.error("Error checking welcome screen status:", error);
-    return false;
-  }
+  });
 }
 
-// Export for use in other files
 window.WelcomeScreen = WelcomeScreen;
 window.checkAndShowWelcome = checkAndShowWelcome;

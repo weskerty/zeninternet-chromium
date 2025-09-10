@@ -8,7 +8,8 @@
       stylesheet = document.createElement("style");
       stylesheet.id = stylesheetId;
       stylesheet.type = "text/css";
-      document.head.appendChild(stylesheet);
+      // Use document.head if available, otherwise fallback to document.documentElement
+      (document.head || document.documentElement).appendChild(stylesheet);
     }
     return stylesheet;
   }
@@ -23,26 +24,35 @@
   // Announce content script is ready and provide current hostname
   function announceReady() {
     try {
-      browser.runtime
-        .sendMessage({
+      chrome.runtime.sendMessage(
+        {
           action: "contentScriptReady",
           hostname: window.location.hostname,
-        })
-        .catch((err) => {
-          // Silent fail - background might not be ready yet
-          console.log("ZenInternet: Could not announce ready state");
-        });
+        },
+        (response) => {
+          // The callback is fired when the background script responds.
+          // We need to check chrome.runtime.lastError in case the background is not ready.
+          if (chrome.runtime.lastError) {
+            console.log(
+              "ZenInternet: Could not announce ready state: " +
+                chrome.runtime.lastError.message,
+            );
+          }
+        },
+      );
     } catch (e) {
       // Fail silently
     }
   }
 
   // Listen for messages from background script
-  browser.runtime.onMessage.addListener((message) => {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "applyStyles") {
       updateStyles(message.css);
-      return Promise.resolve({ success: true });
+      // Send a response back to the sender
+      sendResponse({ success: true });
     }
+    // Return true if you intend to send a response asynchronously (not needed here, but good practice)
     return false;
   });
 

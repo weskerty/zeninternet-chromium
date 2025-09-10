@@ -12,321 +12,202 @@ document.addEventListener("DOMContentLoaded", function () {
   const globalSettingsElement = document.getElementById("global-settings-data");
   const skipListElement = document.getElementById("skip-list-data");
   const combinedWebsitesElement = document.getElementById(
-    "combined-websites-data"
+    "combined-websites-data",
   );
   const deleteAllButton = document.getElementById("delete-all-data");
   const versionElement = document.getElementById("addon-version");
   const disableTransparencyToggle = document.getElementById(
-    "disable-transparency"
+    "disable-transparency",
   );
-  // New toggle elements
   const disableHoverToggle = document.getElementById("disable-hover");
   const disableFooterToggle = document.getElementById("disable-footer");
-
-  // Repository URL Elements
   const repositoryUrlInput = document.getElementById("repository-url");
   const setRepositoryUrlButton = document.getElementById("set-repository-url");
   const resetRepositoryUrlButton = document.getElementById(
-    "reset-repository-url"
+    "reset-repository-url",
   );
   const repositoryUrlStatus = document.getElementById("repository-url-status");
-
-  // Backup & Restore Elements
   const exportButton = document.getElementById("export-settings");
   const importFileInput = document.getElementById("import-file");
   const importStatusElement = document.getElementById("import-status");
 
-  // Load and display the data
   loadAllData();
-
-  // Display addon version
   displayAddonVersion();
 
-  // Event listener for disable transparency toggle
   disableTransparencyToggle.addEventListener("change", function () {
     saveTransparencySettings(this.checked);
   });
-
-  // Event listeners for new toggles
   disableHoverToggle.addEventListener("change", function () {
     saveHoverSettings(this.checked);
   });
-
   disableFooterToggle.addEventListener("change", function () {
     saveFooterSettings(this.checked);
   });
-
-  // Event listener for delete all data button
   deleteAllButton.addEventListener("click", function () {
     if (
-      confirm(
-        "WARNING: This will delete ALL extension data including settings, website styles, and preferences. This action cannot be undone!\n\nAre you sure you want to proceed?"
-      )
+      confirm("WARNING: This will delete ALL extension data... Are you sure?")
     ) {
       deleteAllData();
     }
   });
 
-  // Repository URL event listeners
   setRepositoryUrlButton.addEventListener("click", setRepositoryUrl);
   resetRepositoryUrlButton.addEventListener("click", resetRepositoryUrl);
-
-  // New event listeners for export and import functionality
   exportButton.addEventListener("click", exportSettings);
   importFileInput.addEventListener("change", importSettings);
 
-  // Add event delegation for feature toggles
-  combinedWebsitesElement.addEventListener("change", async (event) => {
-    if (event.target.type === "checkbox" && event.target.dataset.website && event.target.dataset.feature) {
-      await saveFeatureToggle(event.target.dataset.website, event.target.dataset.feature, event.target.checked);
+  combinedWebsitesElement.addEventListener("change", (event) => {
+    if (
+      event.target.type === "checkbox" &&
+      event.target.dataset.website &&
+      event.target.dataset.feature
+    ) {
+      saveFeatureToggle(
+        event.target.dataset.website,
+        event.target.dataset.feature,
+        event.target.checked,
+      );
     }
   });
 
-  // Load the repository URL from storage
   loadRepositoryUrl();
 
-  async function loadRepositoryUrl() {
-    try {
-      const data = await browser.storage.local.get(REPOSITORY_URL_KEY);
+  function loadRepositoryUrl() {
+    chrome.storage.local.get(REPOSITORY_URL_KEY, (data) => {
       const repositoryUrl = data[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL;
       repositoryUrlInput.value = repositoryUrl;
-    } catch (error) {
-      console.error("Error loading repository URL:", error);
-      repositoryUrlInput.value = DEFAULT_REPOSITORY_URL;
-    }
+    });
   }
 
-  async function setRepositoryUrl() {
+  function setRepositoryUrl() {
+    const newUrl = repositoryUrlInput.value.trim();
+    if (!newUrl)
+      return showRepositoryUrlStatus("Repository URL cannot be empty", "error");
     try {
-      const newUrl = repositoryUrlInput.value.trim();
-
-      if (!newUrl) {
-        showRepositoryUrlStatus("Repository URL cannot be empty", "error");
-        return;
-      }
-
-      // Simple URL validation
-      try {
-        new URL(newUrl);
-      } catch (e) {
-        showRepositoryUrlStatus("Invalid URL format", "error");
-        return;
-      }
-
-      // Save the new URL to storage
-      await browser.storage.local.set({ [REPOSITORY_URL_KEY]: newUrl });
-
+      new URL(newUrl);
+    } catch (e) {
+      return showRepositoryUrlStatus("Invalid URL format", "error");
+    }
+    chrome.storage.local.set({ [REPOSITORY_URL_KEY]: newUrl }, () => {
       showRepositoryUrlStatus("Repository URL saved successfully", "success");
-
-      // Prompt the user to clear styles data
-      if (
-        confirm(
-          "Would you like to clear existing styles data to avoid conflicts with the new repository?\n\nThis will clear saved styles and website-specific settings, but keep your global settings."
-        )
-      ) {
-        await clearStylesData();
+      if (confirm("Would you like to clear existing styles data...?")) {
+        clearStylesData();
       }
-    } catch (error) {
-      console.error("Error setting repository URL:", error);
-      showRepositoryUrlStatus(`Error saving URL: ${error.message}`, "error");
-    }
+    });
   }
 
-  async function resetRepositoryUrl() {
-    try {
-      repositoryUrlInput.value = DEFAULT_REPOSITORY_URL;
-      await browser.storage.local.set({
-        [REPOSITORY_URL_KEY]: DEFAULT_REPOSITORY_URL,
-      });
-
-      showRepositoryUrlStatus("Repository URL reset to default", "success");
-
-      // Prompt to clear styles data
-      if (
-        confirm(
-          "Would you like to clear existing styles data to avoid conflicts?\n\nThis will clear saved styles and website-specific settings, but keep your global settings."
-        )
-      ) {
-        await clearStylesData();
-      }
-    } catch (error) {
-      console.error("Error resetting repository URL:", error);
-      showRepositoryUrlStatus(`Error resetting URL: ${error.message}`, "error");
-    }
+  function resetRepositoryUrl() {
+    repositoryUrlInput.value = DEFAULT_REPOSITORY_URL;
+    chrome.storage.local.set(
+      { [REPOSITORY_URL_KEY]: DEFAULT_REPOSITORY_URL },
+      () => {
+        showRepositoryUrlStatus("Repository URL reset to default", "success");
+        if (confirm("Would you like to clear existing styles data...?")) {
+          clearStylesData();
+        }
+      },
+    );
   }
 
-  async function clearStylesData() {
-    try {
-      // Get all storage data to filter what to keep and what to remove
-      const allData = await browser.storage.local.get(null);
-
-      // Create a new object with just the data we want to keep
+  function clearStylesData() {
+    chrome.storage.local.get(null, (allData) => {
       const dataToKeep = {};
-
-      // Keep global settings
-      if (allData[BROWSER_STORAGE_KEY]) {
+      if (allData[BROWSER_STORAGE_KEY])
         dataToKeep[BROWSER_STORAGE_KEY] = allData[BROWSER_STORAGE_KEY];
-      }
-
-      // Keep repository URL
-      if (allData[REPOSITORY_URL_KEY]) {
+      if (allData[REPOSITORY_URL_KEY])
         dataToKeep[REPOSITORY_URL_KEY] = allData[REPOSITORY_URL_KEY];
-      }
-
-      // Keep mappings
-      if (allData[STYLES_MAPPING_KEY]) {
+      if (allData[STYLES_MAPPING_KEY])
         dataToKeep[STYLES_MAPPING_KEY] = allData[STYLES_MAPPING_KEY];
-      }
 
-      // Clear all storage first
-      await browser.storage.local.clear();
-
-      // Then restore the data we want to keep
-      await browser.storage.local.set(dataToKeep);
-
-      // Refresh the data display
-      loadAllData();
-
-      showRepositoryUrlStatus("Styles data cleared successfully", "success");
-    } catch (error) {
-      console.error("Error clearing styles data:", error);
-      showRepositoryUrlStatus(`Error clearing data: ${error.message}`, "error");
-    }
+      chrome.storage.local.clear(() => {
+        chrome.storage.local.set(dataToKeep, () => {
+          loadAllData();
+          showRepositoryUrlStatus(
+            "Styles data cleared successfully",
+            "success",
+          );
+        });
+      });
+    });
   }
 
   function showRepositoryUrlStatus(message, type) {
     repositoryUrlStatus.textContent = message;
     repositoryUrlStatus.className = `repository-url-status status-${type}`;
-
-    // Clear the message after 5 seconds
     setTimeout(() => {
       repositoryUrlStatus.textContent = "";
       repositoryUrlStatus.className = "repository-url-status";
     }, 5000);
   }
 
-  async function deleteAllData() {
-    try {
-      // Clear all storage data
-      await browser.storage.local.clear();
-
-      // Show confirmation message
+  function deleteAllData() {
+    chrome.storage.local.clear(() => {
       alert(
-        "All data has been deleted successfully. The page will now reload."
+        "All data has been deleted successfully. The page will now reload.",
       );
-
-      // Reload the page to show empty state
       window.location.reload();
-    } catch (error) {
-      console.error("Error deleting data:", error);
-      alert("An error occurred while trying to delete data: " + error.message);
-    }
+    });
   }
 
-  async function saveTransparencySettings(isDisabled) {
-    try {
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  function saveTransparencySettings(isDisabled) {
+    chrome.storage.local.get(BROWSER_STORAGE_KEY, (data) => {
       const settings = data[BROWSER_STORAGE_KEY] || {};
-
-      // Update the disableTransparency setting
       settings.disableTransparency = isDisabled;
-
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      // No notification - just save the setting silently
-    } catch (error) {
-      console.error("Error saving transparency settings:", error);
-    }
+      chrome.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    });
   }
 
-  // New functions to save hover and footer settings
-  async function saveHoverSettings(isDisabled) {
-    try {
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  function saveHoverSettings(isDisabled) {
+    chrome.storage.local.get(BROWSER_STORAGE_KEY, (data) => {
       const settings = data[BROWSER_STORAGE_KEY] || {};
-
-      // Update the disableHover setting
       settings.disableHover = isDisabled;
-
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      // No notification - just save the setting silently
-    } catch (error) {
-      console.error("Error saving hover settings:", error);
-    }
+      chrome.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    });
   }
 
-  async function saveFooterSettings(isDisabled) {
-    try {
-      const data = await browser.storage.local.get(BROWSER_STORAGE_KEY);
+  function saveFooterSettings(isDisabled) {
+    chrome.storage.local.get(BROWSER_STORAGE_KEY, (data) => {
       const settings = data[BROWSER_STORAGE_KEY] || {};
-
-      // Update the disableFooter setting
       settings.disableFooter = isDisabled;
-
-      await browser.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
-      // No notification - just save the setting silently
-    } catch (error) {
-      console.error("Error saving footer settings:", error);
-    }
+      chrome.storage.local.set({ [BROWSER_STORAGE_KEY]: settings });
+    });
   }
 
-  // Function to save individual feature toggle settings
-  async function saveFeatureToggle(websiteDomain, feature, isEnabled) {
-    try {
-      const siteKey = `${BROWSER_STORAGE_KEY}.${websiteDomain}`;
-      
-      // Get existing site settings
-      const data = await browser.storage.local.get(siteKey);
+  function saveFeatureToggle(websiteDomain, feature, isEnabled) {
+    const siteKey = `${BROWSER_STORAGE_KEY}.${websiteDomain}`;
+    chrome.storage.local.get(siteKey, (data) => {
       const siteSettings = data[siteKey] || {};
-      
-      // Update the specific feature setting
       siteSettings[feature] = isEnabled;
-      
-      // Save the updated settings
-      await browser.storage.local.set({ [siteKey]: siteSettings });
-      
-      console.log(`Feature ${feature} for ${websiteDomain} set to ${isEnabled}`);
-    } catch (error) {
-      console.error("Error saving feature toggle:", error);
-    }
+      chrome.storage.local.set({ [siteKey]: siteSettings }, () => {
+        console.log(
+          `Feature ${feature} for ${websiteDomain} set to ${isEnabled}`,
+        );
+      });
+    });
   }
 
-  // Export settings functionality
-  async function exportSettings() {
-    try {
-      // Retrieve all storage data to find site-specific settings
-      const allData = await browser.storage.local.get(null);
-
-      // Get the fallback background list once
-      const fallbackBackgroundList = allData[FALLBACK_BACKGROUND_KEY] || [];
-
-      // Extract only the settings we want to backup
+  function exportSettings() {
+    chrome.storage.local.get(null, (allData) => {
       const settingsToBackup = {
         [BROWSER_STORAGE_KEY]: allData[BROWSER_STORAGE_KEY] || {},
         [SKIP_FORCE_THEMING_KEY]: allData[SKIP_FORCE_THEMING_KEY] || [],
         [SKIP_THEMING_KEY]: allData[SKIP_THEMING_KEY] || [],
-        [FALLBACK_BACKGROUND_KEY]: fallbackBackgroundList,
+        [FALLBACK_BACKGROUND_KEY]: allData[FALLBACK_BACKGROUND_KEY] || [],
         [REPOSITORY_URL_KEY]:
           allData[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL,
       };
-
-      // Remove fallbackBackgroundList from global settings if it exists there
-      if (settingsToBackup[BROWSER_STORAGE_KEY].fallbackBackgroundList) {
-        delete settingsToBackup[BROWSER_STORAGE_KEY].fallbackBackgroundList;
-      }
-
-      // Also extract site-specific settings (keys that start with BROWSER_STORAGE_KEY.)
       const siteSpecificSettings = {};
       for (const [key, value] of Object.entries(allData)) {
         if (key.startsWith(BROWSER_STORAGE_KEY + ".")) {
           siteSpecificSettings[key] = value;
         }
       }
-
-      const userMappingData = allData[USER_STYLES_MAPPING_KEY] || { mapping: {} };
+      const userMappingData = allData[USER_STYLES_MAPPING_KEY] || {
+        mapping: {},
+      };
       settingsToBackup.userMappings = userMappingData;
 
-      // Add export timestamp and version
-      const manifest = browser.runtime.getManifest();
+      const manifest = chrome.runtime.getManifest();
       const exportData = {
         exportDate: new Date().toISOString(),
         addonVersion: manifest.version,
@@ -334,14 +215,9 @@ document.addEventListener("DOMContentLoaded", function () {
         siteSettings: siteSpecificSettings,
       };
 
-      // Convert to JSON
       const jsonData = JSON.stringify(exportData, null, 2);
-
-      // Create a blob and download link
       const blob = new Blob([jsonData], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-
-      // Create a temporary anchor and trigger download
       const a = document.createElement("a");
       a.href = url;
       a.download = `zen-internet-settings-${
@@ -349,154 +225,96 @@ document.addEventListener("DOMContentLoaded", function () {
       }.json`;
       document.body.appendChild(a);
       a.click();
-
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, 0);
-
-      // Show success message
       showImportStatus("Settings exported successfully!", "success");
-    } catch (error) {
-      console.error("Error exporting settings:", error);
-      showImportStatus(`Export failed: ${error.message}`, "error");
-    }
+    });
   }
 
-  // Import settings functionality
-  async function importSettings(event) {
-    try {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-
-      reader.onload = async (e) => {
-        try {
-          const importData = JSON.parse(e.target.result);
-
-          // Validate the imported data structure
-          if (
-            !importData.settings ||
-            !importData.settings[BROWSER_STORAGE_KEY]
-          ) {
-            throw new Error("Invalid settings file format");
+  function importSettings(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importData = JSON.parse(e.target.result);
+        if (!importData.settings || !importData.settings[BROWSER_STORAGE_KEY]) {
+          throw new Error("Invalid settings file format");
+        }
+        if (
+          confirm(
+            `Are you sure you want to import settings from ${importData.exportDate}?`,
+          )
+        ) {
+          const importOperations = {
+            [BROWSER_STORAGE_KEY]: importData.settings[BROWSER_STORAGE_KEY],
+            [SKIP_FORCE_THEMING_KEY]:
+              importData.settings[SKIP_FORCE_THEMING_KEY] || [],
+            [SKIP_THEMING_KEY]: importData.settings[SKIP_THEMING_KEY] || [],
+            [REPOSITORY_URL_KEY]:
+              importData.settings[REPOSITORY_URL_KEY] || DEFAULT_REPOSITORY_URL,
+          };
+          if (importData.siteSettings) {
+            for (const [key, value] of Object.entries(
+              importData.siteSettings,
+            )) {
+              importOperations[key] = value;
+            }
           }
-
-          // Confirm the import
-          if (
-            confirm(
-              `Are you sure you want to import settings from ${importData.exportDate}? This will overwrite your current settings.`
-            )
-          ) {
-            // First store the global settings, lists, and repository URL
-            const importOperations = {
-              [BROWSER_STORAGE_KEY]: importData.settings[BROWSER_STORAGE_KEY],
-              [SKIP_FORCE_THEMING_KEY]:
-                importData.settings[SKIP_FORCE_THEMING_KEY] || [],
-              [SKIP_THEMING_KEY]: importData.settings[SKIP_THEMING_KEY] || [],
-              [REPOSITORY_URL_KEY]:
-                importData.settings[REPOSITORY_URL_KEY] ||
-                DEFAULT_REPOSITORY_URL,
-            };
-
-            // Then add any site-specific settings if they exist
-            if (importData.siteSettings) {
-              for (const [key, value] of Object.entries(
-                importData.siteSettings
-              )) {
-                importOperations[key] = value;
-              }
-            }
-
-            if (importData.userMappings) {
-              importOperations[USER_STYLES_MAPPING_KEY] = importData.userMappings;
-            }
-
-            // Apply all settings at once
-            await browser.storage.local.set(importOperations);
-
+          if (importData.userMappings) {
+            importOperations[USER_STYLES_MAPPING_KEY] = importData.userMappings;
+          }
+          chrome.storage.local.set(importOperations, () => {
             showImportStatus(
               "Settings imported successfully! Reloading...",
-              "success"
+              "success",
             );
-
-            // Reload the page after a short delay
-            setTimeout(() => {
-              window.location.reload();
-            }, 1500);
-          } else {
-            // User cancelled
-            importFileInput.value = "";
-            showImportStatus("Import cancelled", "error");
-          }
-        } catch (parseError) {
-          console.error("Error parsing import file:", parseError);
-          showImportStatus(`Import failed: ${parseError.message}`, "error");
+            setTimeout(() => window.location.reload(), 1500);
+          });
+        } else {
+          importFileInput.value = "";
+          showImportStatus("Import cancelled", "error");
         }
-      };
-
-      reader.readAsText(file);
-    } catch (error) {
-      console.error("Error handling import:", error);
-      showImportStatus(`Import failed: ${error.message}`, "error");
-    }
+      } catch (parseError) {
+        showImportStatus(`Import failed: ${parseError.message}`, "error");
+      }
+    };
+    reader.readAsText(file);
   }
 
-  // Helper function to show import status messages
   function showImportStatus(message, type) {
     importStatusElement.textContent = message;
     importStatusElement.className = `import-status status-${type}`;
-
-    // Clear the message after 5 seconds
     setTimeout(() => {
       importStatusElement.textContent = "";
       importStatusElement.className = "import-status";
     }, 5000);
   }
 
-  async function displayAddonVersion() {
-    const manifest = browser.runtime.getManifest();
+  function displayAddonVersion() {
+    const manifest = chrome.runtime.getManifest();
     versionElement.textContent = `Version: ${manifest.version}`;
   }
 
-  async function loadAllData() {
-    try {
-      const data = await browser.storage.local.get(null);
-
-      // Display global settings
+  function loadAllData() {
+    chrome.storage.local.get(null, (data) => {
       displayGlobalSettings(data);
-
-      // Display skip/enable lists
       displaySkipLists(data);
-
-      // Display website data
       displayCombinedWebsiteData(data);
-
-      // Display mapping data
       displayMappingData(data);
-
-      // Load user mapping UI after mapping section is rendered
-      await loadUserMappingsUI();
-
-      // Setup collapsible sections
+      loadUserMappingsUI();
       setupCollapsibleSections();
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
+    });
   }
 
   function displayGlobalSettings(data) {
     const settings = data[BROWSER_STORAGE_KEY] || {};
-
-    // Restore the toggle states based on actual values
     disableTransparencyToggle.checked = settings.disableTransparency || false;
     disableHoverToggle.checked = settings.disableHover || false;
     disableFooterToggle.checked = settings.disableFooter || false;
-
     globalSettingsElement.innerHTML = "";
-
     const table = document.createElement("table");
     table.classList.add("data-table");
 
@@ -557,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
       skipThemingList,
       fallbackBackgroundList,
       isWhitelistMode,
-      isWhitelistStyleMode
+      isWhitelistStyleMode,
     );
   }
 
@@ -566,7 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
     skipThemingList,
     fallbackBackgroundList,
     isWhitelistMode,
-    isWhitelistStyleMode
+    isWhitelistStyleMode,
   ) {
     skipListElement.innerHTML = "";
 
@@ -605,7 +423,7 @@ document.addEventListener("DOMContentLoaded", function () {
       clearAllButton.classList.add(
         "action-button",
         "danger",
-        "clear-list-button"
+        "clear-list-button",
       );
       clearAllButton.innerHTML = '<i class="fas fa-trash"></i> Clear All Lists';
       clearAllButton.addEventListener("click", clearAllSkipLists);
@@ -624,7 +442,7 @@ document.addEventListener("DOMContentLoaded", function () {
       isWhitelistMode
         ? "Sites where forced styling IS applied"
         : "Sites where forced styling is NOT applied",
-      SKIP_FORCE_THEMING_KEY
+      SKIP_FORCE_THEMING_KEY,
     );
 
     // Create regular styling list
@@ -635,7 +453,7 @@ document.addEventListener("DOMContentLoaded", function () {
       isWhitelistStyleMode
         ? "Sites where regular styling IS applied"
         : "Sites where regular styling is NOT applied",
-      SKIP_THEMING_KEY
+      SKIP_THEMING_KEY,
     );
 
     // Create fallback background list
@@ -644,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function () {
       false, // Fallback background is not whitelist/blacklist based
       "Fallback Background List",
       "Sites where a default background added, no transparency",
-      FALLBACK_BACKGROUND_KEY
+      FALLBACK_BACKGROUND_KEY,
     );
 
     tablesContainer.appendChild(forceListSection);
@@ -658,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function () {
     isWhitelistMode,
     title,
     description,
-    storageKey
+    storageKey,
   ) {
     const section = document.createElement("div");
     section.className = "list-section";
@@ -708,7 +526,7 @@ document.addEventListener("DOMContentLoaded", function () {
       removeButton.innerHTML = '<i class="fas fa-times"></i>';
       removeButton.title = "Remove from list";
       removeButton.addEventListener("click", function () {
-        removeSiteFromList(site, storageKey);
+        removeSiteFromList(site, storageKey); // This function will be converted
       });
       actionCell.appendChild(removeButton);
       row.appendChild(actionCell);
@@ -721,46 +539,30 @@ document.addEventListener("DOMContentLoaded", function () {
     return section;
   }
 
-  async function removeSiteFromList(site, listKey) {
-    try {
-      // Get current list
-      const data = await browser.storage.local.get(listKey);
+  function removeSiteFromList(site, listKey) {
+    chrome.storage.local.get(listKey, (data) => {
       const list = data[listKey] || [];
-
-      // Remove the site
       const newList = list.filter((item) => item !== site);
-
-      // Save updated list
-      await browser.storage.local.set({ [listKey]: newList });
-
-      // Refresh the display
-      loadAllData();
-
-      console.log(`Removed ${site} from ${listKey}`);
-    } catch (error) {
-      console.error(`Error removing site from list: ${error}`);
-      alert(`An error occurred: ${error.message}`);
-    }
+      chrome.storage.local.set({ [listKey]: newList }, () => {
+        loadAllData();
+        console.log(`Removed ${site} from ${listKey}`);
+      });
+    });
   }
 
-  async function clearAllSkipLists() {
-    try {
-      if (
-        confirm(
-          "Are you sure you want to clear ALL website lists? This will remove all entries from:\n- Force Styling List\n- Regular Styling List\n- Fallback Background List\n\nThis action cannot be undone."
-        )
-      ) {
-        await browser.storage.local.set({
+  function clearAllSkipLists() {
+    if (confirm("Are you sure you want to clear ALL website lists?")) {
+      chrome.storage.local.set(
+        {
           [SKIP_FORCE_THEMING_KEY]: [],
           [SKIP_THEMING_KEY]: [],
           [FALLBACK_BACKGROUND_KEY]: [],
-        });
-        loadAllData(); // Reload to show empty lists
-        console.log("All skip lists cleared");
-      }
-    } catch (error) {
-      console.error("Error clearing skip lists:", error);
-      alert("An error occurred while clearing the lists: " + error.message);
+        },
+        () => {
+          loadAllData();
+          console.log("All skip lists cleared");
+        },
+      );
     }
   }
 
@@ -811,7 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
     expandAllButton.classList.add(
       "action-button",
       "secondary",
-      "view-all-button"
+      "view-all-button",
     );
     expandAllButton.textContent = "Expand All";
     expandAllButton.addEventListener("click", function () {
@@ -874,7 +676,8 @@ document.addEventListener("DOMContentLoaded", function () {
         domainName = siteName.slice(1);
         // For wildcard sites, we need to find any matching domain in settings
         const matchingDomains = Object.keys(siteSettings).filter(
-          (domain) => domain === domainName || domain.endsWith(`.${domainName}`)
+          (domain) =>
+            domain === domainName || domain.endsWith(`.${domainName}`),
         );
 
         // Use the first matching domain's settings if any found
@@ -933,7 +736,11 @@ document.addEventListener("DOMContentLoaded", function () {
         // Make the CSS block header toggleable
         cssBlockHeader.addEventListener("click", function (e) {
           // Don't expand if clicking on toggle switch
-          if (e.target.type === 'checkbox' || e.target.classList.contains('slider') || e.target.classList.contains('toggle-switch')) {
+          if (
+            e.target.type === "checkbox" ||
+            e.target.classList.contains("slider") ||
+            e.target.classList.contains("toggle-switch")
+          ) {
             return;
           }
 
@@ -979,67 +786,81 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
-
-  async function loadUserMappingsUI() {
+  function loadUserMappingsUI() {
     const userMappingsList = document.getElementById("user-mappings-list");
     const addMappingForm = document.getElementById("add-mapping-form");
     const sourceInput = document.getElementById("source-style-input");
     const targetInput = document.getElementById("target-site-input");
 
-    // Load user mappings from storage
-    const data = await browser.storage.local.get(USER_STYLES_MAPPING_KEY);
-    let userMapping = data[USER_STYLES_MAPPING_KEY] || { mapping: {} };
+    chrome.storage.local.get(USER_STYLES_MAPPING_KEY, (data) => {
+      let userMapping = data[USER_STYLES_MAPPING_KEY] || { mapping: {} };
 
-    // Render user mappings
-    function renderUserMappings() {
-      userMappingsList.innerHTML = '';
-      const mapping = userMapping.mapping || {};
-      const keys = Object.keys(mapping);
-      if (keys.length === 0) {
-        userMappingsList.innerHTML = '<div class="no-mappings">No custom mappings added.</div>';
-        return;
+      function renderUserMappings() {
+        userMappingsList.innerHTML = "";
+        const mapping = userMapping.mapping || {};
+        if (Object.keys(mapping).length === 0) {
+          userMappingsList.innerHTML =
+            '<div class="no-mappings">No custom mappings added.</div>';
+          return;
+        }
+        keys.sort();
+        keys.forEach((source) => {
+          mapping[source].forEach((site, idx) => {
+            const item = document.createElement("div");
+            item.className = "user-mapping-item";
+            item.innerHTML = `<span class="source-style">${source}</span> → <span class="target-site-tag">${site}</span> <button class="remove-user-mapping" data-source="${source}" data-site="${site}"><i class="fas fa-times"></i></button>`;
+            userMappingsList.appendChild(item);
+          });
+        });
+        // Add remove event listeners
+        userMappingsList
+          .querySelectorAll(".remove-user-mapping")
+          .forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const source = btn.getAttribute("data-source");
+              const site = btn.getAttribute("data-site");
+              if (userMapping.mapping[source]) {
+                userMapping.mapping[source] = userMapping.mapping[
+                  source
+                ].filter((s) => s !== site);
+                if (userMapping.mapping[source].length === 0)
+                  delete userMapping.mapping[source];
+                chrome.storage.local.set(
+                  { [USER_STYLES_MAPPING_KEY]: userMapping },
+                  () => {
+                    renderUserMappings();
+                    loadAllData();
+                  },
+                );
+              }
+            });
+          });
       }
-      keys.sort();
-      keys.forEach(source => {
-        mapping[source].forEach((site, idx) => {
-          const item = document.createElement('div');
-          item.className = 'user-mapping-item';
-          item.innerHTML = `<span class="source-style">${source}</span> → <span class="target-site-tag">${site}</span> <button class="remove-user-mapping" data-source="${source}" data-site="${site}"><i class="fas fa-times"></i></button>`;
-          userMappingsList.appendChild(item);
-        });
-      });
-      // Add remove event listeners
-      userMappingsList.querySelectorAll('.remove-user-mapping').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const source = btn.getAttribute('data-source');
-          const site = btn.getAttribute('data-site');
-          if (userMapping.mapping[source]) {
-            userMapping.mapping[source] = userMapping.mapping[source].filter(s => s !== site);
-            if (userMapping.mapping[source].length === 0) delete userMapping.mapping[source];
-            await browser.storage.local.set({ [USER_STYLES_MAPPING_KEY]: userMapping });
-            renderUserMappings();
-            loadAllData(); // Refresh mapping display
-          }
-        });
-      });
-    }
-    renderUserMappings();
+      renderUserMappings();
 
-    // Add mapping form handler
-    addMappingForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const source = sourceInput.value.trim();
-      const site = targetInput.value.trim().replace(/^https?:\/\//, '').replace(/^www\./, '');
-      if (!source || !site) return;
-      if (!userMapping.mapping[source]) userMapping.mapping[source] = [];
-      if (!userMapping.mapping[source].includes(site)) {
-        userMapping.mapping[source].push(site);
-        await browser.storage.local.set({ [USER_STYLES_MAPPING_KEY]: userMapping });
-        renderUserMappings();
-        loadAllData(); // Refresh mapping display
-      }
-      addMappingForm.reset();
-    };
+      // Add mapping form handler
+      addMappingForm.onsubmit = (e) => {
+        e.preventDefault();
+        const source = sourceInput.value.trim();
+        const site = targetInput.value
+          .trim()
+          .replace(/^https?:\/\//, "")
+          .replace(/^www\./, "");
+        if (!source || !site) return;
+        if (!userMapping.mapping[source]) userMapping.mapping[source] = [];
+        if (!userMapping.mapping[source].includes(site)) {
+          userMapping.mapping[source].push(site);
+          chrome.storage.local.set(
+            { [USER_STYLES_MAPPING_KEY]: userMapping },
+            () => {
+              renderUserMappings();
+              loadAllData();
+            },
+          );
+        }
+        addMappingForm.reset();
+      };
+    });
   }
 
   function displayMappingData(data) {
@@ -1063,18 +884,36 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     const mappingKeys = Object.keys(merged);
     if (mappingKeys.length === 0) {
-      mappingsContainer.innerHTML = '<div class="no-mappings">No style mappings found.</div>';
+      mappingsContainer.innerHTML =
+        '<div class="no-mappings">No style mappings found.</div>';
       return;
     }
     mappingKeys.sort();
-    const mappingsHTML = mappingKeys.map(sourceStyle => {
-      const fetched = (mappingData && mappingData.mapping && mappingData.mapping[sourceStyle]) || [];
-      const user = (userMappingData && userMappingData.mapping && userMappingData.mapping[sourceStyle]) || [];
-      const targetSitesHTML = merged[sourceStyle].map(site => {
-        const isUser = user.includes(site);
-        return `<span class="target-site-tag${isUser ? ' user-mapping' : ''}">${site}${isUser ? ' <i class=\'fas fa-user-edit\' title=\'Custom mapping\'></i>' : ''}</span>`;
-      }).join('');
-      return `
+    const mappingsHTML = mappingKeys
+      .map((sourceStyle) => {
+        const fetched =
+          (mappingData &&
+            mappingData.mapping &&
+            mappingData.mapping[sourceStyle]) ||
+          [];
+        const user =
+          (userMappingData &&
+            userMappingData.mapping &&
+            userMappingData.mapping[sourceStyle]) ||
+          [];
+        const targetSitesHTML = merged[sourceStyle]
+          .map((site) => {
+            const isUser = user.includes(site);
+            return `<span class="target-site-tag${
+              isUser ? " user-mapping" : ""
+            }">${site}${
+              isUser
+                ? " <i class='fas fa-user-edit' title='Custom mapping'></i>"
+                : ""
+            }</span>`;
+          })
+          .join("");
+        return `
         <div class="mapping-item">
           <div class="mapping-header">
             <span class="source-style">${sourceStyle}</span>
@@ -1085,32 +924,35 @@ document.addEventListener("DOMContentLoaded", function () {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join("");
     mappingsContainer.innerHTML = `<div class="mappings-container">${mappingsHTML}</div>`;
   }
 
   function setupCollapsibleSections() {
-    const collapsibleHeaders = document.querySelectorAll('.collapsible');
+    const collapsibleHeaders = document.querySelectorAll(".collapsible");
 
-    collapsibleHeaders.forEach(header => {
-      header.addEventListener('click', () => {
-        const targetId = header.getAttribute('data-target');
-        const targetSection = document.querySelector(`[data-section="${targetId}"]`);
-        const icon = header.querySelector('i');
+    collapsibleHeaders.forEach((header) => {
+      header.addEventListener("click", () => {
+        const targetId = header.getAttribute("data-target");
+        const targetSection = document.querySelector(
+          `[data-section="${targetId}"]`,
+        );
+        const icon = header.querySelector("i");
 
         if (targetSection) {
-          const isCollapsed = targetSection.classList.contains('collapsed');
+          const isCollapsed = targetSection.classList.contains("collapsed");
 
           if (isCollapsed) {
             // Expand
-            targetSection.classList.remove('collapsed');
-            header.classList.add('expanded');
-            icon.className = 'fas fa-chevron-up';
+            targetSection.classList.remove("collapsed");
+            header.classList.add("expanded");
+            icon.className = "fas fa-chevron-up";
           } else {
             // Collapse
-            targetSection.classList.add('collapsed');
-            header.classList.remove('expanded');
-            icon.className = 'fas fa-chevron-down';
+            targetSection.classList.add("collapsed");
+            header.classList.remove("expanded");
+            icon.className = "fas fa-chevron-down";
           }
         }
       });

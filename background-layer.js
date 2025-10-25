@@ -45,7 +45,7 @@ body::before {
 }
 `;
 
-  const IMAGE_CSS = (url) => `
+const IMAGE_CSS = (url) => `
 body::before {
   content: '';
   position: fixed;
@@ -57,9 +57,11 @@ body::before {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  filter: blur(7px);
   z-index: -9999;
   pointer-events: none;
 }
+
 `;
 
   function apply(url) {

@@ -8,12 +8,12 @@ const USER_STYLES_MAPPING_KEY = "userStylesMapping";
 const DEFAULT_SETTINGS = {
   enableStyling: true,
   autoUpdate: true,
-  forceStyling: false,
+  forceStyling: true,
   whitelistMode: false,
   whitelistStyleMode: false,
   disableTransparency: false,
-  disableHover: false,
-  disableFooter: false,
+  disableHover: true,
+  disableFooter: true,
   fallbackBackgroundList: [],
 };
 

@@ -1,21 +1,32 @@
 (function () {
+  const B2="zeninternet-base-bg";
+  const B1=`body::before{content:'';position:fixed;top:50%;left:50%;width:500px;height:500px;transform:translate(-50%,-50%);filter:blur(50px);background-image:url(''),linear-gradient(#4ddc9e3b,#061733,#340a20);background-size:cover;background-position:center;background-repeat:no-repeat;animation:r1 10s cubic-bezier(0.8,0.2,0.2,0.8) alternate infinite;border-radius:30% 70% 70% 30%/30% 30% 70% 70%;z-index:-1;pointer-events:none}@keyframes r1{0%{transform:translate(-50%,-50%) rotate(0deg)}100%{transform:translate(-50%,-50%) rotate(360deg)}}`;
   const stylesheetId = "zeninternet-custom-styles";
 
-  // Create or get our stylesheet element
+  function B3(){
+    let s=document.getElementById(B2);
+    if(!s){
+      s=document.createElement("style");
+      s.id=B2;
+      s.type="text/css";
+      s.textContent=B1;
+      (document.head||document.documentElement).insertBefore(s,document.head?.firstChild||document.documentElement.firstChild);
+    }
+    return s;
+  }
   function getStylesheet() {
     let stylesheet = document.getElementById(stylesheetId);
     if (!stylesheet) {
       stylesheet = document.createElement("style");
       stylesheet.id = stylesheetId;
       stylesheet.type = "text/css";
-      // Use document.head if available, otherwise fallback to document.documentElement
       (document.head || document.documentElement).appendChild(stylesheet);
     }
     return stylesheet;
   }
 
-  // Update our stylesheet content
   function updateStyles(css) {
+    B3();
     const stylesheet = getStylesheet();
     stylesheet.textContent = css || "";
     console.log("ZenInternet: Styles were " + (css ? "updated" : "removed"));
@@ -56,6 +67,6 @@
     return false;
   });
 
-  // Announce content script is ready on load
+  B3();
   announceReady();
 })();

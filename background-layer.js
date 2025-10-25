@@ -1,5 +1,6 @@
 (function () {
   const BG_KEY = "backgroundImageUrl";
+  const BG_DATA_KEY = "backgroundImageData";
   const STYLE_ID = "zen-background-layer";
 
   const ANIMATED_CSS = `
@@ -64,23 +65,23 @@ body::before {
 
 `;
 
-  function apply(url) {
+  function apply(data) {
     let s = document.getElementById(STYLE_ID);
     if (!s) {
       s = document.createElement("style");
       s.id = STYLE_ID;
       (document.head || document.documentElement).appendChild(s);
     }
-    s.textContent = url ? IMAGE_CSS(url) : ANIMATED_CSS;
+    s.textContent = data ? IMAGE_CSS(data) : ANIMATED_CSS;
   }
 
-  chrome.storage.local.get(BG_KEY, (d) => {
-    apply(d[BG_KEY] || "");
+  chrome.storage.local.get([BG_DATA_KEY, BG_KEY], (d) => {
+    apply(d[BG_DATA_KEY] || d[BG_KEY] || "");
   });
 
   chrome.storage.onChanged.addListener((ch, a) => {
-    if (a === "local" && ch[BG_KEY]) {
-      apply(ch[BG_KEY].newValue || "");
+    if (a === "local" && (ch[BG_DATA_KEY] || ch[BG_KEY])) {
+      apply((ch[BG_DATA_KEY] && ch[BG_DATA_KEY].newValue) || (ch[BG_KEY] && ch[BG_KEY].newValue) || "");
     }
   });
 })();

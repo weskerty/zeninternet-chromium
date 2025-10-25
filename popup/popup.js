@@ -1765,7 +1765,24 @@ ${
   }
 
   saveBgImage() {
-    chrome.storage.local.set({ [BG_IMAGE_KEY]: this.bgImageInput.value });
+    const url = this.bgImageInput.value.trim();
+    chrome.storage.local.set({ [BG_IMAGE_KEY]: url });
+    
+    if (!url) {
+      chrome.storage.local.remove("backgroundImageData");
+      return;
+    }
+    
+    fetch(url)
+      .then(r => r.blob())
+      .then(b => {
+        const rd = new FileReader();
+        rd.onloadend = () => {
+          chrome.storage.local.set({ backgroundImageData: rd.result });
+        };
+        rd.readAsDataURL(b);
+      })
+      .catch(() => {});
   }
 
   checkWelcomeScreen() {

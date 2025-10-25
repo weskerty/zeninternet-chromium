@@ -4,16 +4,17 @@ let SKIP_THEMING_KEY = "skipThemingList";
 let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 let STYLES_MAPPING_KEY = "stylesMapping";
 const USER_STYLES_MAPPING_KEY = "userStylesMapping";
+const BG_IMAGE_KEY = "backgroundImageUrl";
 
 const DEFAULT_SETTINGS = {
   enableStyling: true,
   autoUpdate: true,
-  forceStyling: true,
+  forceStyling: false,
   whitelistMode: false,
   whitelistStyleMode: false,
   disableTransparency: false,
-  disableHover: true,
-  disableFooter: true,
+  disableHover: false,
+  disableFooter: false,
   fallbackBackgroundList: [],
 };
 
@@ -62,6 +63,7 @@ new (class ExtensionPopup {
   howToUseButton = $("how-to-use");
   fallbackBackgroundSwitch = $("fallback-background");
   fallbackBackgroundList = [];
+  bgImageInput = $("background-image-url");
 
   constructor() {
     this.loadSettings(() => {
@@ -80,6 +82,8 @@ new (class ExtensionPopup {
     });
 
     this.checkWelcomeScreen();
+    this.loadBgImage();
+    this.bgImageInput.addEventListener("change", this.saveBgImage.bind(this));
     this.refetchCSSButton.addEventListener("click", this.refetchCSS.bind(this));
     this.autoUpdateSwitch.addEventListener(
       "change",
@@ -1754,6 +1758,16 @@ ${
   }
 
   // Add welcome screen check method
+  loadBgImage() {
+    chrome.storage.local.get(BG_IMAGE_KEY, (d) => {
+      this.bgImageInput.value = d[BG_IMAGE_KEY] || "";
+    });
+  }
+
+  saveBgImage() {
+    chrome.storage.local.set({ [BG_IMAGE_KEY]: this.bgImageInput.value });
+  }
+
   checkWelcomeScreen() {
     // The `checkAndShowWelcome` function is now global in `welcome.js` and handles its own logic.
     // We just need to call it.

@@ -28,8 +28,17 @@
     "scripts": ["background.js"],
     "persistent": true
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["background-layer.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "web_accessible_resources": [
     "theme.css",
+    "background-layer.js",
     "data-viewer/data-viewer.html",
     "data-viewer/data-viewer.js",
     "data-viewer/data-viewer.css",

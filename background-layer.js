@@ -10,7 +10,7 @@ body::before {
   left: 0;
   width: 120%;
   height: 120%;
-  background: radial-gradient(circle at 50% 50%, rgba(59, 126, 100, 1) 0%, transparent 60%),
+  background: radial-gradient(circle at 50% 50%, rgba(0, 59, 8, 1) 0%, transparent 60%),
               radial-gradient(circle at 80% 70%, rgba(51, 135, 156, 1) 0%, transparent 50%),
               radial-gradient(circle at 50% 50%, rgba(241, 48, 125, 0.69) 0%, transparent 60%);
   background-size: 200% 200%;

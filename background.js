@@ -3,7 +3,7 @@ let SKIP_THEMING_KEY = "skipThemingList";
 let FALLBACK_BACKGROUND_KEY = "fallbackBackgroundList";
 let BROWSER_STORAGE_KEY = "transparentZenSettings";
 let STYLES_MAPPING_KEY = "stylesMapping";
-let logging = true; // Enable logging for debugging
+let logging = true;
 
 const cssCache = new Map();
 const activeTabs = new Map();
@@ -44,7 +44,6 @@ function ensureDefaultSettings(settings = {}) {
   return result;
 }
 
-// Rewritten with callbacks
 function shouldApplyStyling(hostname, callback) {
   const cacheKey = `styling:${hostname}`;
   if (stylingStateCache.has(cacheKey)) {
@@ -64,7 +63,6 @@ function shouldApplyStyling(hostname, callback) {
       return callback(result);
     }
 
-    // Preload styles if cache is empty
     if (cssCache.size === 0) {
       preloadStyles(() => shouldApplyStyling(hostname, callback));
       return;
@@ -235,12 +233,8 @@ function preloadStyles(callback) {
       cssCache.clear();
       if (data.styles && data.styles.website) {
         for (const [website, features] of Object.entries(data.styles.website)) {
-          let combinedCSS = "";
-          for (const css of Object.values(features)) {
-            combinedCSS += css + "\n";
-          }
           const websiteKey = website.replace(".css", "");
-          cssCache.set(websiteKey, combinedCSS);
+          cssCache.set(websiteKey, features);
         }
         if (logging) console.log("Styles preloaded for faster injection");
       }
@@ -258,7 +252,6 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "contentScriptReady" && message.hostname) {
-    // ... existing logic
     return true;
   } else if (message.action === "enableAutoUpdate") {
     startAutoUpdate();
@@ -267,19 +260,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === "contentScriptReady" && sender.tab) {
     updateIconForTab(sender.tab.id, sender.tab.url);
   } else if (message.action === "reapplyStyles" && message.tabId) {
-    // **THIS IS THE NEW PART**
-    // A request from the popup to re-evaluate and apply styles for a specific tab.
     chrome.tabs.get(message.tabId, (tab) => {
       if (tab) {
-        // We first clear any old styles by sending an empty CSS string.
         chrome.tabs.sendMessage(
           tab.id,
           { action: "applyStyles", css: "" },
           () => {
             if (chrome.runtime.lastError) {
-              /* ignore error if content script isn't ready */
             }
-            // Then we apply the new styles.
             applyCSSToTab(tab);
           },
         );
@@ -288,32 +276,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-function getStylesForHostname(hostname, settings, callback) {
+function getFeaturesForHostname(hostname, settings, callback) {
   settings = ensureDefaultSettings(settings);
+  
+  const normalizedHostname = normalizeHostname(hostname);
+  
+  if (cssCache.has(normalizedHostname)) {
+    return callback(cssCache.get(normalizedHostname));
+  }
+  if (cssCache.has(`www.${normalizedHostname}`)) {
+    return callback(cssCache.get(`www.${normalizedHostname}`));
+  }
 
-  if (cssCache.has(hostname)) return callback(cssCache.get(hostname));
-  if (cssCache.has(`www.${hostname}`))
-    return callback(cssCache.get(`www.${hostname}`));
-
-  for (const [cachedSite, cachedCSS] of cssCache.entries()) {
+  for (const [cachedSite, features] of cssCache.entries()) {
     if (cachedSite.startsWith("+")) {
       const baseSite = cachedSite.slice(1);
-      if (hostname === baseSite || hostname.endsWith(`.${baseSite}`))
-        return callback(cachedCSS);
+      if (normalizedHostname === baseSite || normalizedHostname.endsWith(`.${baseSite}`))
+        return callback(features);
     } else if (cachedSite.startsWith("-")) {
       const baseSite = cachedSite.slice(1);
       const cachedDomain = baseSite.split(".").slice(0, -1).join(".");
-      const hostParts = hostname.split(".");
+      const hostParts = normalizedHostname.split(".");
       const hostDomain =
-        hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : hostname;
+        hostParts.length > 1 ? hostParts.slice(0, -1).join(".") : normalizedHostname;
       if (cachedDomain && hostDomain && hostDomain === cachedDomain)
-        return callback(cachedCSS);
+        return callback(features);
     } else if (
-      hostname !== cachedSite &&
-      hostname.endsWith(`.${cachedSite}`) &&
+      normalizedHostname !== cachedSite &&
+      normalizedHostname.endsWith(`.${cachedSite}`) &&
       !cachedSite.startsWith("-")
     ) {
-      return callback(cachedCSS);
+      return callback(features);
     }
   }
 
@@ -325,7 +318,7 @@ function getStylesForHostname(hostname, settings, callback) {
         for (const [sourceStyle, targetSites] of Object.entries(
           mappingData.mapping,
         )) {
-          if (targetSites.includes(hostname)) {
+          if (targetSites.includes(normalizedHostname)) {
             const sourceStyleKey = sourceStyle.replace(".css", "");
             if (cssCache.has(sourceStyleKey))
               return callback(cssCache.get(sourceStyleKey));
@@ -336,15 +329,15 @@ function getStylesForHostname(hostname, settings, callback) {
       if (settings.forceStyling) {
         const siteList = data[SKIP_FORCE_THEMING_KEY] || [];
         const isWhitelistMode = settings.whitelistMode || false;
-        const siteInList = siteList.includes(hostname);
+        const siteInList = siteList.includes(normalizedHostname);
 
         if (
           (isWhitelistMode && siteInList) ||
           (!isWhitelistMode && !siteInList)
         ) {
-          return callback(
-            cssCache.get("example.com") || "/* Default fallback CSS */",
-          );
+          if (cssCache.has("example.com")) {
+            return callback(cssCache.get("example.com"));
+          }
         }
       }
 
@@ -384,9 +377,9 @@ function applyCSSToTab(tab) {
           const globalSettings = ensureDefaultSettings(
             data[BROWSER_STORAGE_KEY] || {},
           );
-          getStylesForHostname(hostname, globalSettings, (css) => {
-            if (css) {
-              applyFinalCSS(tab.id, hostname, css);
+          getFeaturesForHostname(hostname, globalSettings, (features) => {
+            if (features) {
+              applyFinalCSS(tab.id, hostname, features);
             }
           });
         }
@@ -395,28 +388,81 @@ function applyCSSToTab(tab) {
   });
 }
 
-function applyFinalCSS(tabId, hostname, cssToApply) {
+function applyFinalCSS(tabId, hostname, features) {
+  const normalizedHostname = normalizeHostname(hostname);
+  
   chrome.storage.local.get(
     [
       BROWSER_STORAGE_KEY,
-      `transparentZenSettings.${normalizeHostname(hostname)}`,
+      FALLBACK_BACKGROUND_KEY,
+      `transparentZenSettings.${normalizedHostname}`,
     ],
     (data) => {
       const globalSettings = ensureDefaultSettings(
         data[BROWSER_STORAGE_KEY] || {},
       );
-      // This logic is simplified as the detailed feature toggling is complex with callbacks.
-      // For now, we apply the whole CSS block if styling is on.
-      // A more advanced version would parse the CSS and filter features.
-
-      if (cssToApply.trim()) {
+      
+      const fallbackBackgroundList = data[FALLBACK_BACKGROUND_KEY] || [];
+      const hasFallbackBackground = fallbackBackgroundList.includes(normalizedHostname);
+      const siteKey = `transparentZenSettings.${normalizedHostname}`;
+      const featureSettings = data[siteKey] || {};
+      
+      let combinedCSS = "";
+      let includedFeatures = 0;
+      let skippedTransparency = 0;
+      let skippedHover = 0;
+      let skippedFooter = 0;
+      let skippedDisabled = 0;
+      
+      for (const [feature, css] of Object.entries(features)) {
+        const isTransparency = feature.toLowerCase().includes("transparency");
+        const isHover = feature.toLowerCase().includes("hover");
+        const isFooter = feature.toLowerCase().includes("footer");
+        
+        if (isTransparency && (globalSettings.disableTransparency || hasFallbackBackground)) {
+          if (logging) console.log(`Skipping transparency feature ${feature}`);
+          skippedTransparency++;
+          continue;
+        }
+        
+        if (isHover && globalSettings.disableHover) {
+          if (logging) console.log(`Skipping hover feature ${feature}`);
+          skippedHover++;
+          continue;
+        }
+        
+        if (isFooter && globalSettings.disableFooter) {
+          if (logging) console.log(`Skipping footer feature ${feature}`);
+          skippedFooter++;
+          continue;
+        }
+        
+        if (featureSettings[feature] === false) {
+          if (logging) console.log(`Skipping feature ${feature} (disabled by site)`);
+          skippedDisabled++;
+          continue;
+        }
+        
+        combinedCSS += css + "\n";
+        includedFeatures++;
+        if (logging) console.log(`Including feature: ${feature}`);
+      }
+      
+      if (hasFallbackBackground) {
+        if (logging) console.log("Adding fallback background");
+        combinedCSS += "\nhtml { background-color: light-dark(#fff, #111); }\n";
+      }
+      
+      if (logging) console.log(`CSS summary:\n  - Included: ${includedFeatures}\n  - Skipped transparency: ${skippedTransparency}\n  - Skipped hover: ${skippedHover}\n  - Skipped footer: ${skippedFooter}\n  - Skipped disabled: ${skippedDisabled}\n  - Fallback bg: ${hasFallbackBackground}\n  - CSS length: ${combinedCSS.length}`);
+      
+      if (combinedCSS.trim()) {
         chrome.tabs.sendMessage(
           tabId,
-          { action: "applyStyles", css: cssToApply },
+          { action: "applyStyles", css: combinedCSS },
           (response) => {
             if (chrome.runtime.lastError) {
               chrome.tabs.insertCSS(tabId, {
-                code: cssToApply,
+                code: combinedCSS,
                 runAt: "document_start",
               });
             }
